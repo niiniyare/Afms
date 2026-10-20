@@ -18,12 +18,16 @@ The three questions every feature serves:
 
 | Document | Use it for |
 |---|---|
-| `docs/FMS_ERPNext_Design_Guide.md` | Behaviour, business rules, formulas, gates, error codes |
-| `docs/FMS_DocType_Catalogue.md` | Exact DocTypes, fields, naming, permissions, custom fields, workspaces. **Authoritative for names.** |
-| `docs/FMS_Development_Tasks.md` | The task list and the project's progress. Work only on tasks listed there. |
+| `docs/fms.md` (the *design guide*) | Behaviour, business rules, formulas, gates, error codes, open decisions (section 19) |
+| `docs/catalogue.md` (the *catalogue*) | Exact DocTypes, fields, naming, permissions, custom fields, workspaces. **Authoritative for names.** |
+| `TASKS.md` (the *task list*) | The task list and the project's progress. Work only on tasks listed there. |
 | `CLAUDE.md` | These rules |
 
 If the design guide and the catalogue disagree on a **name**, the catalogue wins. If they disagree on **behaviour**, the design guide wins. If a task needs something neither covers, stop and ask the owner. Do not invent behaviour.
+
+Decisions marked **Proposed** in design guide section 19 are defaults the owner has not yet confirmed. Build them as written, but mention in the pull request when a task depends on one, so the owner can change it before the work is merged.
+
+This repository (`niiniyare/Afms`) is the app repository: the `forecourt` app is scaffolded at the repository root (task FMS-B02), next to these documents and `.claude/skills/`.
 
 ## 3. Stack and versions
 
@@ -37,7 +41,7 @@ If the design guide and the catalogue disagree on a **name**, the catalogue wins
 
 ## 4. Skills: use the Frappe Claude Skill Package
 
-The project skills in `.claude/skills/` come from the Frappe Claude Skill Package (Impertio-Studio / OpenAEC-Foundation, version pinned in `.claude/skills/VERSION`). **Load the skills a task lists before writing code.** When a task lists none, pick from this table:
+The project skills in `.claude/skills/` come from the Frappe Claude Skill Package (Impertio-Studio / OpenAEC-Foundation, version pinned in `.claude/skills/VERSION`, added in task FMS-B04). **Load the skills a task lists before writing code.** When a task lists none, pick from this table:
 
 | Work | Skills |
 |---|---|
@@ -70,7 +74,7 @@ The project skills in `.claude/skills/` come from the Frappe Claude Skill Packag
 3. **Pure calculations.** All arithmetic lives in `forecourt/calc/` with **no `frappe` imports**, tested with unit tests. Controllers call `calc`, never re-implement formulas.
 4. **One place for posting.** Native documents are built only in `forecourt/posting/` (one function per generated document). Corrections live in `forecourt/corrections/`.
 5. **Atomic close.** Shift close posts everything in one transaction (or one background job transaction for large shifts). **Never call `frappe.db.commit()`** in controllers, hooks or posting code; v16 forbids commits in document hooks anyway.
-6. **Append-only ledgers.** Wetstock, Nozzle, Sales and Cashier Ledger Entries are written only by `posting/ledgers.py` and correction code. They are never edited. Cancellation sets `is_cancelled`; corrections set `superseded_by` and write new rows.
+6. **Append-only ledgers.** Wetstock, Nozzle, Sales and Cashier Ledger Entries are written only by `posting/ledgers.py` and correction code. Other writers (the Purchase Receipt hook, Tank Dip, Meter Change) call functions in `posting/ledgers.py`; they never insert ledger rows themselves. They are never edited. Cancellation sets `is_cancelled`; corrections set `superseded_by` and write new rows.
 7. **Closed shifts are corrected, never edited.** All fixes go through Shift Correction with director approval (design guide 6.8). Generated documents refuse direct cancellation unless `frappe.flags.fms_correction` is set by correction code.
 8. **Every variance is cleared before close.** No "pending" states, no "close anyway". Gates live in `before_submit` and raise coded errors from `forecourt/errors.py`.
 9. **Enter once.** Anything the system knows (openings, roster, prices, GRNs, own use, POS sales, imported payments) is pulled in, never typed again.
@@ -85,20 +89,20 @@ The project skills in `.claude/skills/` come from the Frappe Claude Skill Packag
 | Custom fields on ERPNext DocTypes | Prefix `fms_`, shipped as fixtures filtered by FMS modules |
 | DocType names | As in the catalogue; never rename without updating the catalogue in the same pull request |
 | Document names | Include the station code (`SH-KE-NBO-WSTL-2026-00042`) |
-| Error messages | Coded (`FMS-S105`), plain language, with the fix. Add new codes to `forecourt/errors.py` **and** the design guide's error catalogue |
+| Error messages | Coded (`FMS-S105`), plain language, with the fix. Use the code ranges in design guide 15.3. Add new codes to `forecourt/errors.py` **and** the design guide's error catalogue |
 | Translations | Wrap every user-facing string: `_()` in Python, `__()` in JavaScript |
 | Types | Type annotations on new Python functions (v16 practice) |
 | Permissions | `has_permission` hooks return explicit `True`/`False` (v16) |
 | Sorting | v16 lists sort by `creation` by default; set `sort_field` explicitly where the catalogue says |
 | SQL | Prefer `frappe.qb` or `frappe.get_all`; never format user input into SQL strings |
-| `ignore_permissions` | Only for ledger writes and system-generated documents in `posting/` and `corrections/` |
+| `ignore_permissions` | Only for ledger writes and system-generated documents in `posting/` and `corrections/`, and for records created as a side effect of a master (walk-in customer, tank warehouse, default accounts) in `forecourt/setup/` (design guide D34, proposed) |
 | Money and quantities | `flt(value, precision)` with the field's precision; never compare floats without rounding |
 | Time | Shift windows in the station's time zone; store datetimes in system time zone as Frappe does |
 
 ## 7. Working on a task
 
-1. Pick the next unticked task from `docs/FMS_Development_Tasks.md` whose dependencies are ticked, or the one the owner names.
-2. Create the branch `task/FMS-X00-short-name`.
+1. Pick the next unticked task from `TASKS.md` whose dependencies are ticked, or the one the owner names.
+2. Create the branch `task/FMS-X00-short-name`, unless the owner or the session names another branch.
 3. Load the listed skills. Re-read the relevant design guide and catalogue sections.
 4. Implement the smallest change that meets the task's **Expectation**. Do not widen the task. Log anything else you notice in the Bug log.
 5. Write or update tests in the same change.
@@ -179,13 +183,16 @@ Logs: `logs/` in the bench (`web.error.log`, `worker.error.log`, `frappe.log`) a
 - Corrections: targeted, director-approved; native documents are cancelled and amended individually; FMS data is superseded, never edited.
 - Mobile money and card payments are posted one transaction per Payment Entry, with the provider reference.
 - Shift link on the native documents the FMS posts or reads; Station as accounting dimension; no tenant field.
+- Shift status is set by the controller; a Frappe Workflow is used only for the approval step, on its own `approval_state` field (design guide 6.2, D19).
+- `niiniyare/Afms` is the app repository; the documents keep their current names (`docs/fms.md`, `docs/catalogue.md`, `TASKS.md`).
 - **Still open:** deployment model (one shared site, separate sites with a group site, or a mix). Keep code compatible with both (design guide 4.2a).
+- **Proposed, awaiting confirmation:** decisions D16–D36 in design guide section 19.
 
 ## 12. Do not
 
 - Do not modify files under `apps/frappe`, `apps/erpnext` or `apps/hrms`.
 - Do not create DocTypes, fields or reports that are not in the catalogue without updating the catalogue in the same pull request and getting the owner's approval.
 - Do not store secrets in the repository or in fixtures. Provider credentials go in site config or encrypted Password fields.
-- Do not use `frappe.db.sql` with string formatting, `frappe.db.commit()` in request code, or `ignore_permissions` outside `posting/` and `corrections/`.
+- Do not use `frappe.db.sql` with string formatting, `frappe.db.commit()` in request code, or `ignore_permissions` outside `posting/`, `corrections/` and `setup/`.
 - Do not tick tasks for work that was not verified.
 

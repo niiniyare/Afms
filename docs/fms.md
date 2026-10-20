@@ -1,7 +1,8 @@
 # Forecourt Management System on ERPNext: Design Guide
 
-**Version:** 1.2 (second owner review: meters, dips, prices, own use, corrections, payments, fields)
+**Version:** 1.3 (documentation review: names aligned with the catalogue, error code ranges, shift status model, proposed decisions D16–D36)
 **Date:** 2026-10-20
+**Companion documents:** [catalogue.md](catalogue.md) (DocTypes and fields, authoritative for names) · [../TASKS.md](../TASKS.md) (build order and progress) · [../CLAUDE.md](../CLAUDE.md) (rules for developers and agents)
 **Platform:** Frappe Framework v16, ERPNext v16 (HRMS v16 optional)
 **Audience:** owner, developers, implementers, accountants
 **Status:** proposal for review. Nothing here is built yet.
@@ -259,7 +260,7 @@ The following features appear in most serious products. They form the feature ch
 ### 4.1 The hierarchy
 
 ```
-Group (the Frappe site, one per business group)
+Group (the Frappe site in option A, or the group reporting site in option B; see 4.2a)
  └─ Company (legal entity in ERPNext; can have a parent company)
      └─ Station (FMS DocType; a physical site)
          ├─ Fuel Tanks          (each is an ERPNext Warehouse)
@@ -307,10 +308,10 @@ Section 19 records this as decision D1.
 
 ### 4.3 Station grouping for aggregate reports
 
-Directors want to see data by brand, by region, or by investor portfolio, and these groupings do not always match the legal Company tree. The **Station Group** tree (a Frappe tree DocType, like Territory) gives a flexible rollup:
+Directors want to see data by brand, by region, area or investor portfolio, and these groupings do not always match the legal Company tree. The **Station Group** tree (a Frappe tree DocType, like Territory; group types Brand, Region, Area, Portfolio, Other) gives a flexible rollup:
 
 ```
-All Stations
+All Station Groups
  ├─ Brand: Brand A
  │   ├─ Region: Nairobi
  │   │   ├─ Station: Westlands
@@ -376,7 +377,7 @@ A nozzle can have up to three cumulative totalisers. They complement each other,
 | **Electronic volume** (E-vol) | Litres dispensed | Electronic display or pump controller |
 | **Manual volume** (M-vol) | Litres dispensed | Mechanical counter on the pump |
 
-**Meter settings** (per station, overridable per dispenser, because older pumps may lack an electronic display):
+**Meter settings** (per station, overridable per dispenser, because older pumps may lack an electronic display). A dispenser override sets both the meters recorded and the sales basis for its nozzles; the basis must be one of that dispenser's recorded meters (D23, proposed):
 
 | Setting | Options | Default |
 |---|---|---|
@@ -400,9 +401,9 @@ Drift is analysed over time per nozzle (section 5.9) and is one of the earliest 
 | Case | Handling |
 |---|---|
 | Normal | Sold = closing − opening |
-| Rollover (meter passes its maximum and restarts at zero) | Per meter. If closing < opening and the user ticks *Rollover*, sold = (max − opening) + closing. Without the tick, the system blocks with error FMS-W102. |
+| Rollover (meter passes its maximum and restarts at zero) | Per meter. If closing < opening and the user ticks *Rollover*, sold = (max − opening) + closing. Without the tick, the system blocks with error FMS-S101. A value above the meter's maximum is refused with FMS-W102. |
 | Meter replaced or reset by a technician | A **Meter Change** document records old final reading and new starting reading, with the technician's name. The next shift opens from the new value. |
-| Pump test (litres dispensed into a test can and poured back into the tank) | `test_volume` on the reading. Counts as dispensed by the meter but not sold, and not removed from the tank. |
+| Pump test (litres dispensed into a test can and poured back into the tank) | `test_volume` on the reading. Counts as dispensed by the meter but not sold, and not removed from the tank. A nozzle may set a maximum test volume per shift; above it the close is blocked (FMS-S115, D29 proposed). |
 | Own use (generator, company vehicles) | Recorded as a *Fuel Own Use* Stock Entry (section 5.10). The shift pulls the litres onto the nozzle's reading automatically, so they are not counted as sold. |
 | Nozzle out of service | Nozzle state *Out of service*. It is skipped in shifts, and its reading must not change. |
 
@@ -426,9 +427,9 @@ A tanker delivery is the moment of greatest financial exposure: one load can be 
 
 What the FMS does with the GRN (it adds checks and records, it does not post extra documents on its own):
 
-1. **On validate:** if the GRN contains fuel items going into tank warehouses and the company requires delivery dips, a dip row is mandatory for each tank. Volumes and variance are computed automatically from the calibration chart.
-2. **On submit:** writes a **Wetstock Ledger Entry** of type *Delivery* (invoiced, received, variance, supplier, transporter, driver). The GRN's stock posting itself is standard ERPNext.
-3. **Delivery shortage beyond tolerance** (default −0.3% of invoiced volume): the GRN cannot be submitted without a reason. The form then offers a **Record delivery shortage** button, which prepares a draft **Stock Entry (Material Issue)** from the tank to the *Delivery Shortage Claims* account for the measured shortage. The manager or accountant reviews and submits it manually, then raises a debit note to the supplier or a claim against the transporter. Posting it keeps the shortage out of the next shift's tank variance.
+1. **On validate:** if the GRN contains fuel items going into tank warehouses and the station requires delivery dips (Station setting `delivery_dips_required`, default on), a dip row is mandatory for each tank (FMS-T206). Volumes and variance are computed automatically from the calibration chart.
+2. **On submit:** writes a **Wetstock Ledger Entry** of type *Delivery* (through `posting/ledgers.py`) (invoiced, received, variance, supplier, transporter, driver). The GRN's stock posting itself is standard ERPNext.
+3. **Delivery shortage beyond tolerance** (default −0.3% of invoiced volume): the GRN cannot be submitted without a reason (FMS-T205). The form then offers a **Record delivery shortage** button, which prepares a draft **Stock Entry (Material Issue)** from the tank to the *Delivery Shortage Claims* account for the measured shortage. The manager or accountant reviews and submits it manually, then raises a debit note to the supplier or a claim against the transporter. Posting it keeps the shortage out of the next shift's tank variance.
 4. Landed costs such as separately invoiced transport go through ERPNext's Landed Cost Voucher, as usual.
 
 Small variances within tolerance are not adjusted. They show up as part of the next shift's tank variance and the cumulative trend.
@@ -459,7 +460,7 @@ Variance % of sales     = variance ÷ net meter sales × 100
 
 ### 5.6 Tolerances
 
-Tolerances are set per company, can be overridden per station and per tank, and are checked on every close.
+Tolerances are set per company (Forecourt Company Settings), can be overridden per station and per tank, and are checked on every close.
 
 | Tolerance | Default | Check |
 |---|---|---|
@@ -484,6 +485,7 @@ Fuel expands by roughly 0.1% per °C. Some markets trade and tax at a reference 
 - Each dip and delivery can record observed temperature and density.
 - If the company enables temperature compensation, volumes are converted to standard volume using the configured petroleum measurement tables (ASTM D1250 / API MPMS 11.1). Both observed and standard volumes are stored.
 - Default: **off**. Most small stations reconcile at observed volume.
+- Phases 0–3 only **record** temperature and density (optional fields on dips and delivery dips). The compensation itself is backlog epic P7 (D30, proposed).
 
 ### 5.9 Wetstock analytics
 
@@ -530,7 +532,9 @@ It is posted manually, like an expense, during or after the shift. The expense a
 Rules:
 
 - Shifts at a station form a chain. Shift *n+1* opens from shift *n*'s closing values.
-- Only one open (draft) shift per station at a time, unless the company allows overlapping shifts.
+- Only one open (draft) shift per station at a time, unless the company allows overlapping shifts (Forecourt Company Settings `allow_overlapping_shifts`, default off, D28 proposed). When overlapping is allowed, gate FMS-S110 is not applied.
+- **Shift date:** `shift_date` is the date of `shift_start` in the station's time zone, so a *Night 18:00–06:00* shift belongs to the evening it started (D20, proposed).
+- A new shift is always created by the manager (pre-filled, section 6.3); the system does not open the next shift automatically (D32, proposed).
 - A shift's time window (start, end) decides which deliveries, POS invoices and payment feed transactions belong to it.
 
 ### 6.2 Shift lifecycle
@@ -548,7 +552,9 @@ stateDiagram-v2
     Corrected --> Corrected: Further corrections
 ```
 
-Technically, *Open*, *Counting*, *Reconciled* and *PendingApproval* are values of a `status` field on a draft document (docstatus 0). *Closed* is docstatus 1. *Corrected* is a status on a closed shift that has applied corrections; the shift itself stays docstatus 1. Frappe Workflow drives the approval step.
+Technically, *Open*, *Counting*, *Reconciled*, *Pending Approval* and *Closing* are values of a read-only `status` field on a draft document (docstatus 0). *Closed* is docstatus 1. *Corrected* is a status on a closed shift that has applied corrections; the shift itself stays docstatus 1 (`status` is `allow_on_submit`).
+
+**Who sets the status (D19, decided 2026-10-20):** the controller sets `status` on every save from the data (readings entered, balances, approvals) and from the close job (*Closing*). A small Frappe **Workflow** drives only the approval step, on its own field `approval_state` (*Not Required*, *Pending Approval*, *Approved*, *Rejected*). The controller sets `approval_state` to *Pending Approval* when a resolution or tank variance needs approval and to *Not Required* when none does; the area manager's *Approve* or *Reject* is the workflow transition. `status` shows *Pending Approval* while `approval_state` is *Pending Approval*. A rejection returns the shift to *Counting* with the comment. Any change to an approved amount, reason or resolution after approval sets `approval_state` back to *Pending Approval*. The approver cannot be the user who prepared the shift.
 
 ### 6.3 What happens when a shift is created
 
@@ -607,6 +613,8 @@ How segments work:
 2. When a segment starts, the manager records the meter readings of the affected nozzles at the change time, exactly like a cashier handover. Each nozzle then has one reading row per segment, and sales are priced per segment. With the E-cash basis, the amount is always exact; the segment readings are what let the system split litres correctly between prices.
 3. A segment without readings blocks the close (FMS-S112). A setting can allow a time-based estimate instead, flagged as an exception in reports; it is off by default because it makes litres approximate.
 4. The Fuel Price Change is the single source of price history. The shift only shows and uses it. If the shift is ever corrected, price history is not affected.
+5. **Other channels.** ERPNext Item Price is valid from a *date*, not a time, so it cannot express a change at 14:00. The FMS therefore writes the Item Price (valid from the effective date) for reference, and a `validate` hook on Sales Invoice and POS Invoice sets the rate of fuel items at a station from the Fuel Price Change in force at the document's posting date and time. The documents the shift posts take their rates from the shift's segments (D24, proposed).
+6. **No future-dated changes in Phases 0–3.** `effective_at` may not be later than the moment of submission; a change is approved at or after the time it takes effect. Scheduled future changes are backlog epic P8 (D24, proposed).
 
 **Why not a price form inside the shift that is only committed at close?** It was considered. It would leave every other channel (credit invoices, POS, the future handheld) on the old price until the shift closes, it would scatter price history across shift documents, and correcting a shift would then rewrite price history. A station-level Fuel Price Change, approved and effective immediately, plus read-only segments in the shift, gives the same view in the shift without those problems.
 
@@ -622,7 +630,7 @@ A shift cannot be submitted unless:
 | FMS-S104 | Every nozzle reading is assigned to a cashier |
 | FMS-S105 | Every cashier's balance is zero after resolution: any shortage or excess has a resolution line (charge to cashier, approved write-off, or excess) with a reason |
 | FMS-S106 | Every tank variance outside tolerance has a reason; above the approval threshold, it is approved |
-| FMS-S107 | Every credit slip has a customer, and the customer is within the credit limit (or the over-limit is approved) |
+| FMS-S107 | Every credit slip has a customer; the vehicle (if given) belongs to the customer and allows the product; the customer is within the credit limit and the vehicle within its monthly litre limit (or the over-limit is approved) |
 | FMS-S108 | Credit and voucher litres per product do not exceed metered litres for that product |
 | FMS-S109 | Every expense has an expense type and an amount below the per-expense limit |
 | FMS-S110 | Shift window does not overlap another submitted shift at the station |
@@ -632,6 +640,7 @@ A shift cannot be submitted unless:
 | FMS-S112 | Every price segment has meter readings for the affected nozzles |
 | FMS-S113 | No draft Fuel Own Use entry exists in the shift window |
 | FMS-S114 | Every mobile money and card collection has a reference, and no reference is used twice for the same provider |
+| FMS-S115 | Test volume on each nozzle is within the nozzle's per-shift limit (when set) |
 | FMS-W103 | Meter drift beyond tolerance has a reason (when the station requires one) |
 
 Error codes are documented in the troubleshooting catalogue (section 15.3).
@@ -640,21 +649,23 @@ Error codes are documented in the troubleshooting catalogue (section 15.3).
 
 All of this happens in one database transaction. If any step fails, nothing is posted and the error is shown. For shifts with many transactions (more than a configurable number, default 200 payment rows), the *Close* button runs the same transaction as a background job: the shift shows *Closing…*, and on failure it returns to *Reconciled* with the error.
 
+**Posting times (D35, proposed).** All generated documents use `set_posting_time` with times derived from `shift_end` (converted from the station time zone to the system time zone). Stock consumption must be posted before the tank adjustment, otherwise moving-average valuation gives the wrong COGS: Sales Invoices (and Delivery Notes) are posted at `shift_end − 1 minute`, the Stock Reconciliation at `shift_end`, and Payment Entries and Journal Entries at `shift_end`. GRNs, own use and transfers keep their own posting times inside the window.
+
 | # | Document | Purpose |
 |---|---|---|
-| 1 | **Sales Invoice** per credit customer | Credit fuel and items, update_stock from tank warehouses, posted to the customer's receivable |
+| 1 | **Sales Invoice** per credit customer (or **Delivery Note** per credit customer when the company invoices credit monthly, D26 proposed) | Credit fuel and items, update_stock from tank warehouses, posted to the customer's receivable |
 | 2 | **Sales Invoice** for the shift's walk-in sales (*shift sales invoice*) | Remaining metered fuel and non-POS items, update_stock, to the station's *Walk-in* customer |
-| 2a | **Payment Entry** per mobile money transaction and per card transaction | Against the shift sales invoice, into the clearing account, with the provider reference as reference number. One by one, so each can be reconciled. |
-| 2b | **Payment Entry** per cashier for cash, and per voucher type | Against the shift sales invoice, into the till account |
-| 3 | **Journal Entry**: cashier differences and expenses | Shortage to the cashier's receivable, excess to *Cash Over* income, expenses to expense accounts |
-| 4 | **Payment Entry** (Internal Transfer) per drop | Till to safe or bank |
-| 5 | **Payment Entry** per debt collected at the station | Customer pays an old balance in cash or mobile money |
-| 7 | **Stock Reconciliation** | Tank book stock set to dipped stock |
-| 8 | **Wetstock Ledger Entry** rows | One per tank |
-| 9 | **Cashier Ledger Entry** rows | One per cashier |
-| 10 | **Nozzle Ledger Entry** and **Sales Ledger Entry** rows | Per nozzle segment, and per sales line × payment type (section 10.4) |
+| 3 | **Payment Entry** per mobile money transaction and per card transaction | Against the shift sales invoice, into the clearing account, with the provider reference as reference number. One by one, so each can be reconciled. |
+| 4 | **Payment Entry** per cashier for cash, and per voucher type | Against the shift sales invoice, into the till account |
+| 5 | **Journal Entry**: cashier differences and expenses | Shortage to the cashier's receivable, excess to *Cash Over* income, expenses to expense accounts |
+| 6 | **Payment Entry** (Internal Transfer) per drop, and for the float when the company returns floats to the safe (D27) | Till to safe or bank |
+| 7 | **Payment Entry** per debt collected at the station | Customer pays an old balance in cash, mobile money or card, into the till or the clearing account, with the provider reference for non-cash (section 7.2) |
+| 8 | **Stock Reconciliation** | Tank book stock set to dipped stock |
+| 9 | **Wetstock Ledger Entry** rows | One per tank |
+| 10 | **Cashier Ledger Entry** rows | One per cashier |
+| 11 | **Nozzle Ledger Entry** and **Sales Ledger Entry** rows | Per nozzle segment, and per sales line × payment type (section 10.4) |
 
-Each generated document carries `forecourt_shift` (a custom link field) and the Station dimension. The shift form's *Connections* tab lists them all.
+Each generated document carries `fms_forecourt_shift` (a custom link field) and the Station dimension. The shift form's *Connections* tab lists them all.
 
 Section 8 explains the accounting in detail. Section 12.3 explains how the walk-in invoice changes when per-transaction receipts are legally required.
 
@@ -668,7 +679,7 @@ A closed shift is **never cancelled as a whole** in normal operation. Mistakes a
 |---|---|---|
 | **Native document** | Credit slip posted to the wrong customer or product; mobile money reference typed wrong; wrong expense account | The specific ERPNext document (Sales Invoice, Payment Entry, Journal Entry) is cancelled and amended in the standard ERPNext way. Nothing else in the shift changes. |
 | **Meter reading** | Closing reading of nozzle N3 typed as 105,230 instead of 105,320 | Moves litres between this shift and the next one (whose opening equals the corrected closing). The correction writes superseding Nozzle and Sales Ledger rows for both shifts, adjusts the walk-in sales with a Credit Note or an additional Sales Invoice, and recalculates both cashiers' balances. Any new difference needs a resolution line inside the correction, under the same rules as closing. If the next shift is still open, its opening updates automatically. |
-| **Dip** | Closing dip typed wrong | Superseding Wetstock Ledger row; a new Stock Reconciliation dated at the original posting time (ERPNext reposts valuation for back-dated stock entries). |
+| **Dip** | Closing dip typed wrong | Superseding Wetstock Ledger row; a new Stock Reconciliation dated at the original posting time (ERPNext reposts valuation for back-dated stock entries, which also recalculates the difference posted by the next shift's Stock Reconciliation). The closing dip is the next shift's opening, so the correction also writes a superseding Wetstock row for the next shift, and any next-shift variance that moves outside tolerance needs a resolution inside the correction. If the next shift is still open, its opening updates automatically (D22, proposed). |
 | **Cashier count or resolution** | Cash counted wrong; shortage charged to the wrong person | Reversing Journal Entry and a new one |
 | **Reclassification** | Wrong variance reason, expense type or own-use purpose | FMS fields only: superseding rows, plus a native fix if an account changes |
 
@@ -677,7 +688,7 @@ Rules:
 - **FMS data is never edited in place.** The original ledger rows are marked `superseded_by` the correction, and corrected rows are written with a `correction` link. Reports show corrected figures by default; the audit view shows both.
 - Postings are dated at the original shift date when its accounting period is open, otherwise at the correction date, with a reference to the original shift.
 - The shift form shows a banner listing its corrections.
-- **Whole-shift cancellation** exists only for a shift entered at the wrong station or date. It needs the System Manager role plus director approval, and only works on the latest closed shift at the station. Shifts in a closed accounting period cannot be cancelled.
+- **Whole-shift cancellation** exists only for a shift entered at the wrong station or date. It needs the System Manager role plus director approval, and only works on the latest closed shift at the station (FMS-C503). Shifts in a closed accounting period cannot be cancelled. No FMS role has the Cancel permission on Forecourt Shift.
 
 ---
 
@@ -695,7 +706,7 @@ Every unit of money belongs to one person in one shift: the **Cashier**.
 
 The term in the user interface is configurable (*Cashier* by default, *Salesperson* as an option) via a company setting, because some companies call the role differently.
 
-A Cashier is an **Employee** record (ERPNext/HRMS) with the flag `is_forecourt_cashier`, so payroll deductions, advances and attendance can use standard HR features. A casual worker without an employee record can be created as a minimal Employee.
+A Cashier is an **Employee** record (Employee is part of ERPNext; HRMS is optional) with the flag `fms_is_forecourt_cashier`, so payroll deductions, advances and attendance can use standard HR features when HRMS is installed. A casual worker without an employee record can be created as a minimal Employee. POS users are mapped to cashiers through `Employee.user_id`.
 
 ### 7.2 The cashier balance
 
@@ -723,6 +734,8 @@ DIFFERENCE = ACCOUNTED − EXPECTED
   > 0  excess
 ```
 
+**Debt receipts paid by mobile money or card (D21, proposed).** A debt receipt is one collection row of type *Debt Receipt* with the customer and a `paid_by` of Cash, Mobile Money or Card. It always adds to EXPECTED. When paid by mobile money or card it also counts as mobile money or card received in ACCOUNTED (so it does not change the difference) and needs the provider and reference like any other transaction. An imported mobile money transaction that turns out to be a debt payment is retyped to *Debt Receipt* on the same row, so it is never counted twice. Debt receipts are posted as Payment Entries from the customer (section 6.7, item 7), not against the walk-in invoice, and are excluded from the Sales Ledger.
+
 ### 7.3 Handling differences
 
 | Difference | Policy (configurable per company) |
@@ -732,7 +745,7 @@ DIFFERENCE = ACCOUNTED − EXPECTED
 | Excess | The manager confirms the excess, which is posted to *Cash Over* income. Repeated excesses are flagged, because they can hide under-recording of earlier sales. |
 | Not yet known | Not allowed. The shift stays open until the difference is resolved (FMS-S105). If the cause is found later, the correction is a new document (for example, reversing a shortage charge with a Journal Entry), never an edit of the closed shift. |
 
-Shortages charged to a cashier post to an **Employee** party on a *Staff Shortage Receivable* account. Recovery happens through a salary deduction (HRMS Additional Salary) or a cash repayment (Payment Entry). The **Cashier Statement** report shows each person's running balance.
+Shortages charged to a cashier post to an **Employee** party on a *Staff Shortage Receivable* account. ERPNext checks that an account's type fits the party type, so the exact account type that accepts party type *Employee* is confirmed in task FMS-C03 (D17, proposed). Recovery happens through a cash repayment (Payment Entry) or, when HRMS is installed, a salary deduction (HRMS Additional Salary) (D16, proposed). The **Cashier Statement** report shows each person's running balance.
 
 ### 7.4 Cashier performance and fraud signals
 
@@ -748,7 +761,7 @@ From the Cashier Ledger:
 
 - Count per currency. Stations near borders or in dollarised markets (for example Somalia, with USD and SOS) take several currencies. Each currency has its own till account and Mode of Payment, and the shift converts at the company's exchange rate for the date.
 - Optional denomination breakdown (notes and coins), helpful for spotting counting errors and for the safe.
-- Float: defaulted from the template. The cashier's count includes the float, and the system subtracts it; the float stays in the till for the next shift or is returned to the safe, by setting.
+- Float: defaulted from the template. The cashier's count includes the float, and the system subtracts it; the float stays in the till for the next shift or is returned to the safe, by the company setting `float_after_shift` (default *Stays in till*; *Returned to safe* posts an internal transfer at close, D27 proposed).
 
 ---
 
@@ -756,7 +769,7 @@ From the Cashier Ledger:
 
 ### 8.1 Chart of accounts additions
 
-The FMS installs a small set of accounts per company (names configurable, mapped in **Forecourt Settings**):
+The FMS creates a small set of accounts per company on request (the *Create default accounts* action in **Forecourt Company Settings**, which also fills the mapping; names configurable). Till and safe accounts are chosen per station:
 
 | Account | Type | Use |
 |---|---|---|
@@ -765,10 +778,10 @@ The FMS installs a small set of accounts per company (names configurable, mapped
 | Mobile Money Clearing – {Provider} | Bank | Mobile money received, cleared against the provider statement |
 | Card Clearing – {Acquirer} | Bank | Card sales, cleared against the acquirer settlement |
 | Voucher Clearing | Current asset | Prepaid fuel vouchers redeemed |
-| Staff Shortage Receivable | Receivable (party type Employee) | Cash shortages charged to cashiers |
+| Staff Shortage Receivable | Account accepting party type Employee (type confirmed in C03, D17) | Cash shortages charged to cashiers |
 | Cash Short (expense) / Cash Over (income) | Expense / Income | Written-off shortages and excesses |
 | Fuel Stock Variance | Expense (or Stock Adjustment) | Tank gains and losses |
-| Delivery Shortage Claims | Receivable | Shortages claimed from suppliers or transporters |
+| Delivery Shortage Claims | Current asset (not a Receivable-type account) | Shortages claimed from suppliers or transporters. A Stock Entry cannot carry a party, and ERPNext requires a party on Receivable accounts, so the claim is moved to the supplier or transporter by a Debit Note or Journal Entry (D18, proposed) |
 | Fuel Own Use (one or more) | Expense | Generator, company vehicles; mapped per Own Use Purpose |
 | Fuel Sales, Shop Sales, Car Wash Income… | Income | Through Item defaults or Item Group defaults |
 
@@ -893,6 +906,7 @@ The manager is the main user and the first line of protection, but the manager i
 | Dip manipulation | Tank variance hidden | Dip and meters cross-check; cumulative variance; area manager spot dips; ATG later |
 | Short delivery (supplier or driver) | Delivery variance | Delivery dips before and after on the GRN, seals, witness; supplier and driver variance report |
 | Product theft from tanks (siphoning) | Unexplained losses, often at night | Night shift tank variance; quiet-period checks once ATG exists |
+| Drive-off (customer leaves without paying) or spillage | Cashier shortage, or tank loss not on any meter | No separate incident document: a drive-off is a cashier shortage resolved with the variance reason *Drive-off*; a spillage is a tank variance with the reason *Spillage* (D31, proposed) |
 | Price manipulation | Charging more than the system price | Prices only change through an approved Fuel Price Change; meter amount vs volume × price cross-check |
 | Back-dated corrections | Changing history to hide losses | Submitted documents are immutable; corrections only through approved Shift Corrections that supersede, never edit; period locking; full version history |
 | Collusion between manager and cashier | Everything balances but the tank loses | Tank variance is independent of cash; area manager sees cumulative variance by station and cashier |
@@ -947,17 +961,18 @@ erDiagram
 
 | DocType | Type | Key fields |
 |---|---|---|
-| Forecourt Settings | Single | Default accounts mapping per company, tolerances, policies, UI term for cashier, delivery dips required, dip entry mode, meters recorded, sales basis, drift tolerance, price change mode, background close threshold |
-| Station | Master | company, station_group, brand, region, country, ownership_type, warehouse_group, shop_warehouse, till accounts, price_list, timezone, active |
-| Station Group | Tree | parent, group_type (Brand, Region, Portfolio, Other) |
+| Forecourt Settings | Single | Site-wide defaults: UI term for cashier, dip entry mode, meters recorded, sales basis, drift tolerance, price change mode, background close threshold, back-dating limit |
+| Forecourt Company Settings | Master (one per company) | Accounts mapping, tank and delivery tolerances, approval multiplier, write-off limits, tank variance posting, sales posting mode, credit invoicing, price cross-check, float handling, overlapping shifts, temperature compensation |
+| Station | Master | company, station_group, brand, region, country, ownership_type, warehouse_group, shop_warehouse, till accounts, price_list, timezone, status; overrides for dip entry mode, meters, sales basis, price change mode, tank tolerances; delivery dips required |
+| Station Group | Tree | parent, group_type (Brand, Region, Area, Portfolio, Other) |
 | Fuel Tank | Master | station, warehouse, item, capacity, safe_fill, dead_stock, manifold_group, tolerances, status |
 | Tank Calibration Chart | Master | tank, valid_from, rows (depth_mm, volume_l), water rows |
-| Dispenser | Master | station, island, make, model, serial, status |
-| Nozzle | Master | dispenser, tank, item (fetched from tank), number, meter_max, meter_decimals, last_reading (read-only), status |
+| Dispenser | Master | station, island, make, model, serial, meter and sales basis overrides, status |
+| Nozzle | Master | dispenser, tank, item (fetched from tank), number, meter maxima, decimals, max test volume, last readings (read-only), status |
 | Forecourt Shift Template | Master | station, name, start_time, end_time, dips_required, roster rows (cashier, nozzles, float) |
 | Customer Vehicle | Master | customer, plate, allowed_items, monthly_litre_limit, drivers, active |
 | Expense Type | Master | account, max_per_line, receipt_required |
-| Variance Reason | Master | name, applies_to (Tank, Cashier, Delivery, Drift), requires_approval |
+| Variance Reason | Master | name, applies_to (Tank, Cashier, Delivery, Drift), requires_approval; defaults include *Drive-off* and *Spillage* |
 | Own Use Purpose | Master | name, expense_account, requires_vehicle |
 
 **Transactions**
@@ -970,6 +985,8 @@ erDiagram
 | Shift Correction | Yes | Targeted correction of a closed shift, with director approval (section 6.8) |
 | Meter Change | Yes | Meter replacement or reset |
 | Tank Transfer | Yes | Fuel moved between tanks (wraps a Stock Entry, Material Transfer) |
+
+This section is a summary. Exact DocTypes, fieldnames and child tables are in the [catalogue](catalogue.md), which wins on names.
 
 **Child tables of Forecourt Shift**
 
@@ -985,16 +1002,18 @@ erDiagram
 
 ### 10.3 Custom fields on ERPNext DocTypes
 
+Fieldnames below are shown without their `fms_` prefix. The exact names are in catalogue section 12.
+
 | DocType | Field | Why |
 |---|---|---|
 | Item | is_fuel | Distinguishes fuel items |
 | Employee | is_forecourt_cashier, default_station | Cashier selection |
-| Sales Invoice, POS Invoice, Payment Entry, Journal Entry, Stock Entry, Stock Reconciliation, Purchase Receipt | forecourt_shift (and cashier where relevant) | Link back for troubleshooting, Connections tab and queries |
+| Sales Invoice, POS Invoice, Delivery Note, Payment Entry, Journal Entry, Stock Entry, Stock Reconciliation, Purchase Receipt | forecourt_shift (and cashier where relevant) | Link back for troubleshooting, Connections tab and queries |
 | Payment Entry | provider, till_or_terminal, transaction_time | Transaction-level reconciliation (reference_no and reference_date are standard) |
 | Stock Entry | station, nozzle, attendant, use_purpose, vehicle_or_asset, reference_no (for type *Fuel Own Use*) | Own use (section 5.10) |
 | Purchase Receipt | station, delivery_note_no, truck, driver, transporter, seals, witness, **GRN Delivery Dip** child table (tank, dip_before_mm, dip_after_mm, volume_before, volume_after, sales_during_drop, received_volume, invoiced_volume, variance, variance_pct, reason) | Manual GRN carries the delivery dips (section 5.4) |
 | Stock Entry | purchase_receipt | Links a delivery shortage adjustment to its GRN |
-| POS Invoice | cashier | Pulling shop sales into the cashier's balance |
+| POS Invoice, Sales Invoice (POS mode) | cashier | Pulling shop sales into the cashier's balance. ERPNext v16 POS can create POS Invoices or Sales Invoices (POS Settings), so the shift reads both (D25, proposed) |
 | All GL-posting DocTypes | station (Accounting Dimension) | Added automatically by ERPNext when the dimension is created |
 
 ### 10.3a Shift and tenant fields on native DocTypes
@@ -1013,7 +1032,7 @@ Every FMS DocType and ledger carries `company` and `station`, which together wit
 
 ### 10.4 Ledger tables for analytics
 
-These are the main reporting tables. They are not submittable documents; they are written by FMS code on submit, never edited, and flagged `is_cancelled` on cancel (the same convention as ERPNext's Stock Ledger Entry).
+These are the main reporting tables. They are not submittable documents; they are written by FMS code on submit, never edited, and flagged `is_cancelled` on cancel (the same convention as ERPNext's Stock Ledger Entry). The tables below describe content; exact fieldnames (for example `forecourt_shift`, `qty`, `net_l`) are in catalogue section 10.
 
 **Wetstock Ledger Entry**
 
@@ -1078,11 +1097,13 @@ Attribution is for reporting only. It never changes the accounting, which stays 
 
 | DocType | Series |
 |---|---|
-| Forecourt Shift | `SH-{station_code}-.YYYY.-.#####` |
-| Tank Dip | `DIP-{station_code}-.YYYY.-.#####` |
-| Fuel Price Change | `FPC-.YYYY.-.#####` |
+| Forecourt Shift | `SH-{station}-{YYYY}-{#####}` → `SH-KE-NBO-WSTL-2026-00042` |
+| Tank Dip | `DIP-{station}-{YYYY}-{#####}` |
+| Fuel Price Change | `FPC-{station}-{YYYY}-{#####}` |
+| Meter Change, Tank Transfer, Payment Import Batch | `MC-…`, `TT-…`, `IMP-…` with the same pattern |
+| Shift Correction | `COR-{forecourt_shift}-{##}` |
 
-Station codes are short (for example `WSTL`) so names are readable on paper and on the phone.
+The Station's name is its station code. Station codes are globally unique and follow the pattern `^[A-Z]{2}-[A-Z0-9]{2,5}-[A-Z0-9]{2,6}$` (country, area, site, for example `KE-NBO-WSTL`), so records from different sites never collide (section 4.2a). The exact naming rules are in the catalogue.
 
 ---
 
@@ -1286,8 +1307,9 @@ The data model does not change. Only the `source` of values changes.
 | **Station Manager** | Create and submit shifts, deliveries, dips for their station; view station reports | Approve own large variances, approve prices, apply corrections, see other stations |
 | **Area Manager** | Approve variances and price changes; view and compare stations in their groups; spot dips | Edit accounting settings |
 | **Forecourt Accountant** | Bank and clearing reconciliation, supplier invoices, receivables, period close | Submit shifts (by default) |
-| **Forecourt Director** | Approve Shift Corrections; read-only dashboards and financial reports for their companies or portfolio | Any other edit |
-| **Forecourt Administrator** | Masters (stations, tanks, nozzles, charts), settings | — |
+| **Forecourt Director** | Approve Shift Corrections and price policy; read-only dashboards and financial reports for their companies or portfolio | Any other edit |
+| **Forecourt Investor** | Read-only dashboards and reports for their companies | Any edit, any approval |
+| **Forecourt Administrator** | Masters (stations, tanks, nozzles, charts), settings | Cancel shifts (System Manager only, section 6.8) |
 
 ### 14.2 Row-level access
 
@@ -1316,20 +1338,39 @@ When something goes wrong at 7 a.m. with a queue at the pumps, the person fixing
 ### 15.2 Make posting predictable
 
 - Posting is **deterministic**: the same shift data always produces the same documents. Fixing a mistake is a Shift Correction that cancels and amends only the affected native document, or supersedes the affected FMS rows.
-- Posting code is in one module (`posting.py`) with one function per generated document, so a developer looking for "where does the shortage journal come from" finds it in one place.
+- Posting code is in one package (`posting/`) with one function per generated document, so a developer looking for "where does the shortage journal come from" finds it in one place.
 - Posting runs inside the submit transaction; there is no partial state to clean up.
 
 ### 15.3 Error catalogue
 
-Every validation raises a coded message with a plain-language cause and fix. The catalogue is a page in the app's help and a section of this guide.
+Every validation raises a coded message with a plain-language cause and fix. The catalogue is a page in the app's help and a section of this guide. All codes live in `forecourt/errors.py`.
+
+**Code ranges**
+
+| Range | Area |
+|---|---|
+| FMS-S1xx | Shift gates and shift entry |
+| FMS-W1xx | Meters and drift |
+| FMS-T2xx | Tanks, dips and deliveries |
+| FMS-P3xx | Posting and accounting setup |
+| FMS-I4xx | Integrations |
+| FMS-C5xx | Corrections and cancellation |
+| FMS-M6xx | Masters and settings (D36, proposed) |
 
 | Code | Message | Likely cause | Fix |
 |---|---|---|---|
 | FMS-S101 | Closing reading below opening on nozzle N3 | Typing error, or meter rolled over | Correct the reading, or tick *Rollover* if the meter passed its maximum |
 | FMS-S102 | Opening reading does not match previous closing | Previous shift was corrected after this one was opened | Re-fetch openings (button), or check the previous shift |
+| FMS-S103 | Tank T2 has no closing dip | Dip not entered, and the template requires dips at this close | Enter the closing dip |
+| FMS-S104 | Nozzle D01-N3 reading row has no cashier | Roster incomplete | Assign the row to a cashier |
 | FMS-S105 | Cashier Amina has an unclassified difference of −500 | Shortage not classified | Choose *Charge to cashier* or *Write off* and add a reason |
+| FMS-S106 | Tank T1 variance of −85 L is outside tolerance without a reason (or approval) | Reason not chosen, or area manager has not approved | Choose a variance reason; send for approval when above the approval threshold |
 | FMS-S107 | Customer Coast Haulage is over its credit limit | Unpaid invoices | Ask the area manager to approve, or collect payment first |
 | FMS-S108 | Credit litres for AGO exceed metered AGO | Slip entered with wrong product, or meter reading too low | Check slips and meter readings |
+| FMS-S109 | Expense line has no expense type, or is above its limit | Type not chosen, or a large expense paid from the till | Choose the type; above the limit, pay it through the accountant |
+| FMS-S110 | Shift window overlaps shift SH-… at this station | Wrong template or date | Fix the date or template |
+| FMS-S111 | 3 payment feed entries in the shift window are not assigned to a cashier | Till not mapped to a cashier | Assign each entry to a cashier |
+| FMS-S115 | Test volume on D01-N2 (60 L) is above the nozzle's limit (20 L) | Test litres typed wrong, or tests used to hide sales | Correct the test volume, or ask the administrator to review the nozzle limit |
 | FMS-W102 | Meter value exceeds the nozzle's maximum | Wrong meter_max on the nozzle or typing error | Check the nozzle master |
 | FMS-T201 | No calibration chart valid on this date for tank T2 | Chart missing or dated later (chart mode only) | Add or re-date the chart, or switch the tank to *Litres entered directly* |
 | FMS-T202 | Dip exceeds the chart's maximum depth | Wrong tank or typing error | Re-check the dip |
@@ -1343,6 +1384,17 @@ Every validation raises a coded message with a plain-language cause and fix. The
 | FMS-S114 | Duplicate mobile money reference QK12AB34CD | Statement imported twice, or reference typed twice | Remove the duplicate row |
 | FMS-W103 | Cash vs electronic volume drift of 1.8% on N2 | Pump price programmed wrongly, meter fault, or tampering | Check the pump's price and meter, then record the reason |
 | FMS-C501 | Correction needs director approval | Shift Correction submitted without approval | Send for approval |
+| FMS-C502 | Payment Entry ACC-PAY-… was generated by shift SH-… and cannot be cancelled directly | Direct cancel of a shift document | Create a Shift Correction |
+| FMS-C503 | Only the latest closed shift at a station can be cancelled, with System Manager role and director approval | Older shift, closed period, or missing approval | Use a Shift Correction instead |
+| FMS-T205 | Delivery variance of −0.5% on tank T1 is beyond tolerance without a reason | Short delivery | Choose a variance reason, then use *Record delivery shortage* |
+| FMS-T206 | Fuel line into tank T1 has no delivery dip row | Dips not entered on the GRN | Add the dips before and after the delivery |
+| FMS-M601 | Station code `westlands` does not match the pattern `XX-AAAA-BBBB` | Code not in country-area-site form | Use a code like `KE-NBO-WSTL` |
+| FMS-M602 | Account X belongs to another company, or has the wrong type | Wrong account chosen | Choose an account of the right company and type |
+| FMS-M603 | Sales basis E-vol is not one of the recorded meters | Basis meter switched off | Record the basis meter, or choose another basis |
+| FMS-M604 | Tank capacity must be above zero and safe fill at most the capacity | Typing error | Correct capacity or safe fill |
+| FMS-M605 | Calibration chart depths and volumes must strictly increase (row 42) | Row typed or pasted wrong | Fix the row |
+| FMS-M606 | Nozzle tank belongs to another station | Wrong tank chosen | Choose a tank at the same station |
+| FMS-M607 | Last readings on a nozzle can only be changed by a shift or a Meter Change | Manual edit attempt | Post a Meter Change |
 
 ### 15.4 Health checks
 
@@ -1372,7 +1424,9 @@ A scheduled **FMS Health** report (daily, emailed to the administrator and area 
 One Frappe app, `forecourt`, installed on top of ERPNext (HRMS optional).
 
 ```
-forecourt/                          # repository root (the app)
+Afms/                               # repository root (niiniyare/Afms) = the app
+├── CLAUDE.md, README.md, TASKS.md
+├── docs/                           # fms.md (this guide), catalogue.md
 ├── forecourt/
 │   ├── hooks.py                    # doc_events, scheduler, fixtures, permission hooks
 │   ├── modules.txt                 # Forecourt Setup, Wetstock, Forecourt Shift, Forecourt Finance, Forecourt Integrations
@@ -1397,12 +1451,14 @@ forecourt/                          # repository root (the app)
 │   │   ├── stock.py
 │   │   └── ledgers.py
 │   ├── corrections/                # Shift Correction appliers, one per correction type
+│   ├── setup/                      # records created as side effects of masters (walk-in customer, tank warehouse, default accounts)
+│   ├── errors.py                   # coded error catalogue (section 15.3)
 │   ├── fixtures/                   # custom fields, roles, workflows, workspaces, default masters
 │   └── tests/                      # scenario tests and shared factories
 └── .claude/skills/                 # Frappe Claude Skill Package (project skills)
 ```
 
-Module names and every DocType are specified in [FMS_DocType_Catalogue.md](FMS_DocType_Catalogue.md).
+Module names and every DocType are specified in the [catalogue](catalogue.md).
 
 ### 16.2 Why this is easy to develop and maintain
 
@@ -1420,7 +1476,7 @@ Module names and every DocType are specified in [FMS_DocType_Catalogue.md](FMS_D
 | Layer | Tool | Examples |
 |---|---|---|
 | Pure calculations | Frappe `UnitTestCase` or plain pytest | Calibration interpolation, rollover, meter basis and drift, price segments, cashier balance, variance %, tolerance edge cases |
-| Document behaviour | Frappe `IntegrationTestCase` (`bench --site test_site run-tests --app forecourt`) | Shift creation pre-fill, gates, submit creates the expected documents with correct amounts, corrections supersede correctly |
+| Document behaviour | Frappe `IntegrationTestCase` (`bench --site test_fms run-tests --app forecourt`) | Shift creation pre-fill, gates, submit creates the expected documents with correct amounts, corrections supersede correctly |
 | Accounting integrity | Integration tests | After a shift, GL balances: till = counted cash, receivable = credit slips, stock = dips |
 | Scenarios | Fixture-driven end-to-end tests | Normal shift; shortage; rollover; delivery during shift; credit over limit; multi-currency cash; mid-shift price change; three-meter drift; each correction type |
 | UI | Manual test scripts per release, Cypress or Playwright later | Shift close in under 10 minutes on a tablet |
@@ -1429,7 +1485,7 @@ Module names and every DocType are specified in [FMS_DocType_Catalogue.md](FMS_D
 
 - Phase 1 uses the standard **Desk form** for the shift, with a carefully ordered layout (section 6.4), editable grids, and a client script for live calculations.
 - When usage shows where the friction is, a dedicated **Shift Close page** (Frappe UI / Vue, mobile-first) can replace the form for managers, calling the same server methods. The data model is unchanged.
-- Workspaces: *Station* (manager), *Operations* (area manager), *Finance*, *Director*.
+- Workspaces: *Forecourt* (manager home), *Shifts*, *Wetstock*, *Forecourt Finance*, *Forecourt Operations* (area manager), *Forecourt Group* (directors and investors), *Forecourt Setup* (catalogue section 14).
 
 ---
 
@@ -1521,6 +1577,34 @@ These are the points where this guide picked a default. Confirm or change them b
 | D13 | Corrections | Shift Correction with director approval; no whole-shift cancel except wrong station or date | — |
 | D14 | Payment posting | One Payment Entry per mobile money or card transaction; background close above 200 rows | Per-shift totals with transaction detail kept only in the FMS |
 | D15 | Shift as accounting dimension | Off (shift link on about eight native DocTypes instead) | On |
+
+### 19.1 Decisions from the documentation review (2026-10-20)
+
+D19 was decided by the owner. The others are **Proposed**: defaults written into this guide, the catalogue and the task list so the specs have no gaps. Confirm or change them; until then they are built as written, and a pull request that depends on one says so.
+
+| # | Status | Decision | Proposed default | Alternative |
+|---|---|---|---|---|
+| D16 | Proposed | HRMS | Optional. Employee comes from ERPNext. Shortage recovery by cash repayment; salary deduction (Additional Salary) only when HRMS is installed (7.3) | HRMS required |
+| D17 | Proposed | Staff Shortage Receivable account type | An account that ERPNext accepts with party type *Employee*; the exact type is confirmed against ERPNext's party-type rules in FMS-C03 (7.3, 8.1) | HRMS Employee Advance |
+| D18 | Proposed | Delivery Shortage Claims account | Current asset, not Receivable-type (a Stock Entry cannot carry a party); claim moved to the supplier or transporter by Debit Note or Journal Entry (8.1) | — |
+| D19 | **Decided** | Shift status model | Controller sets `status`; a Frappe Workflow only drives `approval_state` (6.2) | Workflow owns all states |
+| D20 | Proposed | Shift date of overnight shifts | Date of `shift_start` in the station's time zone (6.1) | Date of `shift_end` |
+| D21 | Proposed | Debt receipts paid by mobile money or card | One *Debt Receipt* row with `paid_by`; counts in both expected and the non-cash total; imported rows are retyped, never duplicated (7.2) | Separate debt receipt and payment rows |
+| D22 | Proposed | Dip corrections | Also re-base the next shift's opening and variance, with resolutions inside the correction (6.8) | Correct only the shift itself |
+| D23 | Proposed | Per-dispenser meters | A dispenser override sets both the meters recorded and the sales basis; each reading row carries its own meter flags (5.3) | Station basis always applies |
+| D24 | Proposed | Price timing outside the shift | Sales Invoice and POS Invoice hook sets fuel rates from the Fuel Price Change in force at posting time; no future-dated price changes in Phases 0–3 (6.5a) | Item Price by date only; scheduled changes now |
+| D25 | Proposed | POS invoice type | Shift reads both POS Invoices and Sales Invoices created by POS (`is_pos`) (10.3) | Require one POS mode |
+| D26 | Proposed | Monthly credit invoicing | Shift posts a Delivery Note per credit customer; the accountant invoices monthly from Delivery Notes (6.7, 8.4) | Monthly invoicing not offered |
+| D27 | Proposed | Float after the shift | Company setting, default *Stays in till*; *Returned to safe* posts an internal transfer (7.5) | Always returned to safe |
+| D28 | Proposed | Overlapping shifts | Company setting, default off; when on, FMS-S110 is skipped (6.1) | Never allowed |
+| D29 | Proposed | Pump test limit | Optional `max_test_volume_l` per nozzle; above it the close is blocked (FMS-S115) (5.3) | Reason instead of block |
+| D30 | Proposed | Temperature and density | Recorded only in Phases 0–3; compensation is backlog epic P7 (5.8) | Build compensation now |
+| D31 | Proposed | Incidents (drive-offs, spillage) | No incident DocType: variance reasons *Drive-off* (cashier) and *Spillage* (tank) (9.1) | Separate incident document with its own stock entry |
+| D32 | Proposed | Opening the next shift | Manager creates it (pre-filled); no automatic opening (6.1) | Auto-open after close |
+| D33 | Proposed | Migration from the Odoo prototype | No transactional history migrated; the pilot's masters, meter positions, tank stock and opening balances are loaded in FMS-N01; the Odoo database is kept read-only for audit | Migrate meter and dip logs |
+| D34 | Proposed | Records created by masters | Walk-in customer, tank warehouse and default accounts are created by code in `forecourt/setup/`, which may use `ignore_permissions` (16.1, CLAUDE.md) | Give FMS roles create rights on Customer, Warehouse, Account |
+| D35 | Proposed | Posting times | Sales Invoices and Delivery Notes at `shift_end − 1 minute`, Stock Reconciliation, Payment and Journal Entries at `shift_end` (6.7) | — |
+| D36 | Proposed | Error codes for masters and settings | New range FMS-M6xx (15.3) | — |
 
 ---
 

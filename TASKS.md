@@ -2,9 +2,10 @@
 
 **This file is the progress indicator of the project.** Every piece of work is a task with a checkbox. A task is ticked only when its deliverable has been verified (through the UI or the CLI, as stated in the task) and committed.
 
-**Version:** 1.0 · **Date:** 2026-10-20
+**Version:** 1.1 (documentation review: repository, forward links, approval workflow, proposed decisions) · **Date:** 2026-10-20
 **Stack:** Frappe Framework v16, ERPNext v16, HRMS v16 (optional), app `forecourt`
-**Specs:** [FMS_ERPNext_Design_Guide.md](FMS_ERPNext_Design_Guide.md) (behaviour) · [FMS_DocType_Catalogue.md](FMS_DocType_Catalogue.md) (DocTypes, fields, workspaces) · [CLAUDE.md](CLAUDE.md) (rules for developers and agents)
+**Repository:** [niiniyare/Afms](https://github.com/niiniyare/Afms), which is also the app repository (the `forecourt` app sits at its root)
+**Specs:** [docs/fms.md](docs/fms.md) (design guide: behaviour) · [docs/catalogue.md](docs/catalogue.md) (DocTypes, fields, workspaces) · [CLAUDE.md](CLAUDE.md) (rules for developers and agents)
 **Agent skills:** [Frappe Claude Skill Package](https://github.com/Impertio-Studio/Frappe_Claude_Skill_Package) (now published as `OpenAEC-Foundation/Frappe_Claude_Skill_Package`), installed as project skills in `.claude/skills/`
 
 ---
@@ -28,7 +29,7 @@
 | M. Deployment and operations | 8 | 0 |
 | N. Pilot and go-live | 5 | 0 |
 | **Total (Phases 0–3)** | **124** | **0** |
-| P. Later phases (backlog) | 6 epics | — |
+| P. Later phases (backlog) | 8 epics | — |
 
 Update the *Done* column in the same commit that ticks a task.
 
@@ -63,8 +64,9 @@ Update the *Done* column in the same commit that ticks a task.
 
 ### Working with Claude Code
 
-- Start each task by saying: *"Do task FMS-X00 from FMS_Development_Tasks.md."* Claude Code reads [CLAUDE.md](CLAUDE.md), loads the listed skills, implements, runs the Verify CLI steps it can run, and reports which UI steps you need to check.
-- One task per branch: `task/FMS-X00-short-name`. One task per pull request, unless tasks are marked as a pair.
+- Start each task by saying: *"Do task FMS-X00 from TASKS.md."* Claude Code reads [CLAUDE.md](CLAUDE.md), loads the listed skills, implements, runs the Verify CLI steps it can run, and reports which UI steps you need to check.
+- One task per branch: `task/FMS-X00-short-name` (unless the session names another branch). One task per pull request, unless tasks are marked as a pair.
+- When a task builds a decision marked **Proposed** in design guide section 19, say so in the pull request.
 - When a task reveals a bug in earlier work, add a **Bug fix** task to the [Bug log](#bug-log) at the bottom rather than silently widening the current task.
 
 ### Commit format
@@ -86,7 +88,7 @@ Types: `feat`, `fix`, `test`, `chore`, `docs`, `refactor`, `ci`. Modules: `setup
   - **Skills:** `frappe-ops-bench`, `frappe-ops-upgrades` (version requirements)
   - **Description:** On the development machine (Ubuntu 24.04 or newer, macOS, or WSL2), install the versions Frappe v16 requires: Python 3.14+, Node.js 24+, Yarn, MariaDB (the version listed in the v16 install notes), Redis, git, and the PDF prerequisites listed for v16. Use `uv` or `pyenv` for Python and `nvm` for Node so other projects are not affected.
   - **Expectation:** All tools report the required versions.
-  - **Deliverables:** A short `docs/dev-setup.md` in the app repo (created in B03) listing exact versions installed.
+  - **Deliverables:** A short `docs/dev-setup.md` in this repository (added in B03) listing exact versions installed.
   - **Verify:** `python3.14 --version`, `node --version` (v24.x), `yarn --version`, `mariadb --version`, `redis-server --version`.
   - **Commit:** none (documented in B03).
 
@@ -143,33 +145,33 @@ Types: `feat`, `fix`, `test`, `chore`, `docs`, `refactor`, `ci`. Modules: `setup
 
 ## B. Repository and app scaffold
 
-- [ ] **FMS-B01 · Initialize · Create the app repository** · S · —
-  - **Description:** Create a new GitHub repository for the Frappe app (default name `forecourt`; the existing `fms` repository holds the Odoo prototype and stays as reference). Protect `main`: pull requests required, CI must pass (after L01).
-  - **Verify (UI):** Repository exists with branch protection on `main`.
+- [ ] **FMS-B01 · Configure · Protect the app repository** · S · —
+  - **Description:** The app repository is the existing [niiniyare/Afms](https://github.com/niiniyare/Afms) (it already holds the documents and `.claude/skills/`). The old `fms` repository holds the Odoo prototype and stays as reference. Protect `main`: pull requests required, CI must pass (after L01).
+  - **Verify (UI):** Branch protection on `main` of `niiniyare/Afms`.
   - **Commit:** none.
 
 - [ ] **FMS-B02 · Initialize · Scaffold the app** · S · A05, B01
   - **Skills:** `frappe-impl-customapp`, `frappe-syntax-customapp`, `frappe-ops-app-lifecycle`
-  - **Description:** `bench new-app forecourt` (title "Forecourt Management", publisher, email, licence MIT or as the owner chooses, GitHub workflow yes, pre-commit yes). Set the git remote to the repo from B01. `bench --site fms.localhost install-app forecourt`.
-  - **Expectation:** App installs on the dev site; `pyproject.toml` declares `frappe` and `erpnext` as required apps (`required_apps = ["frappe/erpnext"]` in hooks).
-  - **Deliverables:** App skeleton, initial commit.
-  - **Verify:** `bench --site fms.localhost list-apps` shows `forecourt`; `git log` shows the first commit pushed.
+  - **Description:** `bench new-app forecourt` (title "Forecourt Management", publisher, email, licence MIT or as the owner chooses, GitHub workflow yes, pre-commit yes). Then join it to the existing repository, keeping its history: in `apps/forecourt`, `git remote add origin https://github.com/niiniyare/Afms`, `git fetch origin`, `git merge origin/main --allow-unrelated-histories`, keep the repository's `README.md` (add the generated app description to it), and push on a feature branch. `bench --site fms.localhost install-app forecourt`. HRMS is not a required app (design guide D16).
+  - **Expectation:** App installs on the dev site; `required_apps = ["erpnext"]` in hooks; the repository root holds the app, the documents and `.claude/skills/`.
+  - **Deliverables:** App skeleton merged into the repository.
+  - **Verify:** `bench --site fms.localhost list-apps` shows `forecourt`; `git log` shows the scaffold commit on top of the documentation history.
   - **Commit:** `chore(env): scaffold forecourt app`
 
-- [ ] **FMS-B03 · Documentation · Add the design documents to the repo** · S · B02
-  - **Description:** Copy `FMS_ERPNext_Design_Guide.md`, `FMS_DocType_Catalogue.md`, this file and `CLAUDE.md` into the repo (`docs/` for the first two and this file, `CLAUDE.md` at the root). Add `docs/dev-setup.md` from A01.
-  - **Verify:** Files visible on GitHub; `CLAUDE.md` at the repo root.
-  - **Commit:** `docs: add design guide, catalogue, task plan and CLAUDE.md`
+- [ ] **FMS-B03 · Documentation · Development setup notes** · S · B02
+  - **Description:** The design guide (`docs/fms.md`), the catalogue (`docs/catalogue.md`), this file and `CLAUDE.md` are already in the repository. Add `docs/dev-setup.md` from A01 and check that the scaffold from B02 did not overwrite any of them.
+  - **Verify:** `docs/dev-setup.md`, `docs/fms.md`, `docs/catalogue.md`, `TASKS.md` and `CLAUDE.md` visible on GitHub.
+  - **Commit:** `docs: add development setup notes`
 
 - [ ] **FMS-B04 · Configure · Install the skill package as project skills** · S · A08, B02
-  - **Description:** `mkdir -p .claude/skills && cp -r <package>/skills/source/*/* .claude/skills/` so each skill folder (e.g. `.claude/skills/frappe-syntax-doctypes/SKILL.md`) sits directly under `.claude/skills/`. Record the package commit hash in `.claude/skills/VERSION`.
+  - **Description:** The 61 skills are already flattened into `.claude/skills/` (repository commit `7e4b3b0`). Check them against the package clone from A08 (`cp -r <package>/skills/source/*/* .claude/skills/` if they differ) and record the package commit hash in `.claude/skills/VERSION`, which is still missing.
   - **Expectation:** Claude Code started in the repo lists the frappe-* skills.
   - **Verify:** In Claude Code, ask "List the Frappe skills you have" → 61 `frappe-*` skills.
   - **Commit:** `chore(env): add Frappe Claude skill package <hash>`
 
 - [ ] **FMS-B05 · Configure · Define the modules** · S · B02
   - **Skills:** `frappe-syntax-customapp`
-  - **Description:** Replace the default module in `forecourt/modules.txt` with: Forecourt Setup, Wetstock, Forecourt Shift, Forecourt Finance, Forecourt Integrations (catalogue 2.1). Create each module folder with `__init__.py`. Create the non-DocType packages: `calc/`, `posting/`, `corrections/`, `api/`, `tests/` with `__init__.py`.
+  - **Description:** Replace the default module in `forecourt/modules.txt` with: Forecourt Setup, Wetstock, Forecourt Shift, Forecourt Finance, Forecourt Integrations (catalogue 2.1). Create each module folder with `__init__.py`. Create the non-DocType packages: `calc/`, `posting/`, `corrections/`, `setup/`, `api/`, `tests/` with `__init__.py`, and `errors.py` with the code ranges of design guide 15.3.
   - **Verify:** `bench --site fms.localhost migrate` clean; in Desk, *Module Def* list shows the five modules with app `forecourt`.
   - **Commit:** `chore(setup): define modules and package layout`
 
@@ -188,13 +190,13 @@ Types: `feat`, `fix`, `test`, `chore`, `docs`, `refactor`, `ci`. Modules: `setup
 
 - [ ] **FMS-B08 · Configure · Fixtures configuration** · S · B05
   - **Skills:** `frappe-impl-customapp`, `frappe-syntax-hooks`
-  - **Description:** In `hooks.py`, declare `fixtures` for Custom Field and Property Setter filtered by `module` in the FMS modules, and for Role, Workflow, Workflow State, Workflow Action Master, Stock Entry Type, Accounting Dimension, Variance Reason, Own Use Purpose filtered by name lists.
+  - **Description:** In `hooks.py`, declare `fixtures` for Custom Field and Property Setter filtered by `module` in the FMS modules, and for Role, Workflow, Workflow State, Workflow Action Master, Stock Entry Type, Accounting Dimension, Variance Reason, Own Use Purpose filtered by name lists (or by the FMS modules where the DocType has a module field).
   - **Verify:** `bench --site fms.localhost export-fixtures --app forecourt` runs without error.
   - **Commit:** `chore(setup): declare fixtures`
 
 - [ ] **FMS-B09 · Review · Architecture review checkpoint** · S · B01–B08
   - **Skills:** `frappe-agent-architect`, `frappe-agent-validator`
-  - **Description:** Ask Claude Code to review the scaffold against CLAUDE.md and the catalogue: one app, no core overrides, module layout, pure `calc/`.
+  - **Description:** Ask Claude Code to review the scaffold against CLAUDE.md and the catalogue: one app, no core overrides, module layout, pure `calc/`, `ignore_permissions` only in `posting/`, `corrections/` and `setup/`.
   - **Deliverables:** Review notes appended to the Bug log (if any findings).
   - **Verify:** Review report has no errors.
   - **Commit:** none, or `docs: architecture review notes`.
@@ -203,7 +205,7 @@ Types: `feat`, `fix`, `test`, `chore`, `docs`, `refactor`, `ci`. Modules: `setup
 
 ## C. Foundation masters (Phase 0)
 
-Build in catalogue order. Each DocType task includes its JSON, controller, a test file, and list or form settings from the catalogue.
+Build in catalogue order. Each DocType task includes its JSON, controller, a test file, list or form settings and the role permissions from the catalogue (so every DocType task depends on C01). Fields that link forward to a later DocType are added by the later task (catalogue 3.1). Validation errors use the codes in design guide 15.3 (FMS-M6xx for masters).
 
 - [ ] **FMS-C01 · Writing Feature · Roles** · S · B08
   - **Skills:** `frappe-core-permissions`
@@ -211,7 +213,7 @@ Build in catalogue order. Each DocType task includes its JSON, controller, a tes
   - **Verify (UI):** Role list shows them; `bench export-fixtures` writes `fixtures/role.json`.
   - **Commit:** `feat(setup): add FMS roles`
 
-- [ ] **FMS-C02 · Writing Feature · Forecourt Settings** · S · B05
+- [ ] **FMS-C02 · Writing Feature · Forecourt Settings** · S · C01
   - **Skills:** `frappe-syntax-doctypes`, `frappe-impl-controllers`
   - **Description:** Single DocType per catalogue 4.1 with the meter validation.
   - **Expectation:** Saving with sales basis *E-vol* while E-vol is not recorded is refused.
@@ -221,8 +223,9 @@ Build in catalogue order. Each DocType task includes its JSON, controller, a tes
 
 - [ ] **FMS-C03 · Writing Feature · Forecourt Company Settings** · S · C02
   - **Skills:** `frappe-syntax-doctypes`, `frappe-core-database`
-  - **Description:** Catalogue 4.2, with account validation (company, root type, account type).
-  - **Verify (UI):** Create one for Demo Petroleum; choosing an account from another company or of the wrong type is refused.
+  - **Description:** Catalogue 4.2, with account validation (company, root type, account type) and the *Create default accounts* action (design guide 8.1, code in `forecourt/setup/`). Confirm which account type ERPNext accepts with party type *Employee* for the Staff Shortage Receivable account, and record the result in design guide D17 and catalogue 4.2 in the same pull request.
+  - **Verify (UI):** Create one for Demo Petroleum; *Create default accounts* creates the missing accounts and fills the mapping; choosing an account from another company or of the wrong type is refused.
+  - **Verify (CLI):** A Journal Entry test posts a shortage to the chosen account with party type Employee.
   - **Commit:** `feat(setup): add Forecourt Company Settings`
 
 - [ ] **FMS-C04 · Writing Feature · Station Group tree** · S · C01
@@ -231,13 +234,13 @@ Build in catalogue order. Each DocType task includes its JSON, controller, a tes
   - **Verify (UI):** Tree view shows *All Station Groups*; add Brand → Region → Area groups.
   - **Commit:** `feat(setup): add Station Group tree`
 
-- [ ] **FMS-C05 · Writing Feature · Reference masters** · M · B05
+- [ ] **FMS-C05 · Writing Feature · Reference masters** · M · C01
   - **Skills:** `frappe-syntax-doctypes`
   - **Description:** Variance Reason, Expense Type (+ Expense Type Account), Own Use Purpose (+ Own Use Purpose Account) per catalogue 4.4–4.6, with default records as fixtures.
   - **Verify (UI):** The three lists show the default records; quick entry works for Variance Reason.
   - **Commit:** `feat(setup): add variance reasons, expense types, own use purposes`
 
-- [ ] **FMS-C06 · Writing Feature · Payment Provider** · S · B05
+- [ ] **FMS-C06 · Writing Feature · Payment Provider** · S · C01
   - **Skills:** `frappe-syntax-doctypes`
   - **Description:** Catalogue 4.7 (import mapping JSON is used in J01).
   - **Verify (UI):** Create *M-Pesa* (Mobile Money) linked to a Mode of Payment *M-Pesa* whose company account is *Mobile Money Clearing*.
@@ -251,7 +254,7 @@ Build in catalogue order. Each DocType task includes its JSON, controller, a tes
 
 - [ ] **FMS-C08 · Writing Feature · Station** · M · C03, C04, C06, C07
   - **Skills:** `frappe-syntax-doctypes`, `frappe-impl-controllers`
-  - **Description:** Station with Station Till Account and Station Payment Terminal (catalogue 5.1). Code pattern validation, company consistency, walk-in customer creation on insert.
+  - **Description:** Station with Station Till Account and Station Payment Terminal (catalogue 5.1). Code pattern validation, company consistency, tolerance overrides, walk-in customer creation on insert (in `forecourt/setup/`).
   - **Expectation:** Creating station `KE-NBO-WSTL` creates customer *Walk-in – Westlands*.
   - **Verify (UI):** Create the station; invalid code `westlands` is refused; walk-in customer exists and is flagged.
   - **Commit:** `feat(setup): add Station`
@@ -266,13 +269,13 @@ Build in catalogue order. Each DocType task includes its JSON, controller, a tes
 - [ ] **FMS-C10 · Writing Feature · Fuel Tank** · M · C08
   - **Skills:** `frappe-syntax-doctypes`, `frappe-impl-controllers`
   - **Description:** Catalogue 6.1, creating the tank Warehouse on insert and blocking deletion once stock exists.
-  - **Verify (UI):** Create T1 (PMS, 30,000 L) → warehouse *T1 - KE-NBO-WSTL* exists under the station's group warehouse.
+  - **Verify (UI):** Create T1 (PMS, 30,000 L) → warehouse *T1 - KE-NBO-WSTL - DPL* (ERPNext adds the company abbreviation) exists under the station's group warehouse.
   - **Commit:** `feat(wetstock): add Fuel Tank`
 
 - [ ] **FMS-C11 · Writing Feature · Dispenser** · S · C08
   - **Skills:** `frappe-syntax-doctypes`
-  - **Description:** Catalogue 6.2.
-  - **Verify (UI):** Create D01 (Island 1) and D02.
+  - **Description:** Catalogue 6.2, including the meter and sales basis override.
+  - **Verify (UI):** Create D01 (Island 1) and D02; an override with basis E-vol and E-vol not recorded is refused.
   - **Commit:** `feat(wetstock): add Dispenser`
 
 - [ ] **FMS-C12 · Writing Feature · Tank Calibration Chart** · M · C10, D02
@@ -283,7 +286,7 @@ Build in catalogue order. Each DocType task includes its JSON, controller, a tes
 
 - [ ] **FMS-C13 · Writing Feature · Nozzle** · S · C10, C11
   - **Skills:** `frappe-syntax-doctypes`
-  - **Description:** Catalogue 7.2; tank must belong to the same station.
+  - **Description:** Catalogue 7.2 without `last_reading_shift` (added in F01); tank must belong to the same station.
   - **Verify (UI):** Create D01-N1 (T1) and D01-N2 (T2); linking a tank from another station is refused.
   - **Commit:** `feat(wetstock): add Nozzle`
 
@@ -362,7 +365,7 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
   - **Skills:** `frappe-syntax-hooks-events`, `frappe-impl-hooks`, `frappe-syntax-doctypes`
   - **Description:** GRN Delivery Dip child DocType (catalogue 8.6); custom fields on Purchase Receipt (catalogue 12); `doc_events` for validate and submit; both dip entry modes; tolerance check with mandatory reason.
   - **Expectation:** A manually created GRN for 10,000 L PMS into T1 with dips before and after computes received volume and variance. Without dips (when required) it cannot be submitted.
-  - **Verify (UI):** Post a GRN with a −0.5% variance → reason required; submit → Wetstock Ledger Entry of type *Delivery* (after F15, check in the ledger list; before that, check the GRN fields).
+  - **Verify (UI):** Post a GRN with a −0.5% variance → reason required (FMS-T205); submit → the GRN's dip fields are stored. The Wetstock Ledger Entry of type *Delivery* is wired and checked in F15.
   - **Commit:** `feat(wetstock): delivery dips on GRN`
 
 - [ ] **FMS-E04 · Writing Feature · Record delivery shortage** · S · E03
@@ -373,13 +376,13 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
 
 - [ ] **FMS-E05 · Writing Feature · Fuel Own Use stock entry type** · M · C05, C13
   - **Skills:** `frappe-syntax-hooks-events`, `frappe-impl-clientscripts`
-  - **Description:** Stock Entry Type fixture; custom fields on Stock Entry; validation (narration, purpose, nozzle, vehicle when required); expense account from purpose; default shift = open shift at station.
+  - **Description:** Stock Entry Type fixture; custom fields on Stock Entry except `fms_forecourt_shift` (added in F01); validation (narration, purpose, nozzle, vehicle when required); expense account from purpose. Defaulting the shift to the open shift at the station is done in F06.
   - **Verify (UI):** Post 40 L generator use from D01-N2 → T2 stock −40 L; GL shows the generator expense account with station dimension.
   - **Commit:** `feat(wetstock): fuel own use`
 
 - [ ] **FMS-E06 · Writing Feature · Tank Dip (spot dip)** · S · C12, D02
   - **Skills:** `frappe-syntax-doctypes`
-  - **Description:** Catalogue 8.4; computes book volume at the dip time from the stock ledger.
+  - **Description:** Catalogue 8.4; computes book volume at the dip time from the stock ledger. The *Spot Dip* ledger row is wired in F15.
   - **Verify (UI):** Spot dip on T1 shows book volume and difference; no stock posted.
   - **Commit:** `feat(wetstock): spot dips`
 
@@ -391,14 +394,14 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
 
 - [ ] **FMS-E08 · Writing Feature · Meter Change** · S · C13
   - **Skills:** `frappe-impl-controllers`
-  - **Description:** Catalogue 8.3; updates nozzle last readings.
+  - **Description:** Catalogue 8.3; updates nozzle last readings. The *Meter Change* ledger row is wired in F15.
   - **Verify (UI):** Meter Change on D01-N1 → Nozzle shows new last readings.
   - **Commit:** `feat(wetstock): meter change`
 
 - [ ] **FMS-E09 · Writing Feature · Fuel Price Change** · M · C08
   - **Skills:** `frappe-impl-controllers`, `frappe-core-workflow`
-  - **Description:** Catalogue 8.2 without the shift segment part (added in F07). Workflow Draft → Pending Approval → Approved. Writes Item Price on the station price list.
-  - **Verify (UI):** Station Manager creates PMS 180 → 182; Area Manager approves; Item Price shows 182 from the effective date.
+  - **Description:** Catalogue 8.2 without the shift segment part and `applied_to_shift` (added in F07). Workflow Draft → Pending Approval → Approved. `effective_at` may not be in the future. Writes Item Price on the station price list, and the Sales Invoice / POS Invoice `validate` hook that sets fuel rates from the change in force at the posting time (design guide 6.5a, D24).
+  - **Verify (UI):** Station Manager creates PMS 180 → 182 at 14:00; Area Manager approves; Item Price shows 182 from the effective date; a Sales Invoice posted at 13:00 the same day keeps 180, one at 15:00 gets 182.
   - **Commit:** `feat(shift): fuel price change`
 
 - [ ] **FMS-E10 · Writing Test · Station movements tests** · M · E01–E09
@@ -413,13 +416,13 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
 
 - [ ] **FMS-F01 · Writing Feature · Shift DocType and child tables** · L · E02
   - **Skills:** `frappe-syntax-doctypes`, `frappe-syntax-controllers`
-  - **Description:** Forecourt Shift and its nine child tables exactly as catalogue 9.1–9.2, no logic yet beyond required fields. Tabs in the specified order.
+  - **Description:** Forecourt Shift and its nine child tables exactly as catalogue 9.1–9.2, no logic yet beyond required fields. Tabs in the specified order. Shift Collection's `feed_entry` and `import_batch` are left out (added in J04 and J01). Also add the forward links that target Forecourt Shift (catalogue 3.1): `Nozzle.last_reading_shift` and the `fms_forecourt_shift` custom fields on the eight native DocTypes.
   - **Verify (UI):** New Forecourt Shift form shows all tabs and grids; saves a draft.
   - **Commit:** `feat(shift): add Forecourt Shift structure`
 
 - [ ] **FMS-F02 · Writing Feature · Shift creation pre-fill** · M · F01, D01
   - **Skills:** `frappe-impl-controllers`
-  - **Description:** `before_insert`: previous shift, roster, reading rows with locked openings (from Nozzle last readings), tank rows with opening stock, first price segment, settings snapshot, shift window in station time zone.
+  - **Description:** `before_insert`: previous shift, roster, reading rows with locked openings (from Nozzle last readings) and each row's meters and sales basis (dispenser override, else station), tank rows with opening stock and dip entry mode (tank override, else station), first price segment, settings snapshot, shift window in station time zone, `shift_date` = date of `shift_start` in station time (D20).
   - **Expectation:** A new shift for the test station is ready with 4 reading rows, 2 tank rows, prices, and no typing.
   - **Verify (UI):** Create a shift → all rows present; opening fields read-only.
   - **Commit:** `feat(shift): pre-fill new shift`
@@ -431,8 +434,8 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
   - **Commit:** `feat(shift): live calculations`
 
 - [ ] **FMS-F04 · Writing Feature · Meter modes and drift in the shift** · M · F03, D04
-  - **Description:** Show only the recorded meters; compute basis and drift; drift reason required beyond tolerance when configured.
-  - **Verify (UI):** Switch the station to all three meters → three columns appear; a 2% drift asks for a reason.
+  - **Description:** Show only the recorded meters (per row, from the dispenser override or the station); compute basis and drift; drift reason required beyond tolerance when configured.
+  - **Verify (UI):** Switch the station to all three meters → three columns appear; a dispenser with an M-vol-only override requires only M-vol on its rows; a 2% drift asks for a reason.
   - **Commit:** `feat(shift): meter modes and drift`
 
 - [ ] **FMS-F05 · Writing Feature · Tank dips in the shift** · S · F03, D05
@@ -441,28 +444,28 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
   - **Commit:** `feat(shift): tank dips with pulled receipts`
 
 - [ ] **FMS-F06 · Writing Feature · Own use pull-in** · S · F05, E05
-  - **Description:** Submitted Fuel Own Use entries in the window reduce the nozzle's net litres; drafts block close (FMS-S113).
+  - **Description:** A new Fuel Own Use entry defaults its shift to the open shift at the station; submitted entries in the window reduce the nozzle's net litres; drafts block close (FMS-S113).
   - **Verify (UI):** 40 L generator use appears on D01-N2's row.
   - **Commit:** `feat(shift): pull own use into shift`
 
 - [ ] **FMS-F07 · Writing Feature · Price segments** · M · F02, E09
   - **Skills:** `frappe-impl-controllers`
-  - **Description:** On Fuel Price Change submit in *Latest price with segments* mode, add a segment to the open shift and split the affected reading rows; manager enters change-time readings; FMS-S112 gate.
+  - **Description:** Add `Fuel Price Change.applied_to_shift`. On Fuel Price Change submit in *Latest price with segments* mode, add a segment to the open shift and split the affected reading rows; manager enters change-time readings; FMS-S112 gate.
   - **Verify (UI):** Approve a PMS change at 14:00 → the shift shows two PMS segments; closing without the 14:00 readings is refused.
   - **Commit:** `feat(shift): mid-shift price segments`
 
 - [ ] **FMS-F08 · Writing Feature · Credit sales** · M · F03, E01
-  - **Description:** Credit Sale grid with vehicle filter, price from the segment at `sold_at`, slip uniqueness, credit limit check with over-limit approval.
+  - **Description:** Credit Sale grid with vehicle filter, price from the segment at `sold_at`, slip uniqueness, vehicle belongs to customer and allows the product, credit limit and vehicle monthly litre limit checks with over-limit approval (FMS-S107).
   - **Verify (UI):** A slip over Coast Haulage's limit shows the limit warning and requires approval.
   - **Commit:** `feat(shift): credit sales`
 
 - [ ] **FMS-F09 · Writing Feature · Item sales and POS pull-in** · S · F03
-  - **Description:** Manual item sales; submitted POS Invoices for each cashier in the window pulled in as read-only lines (excluded from posting).
+  - **Description:** Manual item sales; submitted POS Invoices and POS-created Sales Invoices (`is_pos`) for each cashier in the window pulled in as read-only lines (excluded from posting) (D25); POS cashier defaulted from `Employee.user_id`.
   - **Verify (UI):** A POS Invoice by cashier Amina during the shift appears under Items.
   - **Commit:** `feat(shift): item sales and POS pull-in`
 
 - [ ] **FMS-F10 · Writing Feature · Cashier counts and collections** · M · F03, C06
-  - **Description:** Cash count grid per cashier and currency; collections grid for mobile money, card, voucher, expense, drop, debt receipt; reference mandatory and unique per provider (FMS-S114); expense limits and receipts.
+  - **Description:** Cash count grid per cashier and currency; collections grid for mobile money, card, voucher, expense, drop, debt receipt (with `paid_by`, design guide 7.2, D21); reference mandatory and unique per provider (FMS-S114); expense limits and receipts.
   - **Verify (UI):** Entering the same M-Pesa reference twice is refused.
   - **Commit:** `feat(shift): cashier counts and collections`
 
@@ -473,26 +476,26 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
 
 - [ ] **FMS-F12 · Writing Feature · Gates** · M · F04–F11
   - **Skills:** `frappe-errors-controllers`
-  - **Description:** All gates in design guide 6.6 in `before_submit`, each raising its coded message from one `forecourt/errors.py` catalogue. Gate failures are listed together, not one at a time.
+  - **Description:** All gates in design guide 6.6 (including FMS-S115) in `before_submit`, each raising its coded message from one `forecourt/errors.py` catalogue. Gate failures are listed together, not one at a time. FMS-S110 is skipped when the company allows overlapping shifts.
   - **Verify (UI):** A shift with three problems shows all three codes in one message.
   - **Commit:** `feat(shift): close gates`
 
 - [ ] **FMS-F13 · Writing Feature · Posting: sales and payments** · L · F12
   - **Skills:** `frappe-impl-controllers`, `frappe-core-database`
-  - **Description:** `posting/sales.py`: credit Sales Invoices per customer; walk-in Sales Invoice (update_stock from tank warehouses). `posting/payments.py`: one Payment Entry per mobile money and card collection (reference_no = provider reference), one cash Payment Entry per cashier, voucher and debt receipt entries. All carry `fms_forecourt_shift`, `fms_cashier` and the station dimension.
+  - **Description:** `posting/sales.py`: credit Sales Invoices per customer (or Delivery Notes when the company invoices monthly, D26); walk-in Sales Invoice (update_stock from tank warehouses). `posting/payments.py`: one Payment Entry per mobile money and card collection (reference_no = provider reference), one cash Payment Entry per cashier, voucher and debt receipt entries (cash into the till, non-cash into the clearing account). All carry `fms_forecourt_shift`, `fms_cashier` and the station dimension, and use the posting times of design guide 6.7 (D35).
   - **Expectation:** After submit, the walk-in invoice is fully paid and every mobile money transaction has its own Payment Entry.
   - **Verify (UI):** Shift Connections tab lists the invoices and payment entries; Accounts Receivable shows walk-in at zero.
   - **Commit:** `feat(shift): post sales and payments`
 
 - [ ] **FMS-F14 · Writing Feature · Posting: journals and stock** · M · F13
-  - **Description:** `posting/journals.py`: expenses and resolutions; `posting/stock.py`: Stock Reconciliation per tank (according to the company setting), drops as internal transfers.
+  - **Description:** `posting/journals.py`: expenses and resolutions; `posting/stock.py`: Stock Reconciliation per tank (according to the company setting), drops as internal transfers, and the float transfer to the safe when the company returns floats (D27).
   - **Verify (UI):** General Ledger filtered by the shift's vouchers: till balance equals counted cash; Fuel Stock Variance shows the tank variance value.
   - **Commit:** `feat(shift): post journals and stock reconciliation`
 
 - [ ] **FMS-F15 · Writing Feature · Ledgers** · M · F13, D07
   - **Skills:** `frappe-syntax-doctypes`, `frappe-core-database`
-  - **Description:** The four ledger DocTypes (catalogue 10.1–10.4) with composite indexes in `on_doctype_update`; `posting/ledgers.py` writes them on submit; Nozzle `last_*` updated.
-  - **Verify (CLI):** `bench --site fms.localhost mariadb -e "SHOW INDEX FROM \`tabSales Ledger Entry\`"` shows the composite indexes. **(UI)** Report view of each ledger shows the shift's rows.
+  - **Description:** The four ledger DocTypes (catalogue 10.1–10.4, without `superseded_by` and `correction`, added in G01) with composite indexes in `on_doctype_update`; `posting/ledgers.py` writes them on submit; Nozzle `last_*` updated. Also wire the ledger rows of E03 (*Delivery*), E06 (*Spot Dip*) and E08 (*Meter Change*) through `posting/ledgers.py`.
+  - **Verify (CLI):** `bench --site fms.localhost mariadb -e "SHOW INDEX FROM \`tabSales Ledger Entry\`"` shows the composite indexes. **(UI)** Report view of each ledger shows the shift's rows; submitting a GRN, a spot dip and a meter change each writes its ledger row.
   - **Commit:** `feat(finance): FMS ledgers`
 
 - [ ] **FMS-F16 · Writing Feature · Background close for large shifts** · S · F13
@@ -509,7 +512,7 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
 
 - [ ] **FMS-F18 · Writing Test · Shift integration tests** · L · F01–F17
   - **Skills:** `frappe-testing-unit`
-  - **Description:** Scenarios: normal shift; shortage charged; excess; rollover; delivery mid-shift; own use; price change mid-shift; three-meter drift; over-limit credit; multi-currency cash; background close. Each asserts GL balances, stock per tank and ledger rows.
+  - **Description:** Scenarios: normal shift; shortage charged; excess; rollover; delivery mid-shift; own use; price change mid-shift; three-meter drift; over-limit credit; multi-currency cash; debt receipt by mobile money; overnight shift; background close. Each asserts GL balances, stock per tank and ledger rows.
   - **Verify:** `bench --site test_fms run-tests --app forecourt --module forecourt.tests.test_shift_scenarios` passes.
   - **Commit:** `test(shift): scenario tests`
 
@@ -519,7 +522,7 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
 
 - [ ] **FMS-G01 · Writing Feature · Shift Correction DocType and workflow** · M · F15
   - **Skills:** `frappe-syntax-doctypes`, `frappe-core-workflow`, `frappe-impl-workflow`
-  - **Description:** Catalogue 10.5 with workflow Draft → Pending Director Approval → Approved → Applied / Rejected. Cancel guards on generated documents (catalogue 12 hooks) that allow cancellation only from a correction.
+  - **Description:** Catalogue 10.5 with workflow Draft → Pending Director Approval → Approved → Applied / Rejected. Add the ledgers' `superseded_by` and `correction` links (catalogue 3.1). Cancel guards on generated documents (catalogue 12 hooks, FMS-C502) that allow cancellation only from a correction.
   - **Verify (UI):** Cancelling a shift's Payment Entry directly is refused with a message pointing to Shift Correction.
   - **Commit:** `feat(shift): Shift Correction workflow`
 
@@ -534,12 +537,12 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
   - **Commit:** `feat(shift): meter reading corrections`
 
 - [ ] **FMS-G04 · Writing Feature · Dip, cashier and reclassification corrections** · M · G01
-  - **Description:** `corrections/dip.py`, `cashier.py`, `reclassify.py` per design guide 6.8.
-  - **Verify (UI):** Correct a dip → new Stock Reconciliation dated at the original time; stock balance updated after reposting.
+  - **Description:** `corrections/dip.py`, `cashier.py`, `reclassify.py` per design guide 6.8. A dip correction also re-bases the next shift's opening and variance (D22).
+  - **Verify (UI):** Correct a dip → new Stock Reconciliation dated at the original time; stock balance updated after reposting; the next shift's tank row and Wetstock Ledger show the corrected opening.
   - **Commit:** `feat(shift): dip, cashier and reclassification corrections`
 
 - [ ] **FMS-G05 · Writing Feature · Whole-shift cancellation (exception)** · S · G01
-  - **Description:** Only for the latest shift, System Manager + director approval, cancels generated documents in reverse order.
+  - **Description:** Only for the latest shift, System Manager + director approval, cancels generated documents in reverse order (FMS-C503). No FMS role has Cancel on Forecourt Shift.
   - **Verify (UI):** Attempt on an older shift is refused; on the latest shift with approval it succeeds.
   - **Commit:** `feat(shift): exceptional whole-shift cancellation`
 
@@ -634,8 +637,8 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
 
 - [ ] **FMS-I03 · Writing Feature · Shift approval workflow** · M · F11
   - **Skills:** `frappe-impl-workflow`, `frappe-core-workflow`
-  - **Description:** Forecourt Shift workflow with the *Pending Approval* step for write-offs and large variances; approver cannot be the submitter.
-  - **Verify (UI):** Manager sends for approval; area manager approves; manager closes.
+  - **Description:** Workflow *Forecourt Shift Approval* on `approval_state` only (design guide 6.2, D19): the controller sets *Pending Approval* for write-offs above the limit and large variances; the area manager approves or rejects; approver cannot be the preparer; a change after approval resets it to *Pending Approval*. `status` stays controller-driven.
+  - **Verify (UI):** A shift with a large write-off shows *Pending Approval*; area manager approves; manager closes; the manager cannot approve their own shift.
   - **Commit:** `feat(shift): approval workflow`
 
 - [ ] **FMS-I04 · Writing Feature · Notifications for approvals** · S · I03
@@ -660,7 +663,7 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
 
 - [ ] **FMS-J01 · Writing Feature · Payment Import Batch (Phase 1)** · L · F10
   - **Skills:** `frappe-impl-whitelisted`, `frappe-core-files`
-  - **Description:** Catalogue 11.3. Mapping-driven CSV and Excel parser; creates collection rows on the shift; duplicates skipped by reference; row log. **Import transactions** button on the shift.
+  - **Description:** Catalogue 11.3, and add `Shift Collection.import_batch`. Mapping-driven CSV and Excel parser; creates collection rows on the shift; duplicates skipped by reference; row log. **Import transactions** button on the shift.
   - **Expectation:** Importing a 300-row M-Pesa statement takes under 10 seconds and assigns rows by till.
   - **Verify (UI):** Import a sample statement → rows appear on the right cashiers; re-import creates zero rows.
   - **Commit:** `feat(integrations): payment statement import`
@@ -677,7 +680,7 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
   - **Commit:** `feat(integrations): integration inbox`
 
 - [ ] **FMS-J04 · Writing Feature · Payment Feed Entry and shift matching** · M · J03, F10
-  - **Description:** Catalogue 11.2; at shift creation and refresh, matched feed entries become collection rows; unmatched block close (FMS-S111).
+  - **Description:** Catalogue 11.2, and add `Shift Collection.feed_entry`; at shift creation and refresh, matched feed entries become collection rows; unmatched block close (FMS-S111).
   - **Verify (UI):** A feed entry for the station's till during the shift appears on the cashier automatically.
   - **Commit:** `feat(integrations): payment feed matching`
 
@@ -828,7 +831,7 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
 ## N. Pilot and go-live
 
 - [ ] **FMS-N01 · Configure · Pilot station master data** · M · M03, K06
-  - **Description:** Real company, accounts, station, tanks, calibration charts (or litres mode), dispensers, nozzles, meter readings, cashiers, credit customers and vehicles, price list.
+  - **Description:** Real company, accounts, station, tanks, calibration charts (or litres mode), dispensers, nozzles, meter readings, cashiers, credit customers and vehicles, price list, opening balances. Where the pilot ran on the Odoo prototype, take masters, meter positions and closing dips from its last closed shift; no transactional history is migrated, and the Odoo database is kept read-only (design guide D33).
   - **Verify (UI):** Onboarding checklist complete; opening stock posted with Stock Reconciliation matching a physical dip.
   - **Commit:** none (data).
 
@@ -866,6 +869,8 @@ Each epic is split into tasks in this file when it is scheduled.
 | P4. Dedicated Shift Close page | 4 | Section 16.4: mobile-first Frappe UI page over the same server methods |
 | P5. Edge bridge, ATG and FCC drivers | 5 | Section 12.5 |
 | P6. Loyalty and fleet cards | later | Section 17.3 |
+| P7. Temperature compensation | when a market needs it | Section 5.8: standard volumes at 15 °C from ASTM D1250 / API MPMS 11.1 tables (D30) |
+| P8. Scheduled price changes | when needed | Section 6.5a: approve a Fuel Price Change in advance and apply it at `effective_at` (D24) |
 
 ---
 
