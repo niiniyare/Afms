@@ -1426,7 +1426,7 @@ One Frappe app, `forecourt`, installed on top of ERPNext (HRMS optional).
 ```
 Afms/                               # repository root (niiniyare/Afms) = the app
 ├── CLAUDE.md, README.md, TASKS.md
-├── docs/                           # fms.md (this guide), catalogue.md, fms-from-odoo.md
+├── docs/                           # fms.md (this guide), catalogue.md
 ├── forecourt/
 │   ├── hooks.py                    # doc_events, scheduler, fixtures, permission hooks
 │   ├── modules.txt                 # Forecourt Setup, Wetstock, Forecourt Shift, Forecourt Finance, Forecourt Integrations

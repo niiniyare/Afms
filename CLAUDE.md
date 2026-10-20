@@ -22,7 +22,6 @@ The three questions every feature serves:
 | `docs/catalogue.md` (the *catalogue*) | Exact DocTypes, fields, naming, permissions, custom fields, workspaces. **Authoritative for names.** |
 | `TASKS.md` (the *task list*) | The task list and the project's progress. Work only on tasks listed there. |
 | `CLAUDE.md` | These rules |
-| `docs/fms-from-odoo.md` | Background only: the old Odoo-to-ERPNext migration guide. Where it conflicts with the design guide, the design guide wins. |
 
 If the design guide and the catalogue disagree on a **name**, the catalogue wins. If they disagree on **behaviour**, the design guide wins. If a task needs something neither covers, stop and ask the owner. Do not invent behaviour.
 

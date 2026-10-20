@@ -9,4 +9,3 @@ This repository is the `forecourt` Frappe app (Frappe Framework v16, ERPNext v16
 | [docs/fms.md](docs/fms.md) | Design guide: behaviour, rules, formulas, error codes, open decisions |
 | [docs/catalogue.md](docs/catalogue.md) | DocType catalogue: names, fields, permissions, workspaces |
 | [TASKS.md](TASKS.md) | Task list and progress |
-| [docs/fms-from-odoo.md](docs/fms-from-odoo.md) | Background: the old Odoo-to-ERPNext migration guide |

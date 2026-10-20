@@ -5,7 +5,7 @@
 **Version:** 1.1 (documentation review: repository, forward links, approval workflow, proposed decisions) · **Date:** 2026-10-20
 **Stack:** Frappe Framework v16, ERPNext v16, HRMS v16 (optional), app `forecourt`
 **Repository:** [niiniyare/Afms](https://github.com/niiniyare/Afms), which is also the app repository (the `forecourt` app sits at its root)
-**Specs:** [docs/fms.md](docs/fms.md) (design guide: behaviour) · [docs/catalogue.md](docs/catalogue.md) (DocTypes, fields, workspaces) · [CLAUDE.md](CLAUDE.md) (rules for developers and agents) · [docs/fms-from-odoo.md](docs/fms-from-odoo.md) (background only)
+**Specs:** [docs/fms.md](docs/fms.md) (design guide: behaviour) · [docs/catalogue.md](docs/catalogue.md) (DocTypes, fields, workspaces) · [CLAUDE.md](CLAUDE.md) (rules for developers and agents)
 **Agent skills:** [Frappe Claude Skill Package](https://github.com/Impertio-Studio/Frappe_Claude_Skill_Package) (now published as `OpenAEC-Foundation/Frappe_Claude_Skill_Package`), installed as project skills in `.claude/skills/`
 
 ---
