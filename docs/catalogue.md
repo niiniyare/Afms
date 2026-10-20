@@ -1,11 +1,11 @@
 # FMS DocType Catalogue
 
-**Version:** 1.0
+**Version:** 1.1 (documentation review: forward links, approval workflow, proposed decisions D16–D36 of the design guide)
 **Date:** 2026-10-20
 **App:** `forecourt` (Frappe Framework v16, ERPNext v16, HRMS v16 optional)
-**Companion documents:** [FMS_ERPNext_Design_Guide.md](FMS_ERPNext_Design_Guide.md) (the *why*), [FMS_Development_Tasks.md](FMS_Development_Tasks.md) (the *build order*), [CLAUDE.md](CLAUDE.md) (rules for developers and agents)
+**Companion documents:** [fms.md](fms.md) (the design guide: the *why*), [../TASKS.md](../TASKS.md) (the task list: the *build order*), [../CLAUDE.md](../CLAUDE.md) (rules for developers and agents)
 
-This catalogue lists every DocType the FMS app defines, every custom field it adds to ERPNext DocTypes, and how they are grouped in workspaces and navigation. DocTypes are ordered **from least dependent to most dependent**, which is also the order in which they are built (see the development task guide). If this catalogue and the design guide disagree on a field name or a DocType name, this catalogue wins. The design guide wins on behaviour.
+This catalogue lists every DocType the FMS app defines, every custom field it adds to ERPNext DocTypes, and how they are grouped in workspaces and navigation. DocTypes are ordered **from least dependent to most dependent**, which is also the order in which they are built (see the task list). A few fields link *forward* to a DocType built later; they are added by the later task (section 3.1). If this catalogue and the design guide disagree on a field name or a DocType name, this catalogue wins. The design guide wins on behaviour.
 
 ---
 
@@ -16,8 +16,8 @@ This catalogue lists every DocType the FMS app defines, every custom field it ad
 3. [Dependency map](#3-dependency-map)
 4. [Level 0: settings and simple masters](#4-level-0-settings-and-simple-masters)
 5. [Level 1: Station](#5-level-1-station)
-6. [Level 2: physical equipment](#6-level-2-physical-equipment)
-7. [Level 3: equipment details and customer vehicles](#7-level-3-equipment-details-and-customer-vehicles)
+6. [Level 2: physical equipment and customer vehicles](#6-level-2-physical-equipment-and-customer-vehicles)
+7. [Level 3: equipment details](#7-level-3-equipment-details)
 8. [Level 4: station transactions outside the shift](#8-level-4-station-transactions-outside-the-shift)
 9. [Level 5: Forecourt Shift](#9-level-5-forecourt-shift)
 10. [Level 6: ledgers and corrections](#10-level-6-ledgers-and-corrections)
@@ -117,9 +117,25 @@ Level 5  Forecourt Shift (+ Shift Price, Shift Meter Reading, Shift Tank Dip, Sh
 Level 6  Wetstock Ledger Entry · Nozzle Ledger Entry · Sales Ledger Entry · Cashier Ledger Entry
          Shift Correction (+ Shift Correction Item)
 
-Integrations (built in Phase 3; depend on Level 1):
+Integrations (depend on Level 1; Payment Import Batch is built in Phase 1 with task J01,
+the inbox and feeds in Phase 3):
          Integration Inbox · Payment Feed Entry · Payment Import Batch
 ```
+
+### 3.1 Forward links
+
+Frappe refuses to save a DocType or Custom Field whose Link points to a DocType that does not exist yet. These fields point to a DocType built later, so the task that builds the target adds them:
+
+| Field | On | Links to | Added in task |
+|---|---|---|---|
+| `last_reading_shift` | Nozzle | Forecourt Shift | FMS-F01 |
+| `fms_forecourt_shift` | Sales Invoice, POS Invoice, Delivery Note, Payment Entry, Journal Entry, Stock Entry, Stock Reconciliation, Purchase Receipt | Forecourt Shift | FMS-F01 |
+| `applied_to_shift` | Fuel Price Change | Forecourt Shift | FMS-F07 |
+| `import_batch` | Shift Collection | Payment Import Batch | FMS-J01 |
+| `feed_entry` | Shift Collection | Payment Feed Entry | FMS-J04 |
+| `superseded_by`, `correction` | the four ledgers | Shift Correction | FMS-G01 |
+
+Ledger rows written by the Purchase Receipt hook (E03), Tank Dip (E06) and Meter Change (E08) are wired in FMS-F15, when the ledger DocTypes exist. All DocTypes that carry role permissions depend on the roles (FMS-C01).
 
 ---
 
@@ -154,7 +170,7 @@ Global defaults for the whole site. Company-specific values live in Forecourt Co
 | require_meter_photo | Check | | D 0 | |
 | require_expense_receipt | Check | | D 1 | |
 
-**Controller:** `validate`: `sales_basis` must be one of the recorded meters; at least one meter recorded.
+**Controller:** `validate`: `sales_basis` must be one of the recorded meters; at least one meter recorded (FMS-M603).
 
 ### 4.2 Forecourt Company Settings
 
@@ -169,11 +185,11 @@ Global defaults for the whole site. Company-specific values live in Forecourt Co
 | Fieldname | Type | Options | Flags | Notes |
 |---|---|---|---|---|
 | company | Link | Company | R U | |
-| staff_shortage_receivable_account | Link | Account | R | Receivable, party type Employee |
+| staff_shortage_receivable_account | Link | Account | R | Must accept party type Employee; account type confirmed in FMS-C03 (design guide D17) |
 | cash_short_account | Link | Account | R | Expense |
 | cash_over_account | Link | Account | R | Income |
 | fuel_stock_variance_account | Link | Account | R | Expense |
-| delivery_shortage_claims_account | Link | Account | R | Receivable / current asset |
+| delivery_shortage_claims_account | Link | Account | R | Current asset, **not** Receivable type (a Stock Entry cannot carry a party; design guide D18) |
 | voucher_clearing_account | Link | Account | | |
 | tank_tolerance_pct | Percent | | D 0.5 | |
 | tank_tolerance_l | Float | | D 20 | |
@@ -184,9 +200,14 @@ Global defaults for the whole site. Company-specific values live in Forecourt Co
 | small_difference_amount | Currency | | | Alternative fixed limit |
 | post_tank_variance | Select | Every shift with dips / Last shift of day / Outside tolerance only | D Every shift | |
 | sales_posting_mode | Select | Shift summary / Per transaction | D Shift summary | Design guide 12.3 |
-| credit_invoicing | Select | Per customer per shift / Monthly | D Per shift | |
+| credit_invoicing | Select | Per customer per shift / Monthly | D Per shift | Monthly: the shift posts Delivery Notes (design guide D26) |
+| price_cross_check_amount | Currency | | D 1 | Meter amount vs volume × price (design guide 5.6) |
+| float_after_shift | Select | Stays in till / Returned to safe | D Stays in till | Design guide 7.5, D27 |
+| allow_overlapping_shifts | Check | | D 0 | When set, FMS-S110 is skipped (D28) |
+| temperature_compensation | Check | | D 0, RO | Reserved for backlog epic P7; Phases 0–3 only record temperature and density (D30) |
 
-**Controller:** `validate`: every account belongs to `company` and has the right root and account type.
+**Controller:** `validate`: every account belongs to `company` and has the right root and account type (FMS-M602).
+**Whitelisted method:** `create_default_accounts` (button *Create default accounts*): creates any missing FMS account of design guide 8.1 under the company's chart and fills the mapping; code in `forecourt/setup/`.
 
 ### 4.3 Station Group
 
@@ -228,7 +249,7 @@ Global defaults for the whole site. Company-specific values live in Forecourt Co
 | requires_approval | Check | | L | Always routes to the Area Manager |
 | disabled | Check | | | |
 
-**Fixtures:** Dip error, Suspected leak, Suspected theft, Meter fault, Temperature, Delivery, Counting error, Unknown.
+**Fixtures:** Dip error, Suspected leak, Suspected theft, Meter fault, Temperature, Delivery, Counting error, Drive-off (cashier), Spillage (tank), Unknown (design guide D31).
 
 ### 4.5 Expense Type
 
@@ -279,7 +300,7 @@ Global defaults for the whole site. Company-specific values live in Forecourt Co
 | provider_type | Select | Mobile Money / Card / Voucher / Bank | R L | |
 | mode_of_payment | Link | Mode of Payment | R | Its company accounts are the clearing accounts |
 | country | Link | Country | | |
-| adapter | Select | None / mpesa / airtel / evc / mtn / card_file / … | D None | Phase 3 |
+| adapter | Data | | | Phase 3. Name of an adapter module under `forecourt_integrations/payment_adapters/`, validated against the adapter registry. Provider names stay out of core DocType JSON (CLAUDE.md 5.11) |
 | import_format | Select | None / CSV mapping / Excel mapping | | Phase 1 statement import |
 | import_mapping | JSON | | | Column mapping for the statement import |
 | reference_pattern | Data | | | Optional regex to validate references |
@@ -332,21 +353,22 @@ Global defaults for the whole site. Company-specific values live in Forecourt Co
 | use_settings_meters | Check | | D 1 | |
 | sales_basis | Select | (blank) / E-cash / E-vol / M-vol / Highest | | |
 | price_change_mode | Select | (blank) / Latest price with segments / Between shifts only | | |
-| delivery_dips_required | Check | | D 1 | |
+| tank_tolerance_pct, tank_tolerance_l | Percent / Float | | | Override company tolerances (blank = company) |
+| delivery_dips_required | Check | | D 1 | The only place this setting lives (design guide 5.4) |
 
 **Child table `Station Till Account`**: `currency` Link Currency R · `account` Link Account R (Cash type, same company).
 
 **Child table `Station Payment Terminal`**: `provider` Link Payment Provider R · `till_or_terminal` Data R · `default_cashier` Link Employee · `active` Check D 1. Unique per provider + till (validated).
 
 **Controller:**
-- `validate`: code pattern `^[A-Z]{2}-[A-Z0-9]{2,5}-[A-Z0-9]{2,6}$`; accounts and warehouses belong to `company`; meter overrides consistent with the sales basis.
-- `after_insert`: create the walk-in customer; add the Station as an Accounting Dimension value if needed (the dimension links to Station, so no value creation is needed).
+- `validate`: code pattern `^[A-Z]{2}-[A-Z0-9]{2,5}-[A-Z0-9]{2,6}$` (FMS-M601); accounts and warehouses belong to `company` (FMS-M602); meter overrides consistent with the sales basis (FMS-M603).
+- `after_insert`: create the walk-in customer (code in `forecourt/setup/`, design guide D34). The Accounting Dimension links to Station, so no dimension value has to be created.
 
 **Indexes:** `company`, `station_group`.
 
 ---
 
-## 6. Level 2: physical equipment
+## 6. Level 2: physical equipment and customer vehicles
 
 ### 6.1 Fuel Tank
 
@@ -376,8 +398,8 @@ Global defaults for the whole site. Company-specific values live in Forecourt Co
 | status | Select | Active / Out of service / Decommissioned | D Active, L F | |
 
 **Controller:**
-- `validate`: item is fuel; capacity > 0; safe fill ≤ capacity.
-- `after_insert`: create Warehouse `{tank_code} - {station_code}` (non-group, parent = station warehouse group); set `warehouse`.
+- `validate`: item is fuel; capacity > 0; safe fill ≤ capacity (FMS-M604).
+- `after_insert`: create the Warehouse with `warehouse_name` = `{tank_code} - {station_code}` (non-group, parent = station warehouse group; code in `forecourt/setup/`); ERPNext appends the company abbreviation, so the record is named `T1 - KE-NBO-WSTL - DPL`; set `warehouse`.
 - `on_trash`: blocked if any stock ledger entry exists for the warehouse.
 
 ### 6.2 Dispenser
@@ -398,6 +420,7 @@ Global defaults for the whole site. Company-specific values live in Forecourt Co
 | make, model, serial_no | Data | | | |
 | meters_override | Check | | | Older pumps without electronic meters |
 | record_ecash, record_evol, record_mvol | Check | | depends_on meters_override | |
+| sales_basis | Select | E-cash / E-vol / M-vol / Highest | depends_on meters_override, R when override | Must be one of this dispenser's recorded meters (FMS-M603; design guide D23) |
 | status | Select | Active / Out of service | D Active, L F | |
 
 ### 6.3 Customer Vehicle
@@ -428,7 +451,7 @@ Child tables: `Customer Vehicle Item` (`item` Link Item) · `Customer Vehicle Dr
 
 ---
 
-## 7. Level 3: equipment details and customer vehicles
+## 7. Level 3: equipment details
 
 ### 7.1 Tank Calibration Chart
 
@@ -452,7 +475,7 @@ Child tables: `Customer Vehicle Item` (`item` Link Item) · `Customer Vehicle Dr
 
 **Child table `Tank Calibration Row`**: `depth_mm` Float R · `volume_l` Float R. `editable_grid` 1. Bulk paste from spreadsheet supported by the standard grid upload.
 
-**Controller:** `validate`: depths and volumes strictly increasing; warn if `max_volume_l` differs from tank capacity by more than 2%. Interpolation lives in `forecourt/calc/calibration.py` (pure Python).
+**Controller:** `validate`: depths and volumes strictly increasing (FMS-M605); warn if `max_volume_l` differs from tank capacity by more than 2%. Interpolation lives in `forecourt/calc/calibration.py` (pure Python).
 
 ### 7.2 Nozzle
 
@@ -476,10 +499,11 @@ Child tables: `Customer Vehicle Item` (`item` Link Item) · `Customer Vehicle Dr
 | ecash_max, evol_max, mvol_max | Float | | | Rollover maxima per meter |
 | decimals_volume, decimals_cash | Int | | D 2 | |
 | last_ecash, last_evol, last_mvol | Float | | RO | Updated by shift close and Meter Change |
-| last_reading_shift | Link | Forecourt Shift | RO | |
+| last_reading_shift | Link | Forecourt Shift | RO | Added in FMS-F01 (section 3.1) |
+| max_test_volume_l | Float | | | Per-shift pump test limit; blank = no limit (FMS-S115, design guide D29) |
 | status | Select | Active / Out of service | D Active, L F | |
 
-**Controller:** `validate`: tank belongs to the same station; `last_*` fields are only writable by system code (`self.flags.from_fms`).
+**Controller:** `validate`: tank belongs to the same station (FMS-M606); `last_*` fields are only writable by system code (`self.flags.from_fms`, FMS-M607).
 
 ---
 
@@ -524,15 +548,15 @@ Child tables: `Shift Template Cashier` (`cashier` Link Employee R, filter `fms_i
 |---|---|---|---|---|
 | station | Link | Station | R I L F | |
 | company | Link | Company | FE station.company, RO | |
-| effective_at | Datetime | | R L | Default now |
+| effective_at | Datetime | | R L | Default now; may not be later than the moment of submission (design guide D24) |
 | reason | Small Text | | R | Regulator change, supplier change… |
 | reference | Data | | | Regulator notice number |
 | items | Table | Fuel Price Change Item | R | |
-| applied_to_shift | Link | Forecourt Shift | RO | Set on submit when a segment is added |
+| applied_to_shift | Link | Forecourt Shift | RO | Set on submit when a segment is added; added in FMS-F07 |
 
 **Child `Fuel Price Change Item`**: `item` Link Item R · `old_price` Currency RO · `new_price` Currency R.
 
-**Controller:** `on_submit`: write Item Price on the station price list (valid_from = effective date); in *Latest price with segments* mode, add a segment to the open shift and mark its nozzles as needing change-time readings. `on_cancel`: blocked once a shift using the segment is closed.
+**Controller:** `on_submit`: write Item Price on the station price list (valid_from = effective date; Item Price has no time, so a `validate` hook on Sales Invoice and POS Invoice sets fuel rates from the Fuel Price Change in force at the posting date and time, section 12); in *Latest price with segments* mode, add a segment to the open shift and mark its nozzles as needing change-time readings. `on_cancel`: blocked once a shift using the segment is closed.
 
 ### 8.3 Meter Change
 
@@ -554,7 +578,7 @@ Child tables: `Shift Template Cashier` (`cashier` Link Employee R, filter `fms_i
 | new_start_ecash, new_start_evol, new_start_mvol | Float | | | |
 | certificate | Attach | | | |
 
-**Controller:** `on_submit`: update `Nozzle.last_*` to the new start values; write a Nozzle Ledger Entry of type *Meter Change*. Validation: no open shift may straddle `changed_at` without a segment.
+**Controller:** `on_submit`: update `Nozzle.last_*` to the new start values; write a Nozzle Ledger Entry of type *Meter Change* through `posting/ledgers.py` (wired in FMS-F15). Validation: no open shift may straddle `changed_at` without a segment.
 
 ### 8.4 Tank Dip (spot dip)
 
@@ -577,8 +601,9 @@ Child tables: `Shift Template Cashier` (`cashier` Link Employee R, filter `fms_i
 | difference_l | Float | | RO | |
 | dipped_by, witness | Link | Employee / User | | |
 | purpose | Select | Audit / Handover / Pre-delivery check / Other | | |
+| temperature_c, density | Float / Float | | | Optional, recorded only (design guide D30) |
 
-Does not post stock. Writes a Wetstock Ledger Entry of type *Spot Dip* for analysis.
+Does not post stock. Writes a Wetstock Ledger Entry of type *Spot Dip* for analysis through `posting/ledgers.py` (wired in FMS-F15).
 
 ### 8.5 Tank Transfer
 
@@ -616,7 +641,8 @@ Does not post stock. Writes a Wetstock Ledger Entry of type *Spot Dip* for analy
 | received_l | Float | | RO | after − before + sales during drop |
 | invoiced_l | Float | | RO | Sum of GRN item rows for this tank |
 | variance_l, variance_pct | Float / Percent | | RO | |
-| reason | Link | Variance Reason | | Required beyond tolerance |
+| reason | Link | Variance Reason | | Required beyond tolerance (FMS-T205) |
+| temperature_c, density | Float / Float | | | Optional, recorded only (design guide D30) |
 | shortage_stock_entry | Link | Stock Entry | RO | Set when *Record delivery shortage* is used |
 
 Added to Purchase Receipt as the custom field `fms_delivery_dips` (section 12).
@@ -637,8 +663,9 @@ Added to Purchase Receipt as the custom field `fms_delivery_dips` (section 12).
 | sort_field / sort_order | shift_start / desc |
 | track_changes | 1 |
 | editable_grid (children) | 1 |
-| Workflow | Open → Counting → Reconciled → (Pending Approval → Reconciled) → Closed (submit). Corrected is a status set by Shift Correction. |
-| Permissions | Station Manager: R W C S P · Area Manager: R W S P (approval transition) · Accountant: R P Rp E · Director, Investor: R Rp · Forecourt Administrator: R W C D S X |
+| Status | `status` is set by the controller: Open → Counting → Reconciled → (Pending Approval) → Closing → Closed (submit). Corrected is set by Shift Correction. |
+| Workflow | *Forecourt Shift Approval* on `approval_state` only: Not Required / Pending Approval → Approved or Rejected (design guide 6.2, D19) |
+| Permissions | Station Manager: R W C S P · Area Manager: R W S P (approval transition) · Accountant: R P Rp E · Director, Investor: R Rp · Forecourt Administrator: R W C D S · System Manager: X (whole-shift cancellation only, design guide 6.8) |
 
 **Header fields**
 
@@ -647,13 +674,15 @@ Added to Purchase Receipt as the custom field `fms_delivery_dips` (section 12).
 | station | Link | Station | R I L F | Default from user's station |
 | company | Link | Company | FE station.company, RO I F | |
 | shift_template | Link | Forecourt Shift Template | R F | Filter by station |
-| shift_date | Date | | R I L F | |
+| shift_date | Date | | R I L F | Date of `shift_start` in the station's time zone (design guide D20) |
 | shift_start, shift_end | Datetime | | R | From template and date, station time zone |
-| status | Select | Open / Counting / Reconciled / Pending Approval / Closing / Closed / Corrected | RO L F | |
+| status | Select | Open / Counting / Reconciled / Pending Approval / Closing / Closed / Corrected | RO L F, allow_on_submit | Set by the controller |
+| approval_state | Select | Not Required / Pending Approval / Approved / Rejected | RO F | Workflow state field; set to Pending Approval or Not Required by the controller, moved by the approval workflow |
+| approved_by_user | Link | User | RO | Set by the *Approve* transition; must differ from the preparer |
 | previous_shift | Link | Forecourt Shift | RO | Found on insert |
 | shift_title | Data | | RO H | |
-| dip_entry_mode, sales_basis, price_change_mode | Data | | RO | Snapshot of effective settings at creation |
-| record_ecash, record_evol, record_mvol | Check | | RO | Snapshot |
+| dip_entry_mode, sales_basis, price_change_mode | Data | | RO | Snapshot of the station's effective settings at creation; tanks and dispensers may override (rows carry their own values) |
+| record_ecash, record_evol, record_mvol | Check | | RO | Snapshot of the station default; a column is shown when any row records that meter |
 
 **Tables (tabs in this order)**
 
@@ -674,15 +703,15 @@ Added to Purchase Receipt as the custom field `fms_delivery_dips` (section 12).
 | Event | Behaviour |
 |---|---|
 | `before_insert` | Find previous shift; copy roster; create reading rows (opening values locked); create tank rows; create first price segment; snapshot settings |
-| `validate` | Recompute everything through `forecourt/calc/*`; set status; run gates that apply to drafts (continuity, ranges) |
+| `validate` | Recompute everything through `forecourt/calc/*`; set `status` and `approval_state`; run gates that apply to drafts (continuity, ranges) |
 | `before_submit` | All gates FMS-S1xx, FMS-T2xx, FMS-W1xx (design guide 6.6) |
 | `on_submit` | `forecourt/posting/*` builds and submits native documents, then writes the four ledgers; updates `Nozzle.last_*` |
-| `on_cancel` | Allowed only with System Manager + director approval flag and only for the latest shift; cancels generated docs in reverse order; marks ledgers cancelled |
+| `on_cancel` | Allowed only with System Manager + director approval flag and only for the latest shift (FMS-C503); cancels generated docs in reverse order; marks ledgers cancelled |
 | `on_update_after_submit` | Only `status` (Corrected) may change |
 
 **Indexes:** (`station`, `shift_start`), (`company`, `shift_date`), `status`.
 
-**Connections (dashboard):** Sales Invoice, Payment Entry, Journal Entry, Stock Entry, Stock Reconciliation, Purchase Receipt (by `fms_forecourt_shift`), Shift Correction, ledger entries.
+**Connections (dashboard):** Sales Invoice, Delivery Note, Payment Entry, Journal Entry, Stock Entry, Stock Reconciliation, Purchase Receipt (by `fms_forecourt_shift`), Shift Correction, ledger entries.
 
 ### 9.2 Child tables of Forecourt Shift
 
@@ -708,9 +737,11 @@ All are `istable` 1, `editable_grid` 1, module Forecourt Shift.
 | attendant | Link | Employee | | Information only |
 | segment_no | Int | | RO | |
 | price | Currency | | RO | From the segment |
-| opening_ecash, closing_ecash | Float | | depends_on record_ecash | Opening RO |
-| opening_evol, closing_evol | Float | | depends_on record_evol | |
-| opening_mvol, closing_mvol | Float | | depends_on record_mvol | |
+| rec_ecash, rec_evol, rec_mvol | Check | | RO | Meters recorded for this nozzle (dispenser override, else station); drive `mandatory_depends_on` of the closings |
+| row_sales_basis | Data | | RO | Sales basis for this nozzle (dispenser override, else station) |
+| opening_ecash, closing_ecash | Float | | depends_on rec_ecash | Opening RO |
+| opening_evol, closing_evol | Float | | depends_on rec_evol | |
+| opening_mvol, closing_mvol | Float | | depends_on rec_mvol | |
 | rollover_ecash, rollover_evol, rollover_mvol | Check | | | |
 | basis_meter | Data | | RO | Which meter drove sales |
 | basis_volume_l | Float | | RO | |
@@ -729,6 +760,7 @@ All are `istable` 1, `editable_grid` 1, module Forecourt Shift.
 |---|---|---|---|---|
 | tank | Link | Fuel Tank | R RO | |
 | item | Link | Item | FE, RO | |
+| dip_entry_mode | Data | | RO | Effective mode for this tank (tank override, else station) |
 | opening_l | Float | | RO | Previous closing dip |
 | receipts_l | Float | | RO | Pulled from GRNs |
 | sales_l | Float | | RO | From readings |
@@ -741,6 +773,7 @@ All are `istable` 1, `editable_grid` 1, module Forecourt Shift.
 | within_tolerance | Check | | RO | |
 | reason | Link | Variance Reason | | Required outside tolerance |
 | approved_by | Link | User | RO | Set by the approval transition |
+| temperature_c, density | Float / Float | | | Optional, recorded only (design guide D30) |
 | source | Select | Manual / ATG / Import | D Manual | |
 
 **Shift Cashier**
@@ -796,7 +829,8 @@ All are `istable` 1, `editable_grid` 1, module Forecourt Shift.
 | item | Link | Item | R | Non-fuel |
 | qty, rate, amount | Float / Currency / Currency | | R | Rate from station price list |
 | warehouse | Link | Warehouse | | Default station shop warehouse |
-| pos_invoice | Link | POS Invoice | RO | Set when pulled from POS (then excluded from posting) |
+| pos_doctype | Select | POS Invoice / Sales Invoice | RO | ERPNext v16 POS creates either (design guide D25) |
+| pos_invoice | Dynamic Link | pos_doctype | RO | Set when pulled from POS (then excluded from posting) |
 
 **Shift Collection** (one row per mobile money or card transaction, per drop, per expense, per voucher, per debt receipt)
 
@@ -804,18 +838,19 @@ All are `istable` 1, `editable_grid` 1, module Forecourt Shift.
 |---|---|---|---|---|
 | cashier | Link | Employee | R | |
 | collection_type | Select | Mobile Money / Card / Voucher / Expense / Drop / Debt Receipt | R | |
-| provider | Link | Payment Provider | depends_on Mobile/Card | |
+| paid_by | Select | Cash / Mobile Money / Card | depends_on Debt Receipt, D Cash | Design guide 7.2, D21 |
+| provider | Link | Payment Provider | depends_on Mobile/Card, or Debt Receipt not paid in cash | |
 | mode_of_payment | Link | Mode of Payment | FE provider.mode_of_payment | |
 | till_or_terminal | Data | | | |
-| reference | Data | | R for Mobile/Card, I | Unique per provider across the site (FMS-S114) |
+| reference | Data | | R for Mobile/Card and non-cash Debt Receipt, I | Unique per provider across the site (FMS-S114) |
 | transaction_time | Datetime | | | |
 | payer | Data | | | Phone or masked card |
 | customer | Link | Customer | depends_on Debt Receipt | |
 | expense_type | Link | Expense Type | depends_on Expense | |
 | amount | Currency | | R | |
 | attachment | Attach | | | Receipt image |
-| feed_entry | Link | Payment Feed Entry | RO | When from a feed |
-| import_batch | Link | Payment Import Batch | RO | When from an import |
+| feed_entry | Link | Payment Feed Entry | RO | When from a feed; added in FMS-J04 |
+| import_batch | Link | Payment Import Batch | RO | When from an import; added in FMS-J01 |
 | payment_entry | Link | Payment Entry | RO | Set on close |
 
 **Shift Resolution**
@@ -847,7 +882,8 @@ The four ledgers share these attributes:
 | in_create | 1 |
 | track_changes | 0 |
 | Permissions | All FMS desk roles: R Rp E · no W/C/D for anyone (written by code with `ignore_permissions`) |
-| Common fields | `company` (I), `station` (I), `posting_date` (I), `forecourt_shift` (I), `voucher_type`, `voucher_no` (I), `is_cancelled`, `superseded_by` (Link Shift Correction), `correction` (Link Shift Correction) |
+| Common fields | `company` (I), `station` (I), `posting_date` (I), `forecourt_shift` (I), `voucher_type`, `voucher_no` (I), `is_cancelled`, `superseded_by` (Link Shift Correction), `correction` (Link Shift Correction); the last two are added in FMS-G01 |
+| Writers | Only `forecourt/posting/ledgers.py` and `forecourt/corrections/` |
 | Composite indexes | (`station`, `posting_date`), (`company`, `posting_date`), plus the per-ledger ones below, created in `on_doctype_update` |
 
 ### 10.1 Wetstock Ledger Entry
@@ -974,16 +1010,17 @@ Phase 1 statement import (before feeds exist).
 
 ## 12. Custom fields and records on ERPNext DocTypes
 
-All shipped as fixtures (`Custom Field`, `Property Setter`) filtered by `module = Forecourt …`. Prefix `fms_`.
+All shipped as fixtures (`Custom Field`, `Property Setter`) filtered by `module = Forecourt …`. Prefix `fms_`. The `fms_forecourt_shift` fields are added in FMS-F01 (section 3.1).
 
 | DocType | Custom fields | Purpose |
 |---|---|---|
 | Item | `fms_is_fuel` (Check, I) | Fuel items |
 | Employee | `fms_is_forecourt_cashier` (Check, I), `fms_default_station` (Link Station) | Cashier selection |
 | Customer | `fms_is_walk_in` (Check), `fms_station` (Link Station) | Walk-in customer per station |
-| Sales Invoice | `fms_forecourt_shift` (Link, I, RO), `fms_cashier` (Link Employee) | Generated invoices |
+| Sales Invoice | `fms_forecourt_shift` (Link, I, RO), `fms_cashier` (Link Employee, I) | Generated invoices, and POS sales when POS creates Sales Invoices |
+| Delivery Note | `fms_forecourt_shift` (Link, I, RO), `fms_cashier` (Link Employee) | Credit sales when the company invoices monthly (design guide D26) |
 | POS Invoice | `fms_forecourt_shift` (Link, I), `fms_cashier` (Link Employee, I) | Pulling shop sales |
-| Payment Entry | `fms_forecourt_shift` (Link, I, RO), `fms_cashier`, `fms_provider` (Link Payment Provider), `fms_till_or_terminal` (Data), `fms_transaction_time` (Datetime) | Per-transaction reconciliation; `reference_no` and `reference_date` are standard |
+| Payment Entry | `fms_forecourt_shift` (Link, I, RO), `fms_cashier` (Link Employee), `fms_provider` (Link Payment Provider), `fms_till_or_terminal` (Data), `fms_transaction_time` (Datetime) | Per-transaction reconciliation; `reference_no` and `reference_date` are standard |
 | Journal Entry | `fms_forecourt_shift` (Link, I, RO) | Resolutions and expenses |
 | Stock Reconciliation | `fms_forecourt_shift` (Link, I, RO) | Tank variance |
 | Stock Entry | `fms_forecourt_shift` (Link, I), `fms_station` (Link Station), `fms_nozzle` (Link Nozzle), `fms_attendant` (Link Employee), `fms_use_purpose` (Link Own Use Purpose), `fms_vehicle_or_asset` (Data), `fms_purchase_receipt` (Link Purchase Receipt) | Fuel Own Use and delivery shortage |
@@ -996,7 +1033,7 @@ All shipped as fixtures (`Custom Field`, `Property Setter`) filtered by `module 
 | Accounting Dimension | Station (document_type = Station) | Adds `station` to all GL-posting DocTypes and GL Entry |
 | Stock Entry Type | Fuel Own Use (purpose Material Issue) | Section 5.10 of the design guide |
 | Role | The seven FMS roles | |
-| Workflow, Workflow State, Workflow Action Master | Forecourt Shift, Fuel Price Change, Shift Correction | |
+| Workflow, Workflow State, Workflow Action Master | Forecourt Shift Approval (on `approval_state`), Fuel Price Change, Shift Correction | |
 | Variance Reason, Own Use Purpose | Default lists | |
 | Number Card, Dashboard Chart, Workspace | Section 13 and 14 | |
 
@@ -1004,12 +1041,12 @@ All shipped as fixtures (`Custom Field`, `Property Setter`) filtered by `module 
 
 | DocType | Event | FMS handler |
 |---|---|---|
-| Purchase Receipt | `validate` | Compute delivery dips; require dips for fuel lines when the station requires them; FMS-T2xx checks |
-| Purchase Receipt | `on_submit` / `on_cancel` | Write / cancel Wetstock Ledger Entry (Delivery); block cancel if a closed shift used the GRN |
+| Purchase Receipt | `validate` | Compute delivery dips; require dips for fuel lines when the station requires them (FMS-T206); reason beyond tolerance (FMS-T205) |
+| Purchase Receipt | `on_submit` / `on_cancel` | Write / cancel Wetstock Ledger Entry (Delivery) through `posting/ledgers.py` (wired in FMS-F15); block cancel if a closed shift used the GRN |
 | Stock Entry | `validate` | For *Fuel Own Use*: mandatory narration, purpose, nozzle; expense account from purpose |
 | Stock Entry | `on_cancel` | Block if a closed shift used it |
-| Payment Entry, Sales Invoice, Journal Entry | `on_cancel` | Block when `fms_forecourt_shift` is set, unless the cancel comes from a Shift Correction (`frappe.flags.fms_correction`) |
-| POS Invoice | `validate` | Default `fms_cashier` from the POS profile user |
+| Payment Entry, Sales Invoice, Delivery Note, Journal Entry, Stock Reconciliation | `on_cancel` | Block when `fms_forecourt_shift` is set, unless the cancel comes from a Shift Correction (`frappe.flags.fms_correction`) (FMS-C502) |
+| POS Invoice, Sales Invoice | `validate` | For fuel items at a station: set the rate from the Fuel Price Change in force at the posting date and time (design guide D24). For POS sales: default `fms_cashier` from the Employee whose `user_id` is the POS user |
 
 ---
 
@@ -1175,7 +1212,7 @@ Forecourt                      (parent, Station Manager home)
 | 16 | Meter Change | 4 | Wetstock | Transaction | ✓ | format |
 | 17 | Tank Dip | 4 | Wetstock | Transaction | ✓ | format |
 | 18 | Tank Transfer | 4 | Wetstock | Transaction | ✓ | format |
-| 19 | GRN Delivery Dip | 4 | Wetstock | Child (on Purchase Receipt) | | — |
+| 19 | GRN Delivery Dip | 4 | Wetstock | Child table used on Purchase Receipt (listed here because no FMS DocType owns it) | | — |
 | 20 | Forecourt Shift (+ 9 child tables) | 5 | Forecourt Shift | Transaction | ✓ | format |
 | 21 | Wetstock Ledger Entry | 6 | Wetstock | Ledger | | hash |
 | 22 | Nozzle Ledger Entry | 6 | Forecourt Finance | Ledger | | hash |
@@ -1186,7 +1223,7 @@ Forecourt                      (parent, Station Manager home)
 | 27 | Payment Feed Entry | Int | Forecourt Integrations | Log | | hash |
 | 28 | Payment Import Batch | Int | Forecourt Integrations | Transaction | | format |
 
-Child tables: Expense Type Account, Own Use Purpose Account, Station Till Account, Station Payment Terminal, Customer Vehicle Item, Customer Vehicle Driver, Tank Calibration Row, Shift Template Cashier, Shift Template Nozzle, Fuel Price Change Item, Shift Price, Shift Meter Reading, Shift Tank Dip, Shift Cashier, Shift Cash Count, Shift Credit Sale, Shift Item Sale, Shift Collection, Shift Resolution, Shift Correction Item (20).
+Child tables of FMS DocTypes (20): Expense Type Account, Own Use Purpose Account, Station Till Account, Station Payment Terminal, Customer Vehicle Item, Customer Vehicle Driver, Tank Calibration Row, Shift Template Cashier, Shift Template Nozzle, Fuel Price Change Item, Shift Price, Shift Meter Reading, Shift Tank Dip, Shift Cashier, Shift Cash Count, Shift Credit Sale, Shift Item Sale, Shift Collection, Shift Resolution (also used on Shift Correction), Shift Correction Item.
 
-**Totals:** 28 main DocTypes, 21 child tables (including GRN Delivery Dip), custom fields on 10 ERPNext DocTypes, 22 reports, 9 number cards, 6 charts, 7 workspaces.
+**Totals:** 28 numbered DocTypes in the table above (27 standalone DocTypes plus GRN Delivery Dip), 20 further child tables, custom fields on 11 ERPNext DocTypes, 22 reports (one is a print format), 9 number cards, 6 charts, 7 workspaces, 3 workflows.
 
