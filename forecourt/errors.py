@@ -104,4 +104,5 @@ FMS_M604 = "FMS-M604"  # Tank capacity or safe fill invalid
 FMS_M605 = "FMS-M605"  # Calibration chart depths/volumes not strictly increasing
 FMS_M606 = "FMS-M606"  # Nozzle tank belongs to another station
 FMS_M607 = "FMS-M607"  # Last nozzle readings can only be changed by a shift or Meter Change
+FMS_M608 = "FMS-M608"  # Fuel Tank cannot be deleted: it has stock history
 FMS_M630 = "FMS-M630"  # Station Group has children — cannot unset Is Group

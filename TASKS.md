@@ -16,7 +16,7 @@
 |---|---|---|
 | A. Environment | 9 | 9 |
 | B. Repository and app scaffold | 9 | 8 |
-| C. Foundation masters (Phase 0) | 14 | 9 |
+| C. Foundation masters (Phase 0) | 14 | 13 |
 | D. Calculation core | 8 | 0 |
 | E. Station movements | 10 | 0 |
 | F. Forecourt Shift (Phase 1 core) | 18 | 0 |
@@ -28,7 +28,7 @@
 | L. CI/CD | 4 | 0 |
 | M. Deployment and operations | 8 | 0 |
 | N. Pilot and go-live | 5 | 0 |
-| **Total (Phases 0–3)** | **124** | **26** |
+| **Total (Phases 0–3)** | **124** | **30** |
 | P. Later phases (backlog) | 8 epics | — |
 
 Update the *Done* column in the same commit that ticks a task.
@@ -266,25 +266,25 @@ Build in catalogue order. Each DocType task includes its JSON, controller, a tes
   - **Verify (UI):** Open a new Journal Entry → *Station* field present. **(CLI)** `bench --site fms.localhost mariadb -e "SHOW COLUMNS FROM \`tabGL Entry\` LIKE 'station'"` returns one row.
   - **Commit:** `feat(setup): add Station accounting dimension`
 
-- [ ] **FMS-C10 · Writing Feature · Fuel Tank** · M · C08
+- [x] **FMS-C10 · Writing Feature · Fuel Tank** · M · C08
   - **Skills:** `frappe-syntax-doctypes`, `frappe-impl-controllers`
   - **Description:** Catalogue 6.1, creating the tank Warehouse on insert and blocking deletion once stock exists.
   - **Verify (UI):** Create T1 (PMS, 30,000 L) → warehouse *T1 - KE-NBO-WSTL - DPL* (ERPNext adds the company abbreviation) exists under the station's group warehouse.
   - **Commit:** `feat(wetstock): add Fuel Tank`
 
-- [ ] **FMS-C11 · Writing Feature · Dispenser** · S · C08
+- [x] **FMS-C11 · Writing Feature · Dispenser** · S · C08
   - **Skills:** `frappe-syntax-doctypes`
   - **Description:** Catalogue 6.2, including the meter and sales basis override.
   - **Verify (UI):** Create D01 (Island 1) and D02; an override with basis E-vol and E-vol not recorded is refused.
   - **Commit:** `feat(wetstock): add Dispenser`
 
-- [ ] **FMS-C12 · Writing Feature · Tank Calibration Chart** · M · C10, D02
+- [x] **FMS-C12 · Writing Feature · Tank Calibration Chart** · M · C10, D02
   - **Skills:** `frappe-syntax-doctypes`, `frappe-impl-clientscripts`
   - **Description:** Catalogue 7.1 with validation; uses `calc/calibration.py` for max depth and volume. Client script: paste rows from a spreadsheet; preview chart.
   - **Verify (UI):** Upload a 300-row chart from CSV; non-increasing volume is refused.
   - **Commit:** `feat(wetstock): add Tank Calibration Chart`
 
-- [ ] **FMS-C13 · Writing Feature · Nozzle** · S · C10, C11
+- [x] **FMS-C13 · Writing Feature · Nozzle** · S · C10, C11
   - **Skills:** `frappe-syntax-doctypes`
   - **Description:** Catalogue 7.2 without `last_reading_shift` (added in F01); tank must belong to the same station.
   - **Verify (UI):** Create D01-N1 (T1) and D01-N2 (T2); linking a tank from another station is refused.

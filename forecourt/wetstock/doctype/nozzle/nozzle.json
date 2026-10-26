@@ -1,0 +1,199 @@
+{
+ "actions": [],
+ "autoname": "format:{dispenser}-N{nozzle_no}",
+ "creation": "2026-01-01 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "dispenser",
+  "station",
+  "nozzle_no",
+  "nozzle_label",
+  "col_break_1",
+  "tank",
+  "item",
+  "rollover_section",
+  "ecash_max",
+  "evol_max",
+  "mvol_max",
+  "last_readings_section",
+  "last_ecash",
+  "last_evol",
+  "last_mvol",
+  "precision_section",
+  "decimals_volume",
+  "decimals_cash",
+  "max_test_volume_l",
+  "status_section",
+  "status"
+ ],
+ "fields": [
+  {
+   "fieldname": "dispenser",
+   "fieldtype": "Link",
+   "label": "Dispenser",
+   "options": "Dispenser",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "station",
+   "fieldtype": "Link",
+   "label": "Station",
+   "options": "Station",
+   "fetch_from": "dispenser.station",
+   "fetch_if_empty": 0,
+   "read_only": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "nozzle_no",
+   "fieldtype": "Int",
+   "label": "Nozzle No.",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "nozzle_label",
+   "fieldtype": "Data",
+   "label": "Label"
+  },
+  {
+   "fieldname": "col_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "tank",
+   "fieldtype": "Link",
+   "label": "Tank",
+   "options": "Fuel Tank",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "label": "Item",
+   "options": "Item",
+   "fetch_from": "tank.item",
+   "fetch_if_empty": 0,
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "rollover_section",
+   "fieldtype": "Section Break",
+   "label": "Meter Rollover Maxima",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "ecash_max",
+   "fieldtype": "Float",
+   "label": "E-Cash Max"
+  },
+  {
+   "fieldname": "evol_max",
+   "fieldtype": "Float",
+   "label": "E-Vol Max"
+  },
+  {
+   "fieldname": "mvol_max",
+   "fieldtype": "Float",
+   "label": "M-Vol Max"
+  },
+  {
+   "fieldname": "last_readings_section",
+   "fieldtype": "Section Break",
+   "label": "Last Readings (system-managed)",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "last_ecash",
+   "fieldtype": "Float",
+   "label": "Last E-Cash",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_evol",
+   "fieldtype": "Float",
+   "label": "Last E-Vol",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_mvol",
+   "fieldtype": "Float",
+   "label": "Last M-Vol",
+   "read_only": 1
+  },
+  {
+   "fieldname": "precision_section",
+   "fieldtype": "Section Break",
+   "label": "Precision",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "decimals_volume",
+   "fieldtype": "Int",
+   "label": "Volume Decimals",
+   "default": "2"
+  },
+  {
+   "fieldname": "decimals_cash",
+   "fieldtype": "Int",
+   "label": "Cash Decimals",
+   "default": "2"
+  },
+  {
+   "fieldname": "max_test_volume_l",
+   "fieldtype": "Float",
+   "label": "Max Test Volume (L)"
+  },
+  {
+   "fieldname": "status_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Active\nOut of service",
+   "default": "Active",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-01-01 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Wetstock",
+ "name": "Nozzle",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "permlevel": 0,
+   "read": 1,
+   "role": "Forecourt Administrator",
+   "write": 1
+  },
+  {"permlevel": 0, "read": 1, "role": "Business Executive"},
+  {"permlevel": 0, "read": 1, "role": "Station Manager"},
+  {"permlevel": 0, "read": 1, "role": "Assistant Station Manager"},
+  {"permlevel": 0, "read": 1, "role": "Forecourt Supervisor"},
+  {"permlevel": 0, "read": 1, "role": "Forecourt Sales Operator"},
+  {"permlevel": 0, "read": 1, "role": "Site Cashier"},
+  {"permlevel": 0, "read": 1, "role": "Station Accountant"},
+  {"permlevel": 0, "read": 1, "role": "Integration Service Account"}
+ ],
+ "search_fields": "dispenser,tank,item",
+ "sort_field": "dispenser",
+ "sort_order": "ASC",
+ "title_field": "nozzle_label",
+ "track_changes": 1
+}

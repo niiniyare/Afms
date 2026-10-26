@@ -1,0 +1,195 @@
+{
+ "actions": [],
+ "autoname": "format:{station}-{tank_code}",
+ "creation": "2026-01-01 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "station",
+  "company",
+  "col_break_1",
+  "tank_code",
+  "tank_label",
+  "product_section",
+  "item",
+  "warehouse",
+  "capacity_section",
+  "capacity_l",
+  "col_break_2",
+  "safe_fill_l",
+  "col_break_3",
+  "dead_stock_l",
+  "config_section",
+  "manifold_group",
+  "dip_entry_mode",
+  "col_break_4",
+  "tolerance_pct",
+  "tolerance_l",
+  "status_section",
+  "status"
+ ],
+ "fields": [
+  {
+   "fieldname": "station",
+   "fieldtype": "Link",
+   "label": "Station",
+   "options": "Station",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "fetch_from": "station.company",
+   "fetch_if_empty": 0,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "col_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "tank_code",
+   "fieldtype": "Data",
+   "label": "Tank Code",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "tank_label",
+   "fieldtype": "Data",
+   "label": "Tank Label"
+  },
+  {
+   "fieldname": "product_section",
+   "fieldtype": "Section Break",
+   "label": "Product"
+  },
+  {
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "label": "Item",
+   "options": "Item",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "link_filters": "[[\"Item\",\"fms_is_fuel\",\"=\",1]]"
+  },
+  {
+   "fieldname": "warehouse",
+   "fieldtype": "Link",
+   "label": "Warehouse",
+   "options": "Warehouse",
+   "read_only": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "capacity_section",
+   "fieldtype": "Section Break",
+   "label": "Capacity"
+  },
+  {
+   "fieldname": "capacity_l",
+   "fieldtype": "Float",
+   "label": "Capacity (L)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "col_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "safe_fill_l",
+   "fieldtype": "Float",
+   "label": "Safe Fill (L)"
+  },
+  {
+   "fieldname": "col_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "dead_stock_l",
+   "fieldtype": "Float",
+   "label": "Dead Stock (L)"
+  },
+  {
+   "fieldname": "config_section",
+   "fieldtype": "Section Break",
+   "label": "Configuration",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "manifold_group",
+   "fieldtype": "Data",
+   "label": "Manifold Group"
+  },
+  {
+   "fieldname": "dip_entry_mode",
+   "fieldtype": "Select",
+   "label": "Dip Entry Mode",
+   "options": "\nDepth via calibration chart\nLitres entered directly"
+  },
+  {
+   "fieldname": "col_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "tolerance_pct",
+   "fieldtype": "Percent",
+   "label": "Tolerance (%)"
+  },
+  {
+   "fieldname": "tolerance_l",
+   "fieldtype": "Float",
+   "label": "Tolerance (L)"
+  },
+  {
+   "fieldname": "status_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Active\nOut of service\nDecommissioned",
+   "default": "Active",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-01-01 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Wetstock",
+ "name": "Fuel Tank",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "permlevel": 0,
+   "read": 1,
+   "role": "Forecourt Administrator",
+   "write": 1
+  },
+  {"permlevel": 0, "read": 1, "role": "Business Executive"},
+  {"permlevel": 0, "read": 1, "role": "Station Manager"},
+  {"permlevel": 0, "read": 1, "role": "Assistant Station Manager"},
+  {"permlevel": 0, "read": 1, "role": "Forecourt Supervisor"},
+  {"permlevel": 0, "read": 1, "role": "Forecourt Sales Operator"},
+  {"permlevel": 0, "read": 1, "role": "Site Cashier"},
+  {"permlevel": 0, "read": 1, "role": "Station Accountant"},
+  {"permlevel": 0, "read": 1, "role": "Integration Service Account"}
+ ],
+ "search_fields": "station,item",
+ "sort_field": "station",
+ "sort_order": "ASC",
+ "title_field": "tank_label",
+ "track_changes": 1
+}
