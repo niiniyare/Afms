@@ -74,7 +74,7 @@ Each DocType section has an **attributes** table using the DocType JSON property
 | Module | Folder | Contains |
 |---|---|---|
 | Forecourt Setup | `forecourt/forecourt_setup/` | Settings, Station, Station Group, reference masters |
-| Wetstock | `forecourt/wetstock/` | Tanks, charts, dispensers, nozzles, dips, transfers, meter changes, GRN delivery dips |
+| Wetstock | `forecourt/wetstock/` | Tanks, charts, islands, pumps, nozzles, dips, transfers, meter changes, GRN delivery dips |
 | Forecourt Shift | `forecourt/forecourt_shift/` | Shift templates, Forecourt Shift and its child tables, price changes, corrections |
 | Forecourt Finance | `forecourt/forecourt_finance/` | Ledgers, customer vehicles, finance reports |
 | Forecourt Integrations | `forecourt/forecourt_integrations/` | Payment providers, Integration Inbox, Payment Feed Entry, imports |
@@ -124,7 +124,7 @@ Level 0  Forecourt Settings · Forecourt Company Settings · Station Group · Va
             │
 Level 1  Station (+ Station Payment Terminal)
             │
-Level 2  Fuel Tank · Dispenser · Customer Vehicle (+ Customer Vehicle Driver)
+Level 2  Fuel Tank · Island · Pump · Customer Vehicle (+ Customer Vehicle Driver)
             │
 Level 3  Tank Calibration Chart (+ Tank Calibration Row) · Nozzle
             │
@@ -180,7 +180,7 @@ Global defaults for the whole site. Company-specific values live in Forecourt Co
 | record_elec_cash | Check | | D 1 | Meters recorded by default |
 | record_elec_meter | Check | | D 0 | |
 | record_man_meter | Check | | D 0 | |
-| sales_basis | Select | Elec Cash / Elec Meter / Man Meter / Highest | D Elec Cash | Must be a recorded meter (validated) |
+| sales_basis | Select | Elec Cash / Elec Mtr / Man Mtr / Highest | D Elec Cash | Must be a recorded meter (validated) |
 | drift_tolerance_pct | Percent | | D 0.5 | |
 | drift_tolerance_l | Float | | D 2 | |
 | drift_requires_reason | Check | | D 1 | |
@@ -372,7 +372,7 @@ Global defaults for the whole site. Company-specific values live in Forecourt Co
 | dip_entry_mode | Select | (blank) / Depth via calibration chart / Litres entered directly | | |
 | record_elec_cash, record_elec_meter, record_man_meter | Check | | | Overrides; a "use settings" check controls whether they apply |
 | use_settings_meters | Check | | D 1 | |
-| sales_basis | Select | (blank) / Elec Cash / Elec Meter / Man Meter / Highest | | |
+| sales_basis | Select | (blank) / Elec Cash / Elec Mtr / Man Mtr / Highest | | |
 | price_change_mode | Select | (blank) / Latest price with segments / Between shifts only | | |
 | tank_tolerance_pct, tank_tolerance_l | Percent / Float | | | Override company tolerances (blank = company) |
 | delivery_dips_required | Check | | D 1 | The only place this setting lives (design guide 5.4) |
@@ -416,35 +416,62 @@ Global defaults for the whole site. Company-specific values live in Forecourt Co
 | manifold_group | Data | | | Tanks with the same value are reconciled together |
 | dip_entry_mode | Select | (blank) / Depth via calibration chart / Litres entered directly | | Overrides the station |
 | tolerance_pct, tolerance_l | Percent / Float | | | Overrides company settings |
+| opening_dip_l | Float | | | Opening stock in litres |
+| opening_dip_date | Date | | | Date of opening dip reading |
 | status | Select | Active / Out of service / Decommissioned | D Active, L F | |
 
 **Controller:**
-- `validate`: item is fuel; capacity > 0; safe fill ≤ capacity (FMS-M604).
+- `validate`: item is fuel; capacity > 0; safe fill ≤ capacity (FMS-M604); opening dip fields blocked from change once a Stock Ledger Entry exists for the tank's warehouse (FMS-M610).
 - `after_insert`: create the Warehouse with `warehouse_name` = `{tank_code} - {station_code}` (non-group, parent = station warehouse group; code in `forecourt/setup/`); ERPNext appends the company abbreviation, so the record is named `T1 - KE-NBO-WSTL - DPL`; set `warehouse`.
-- `on_trash`: blocked if any stock ledger entry exists for the warehouse.
+- `on_trash`: blocked if any stock ledger entry exists for the warehouse (FMS-M608).
 
-### 6.2 Dispenser
+### 6.2 Island
 
 | Attribute | Value |
 |---|---|
 | module | Wetstock |
-| autoname | `format:{station}-{dispenser_code}` |
-| title_field | dispenser_code |
+| autoname | `format:{station}-{island_code}` |
+| title_field | island_label |
 | track_changes | 1 |
 | Permissions | Forecourt Administrator: R W C D · operations roles: R |
 
 | Fieldname | Type | Options | Flags | Notes |
 |---|---|---|---|---|
 | station | Link | Station | R I L F | |
-| dispenser_code | Data | | R L | D01, D02… |
-| island | Data | | L F | Island 1… |
-| make, model, serial_no | Data | | | |
-| meters_override | Check | | | Older pumps without electronic meters |
-| record_elec_cash, record_elec_meter, record_man_meter | Check | | depends_on meters_override | |
-| sales_basis | Select | Elec Cash / Elec Meter / Man Meter / Highest | depends_on meters_override, R when override | Must be one of this dispenser's recorded meters (FMS-M603; design guide D23) |
+| company | Link | Company | FE station.company, RO I | |
+| island_code | Data | | R L | I01, I02… |
+| island_label | Data | | | e.g. "Island 1 (PMS/AGO)" |
 | status | Select | Active / Out of service | D Active, L F | |
 
-### 6.3 Customer Vehicle
+Island is a physical grouping of two or more pumps on a shared concrete plinth. Used for reporting (how much all pumps on an island sold together) and optionally for cashier assignment (a cashier is responsible for an entire island).
+
+### 6.3 Pump
+
+| Attribute | Value |
+|---|---|
+| module | Wetstock |
+| autoname | `format:{station}-{pump_code}` |
+| title_field | pump_code |
+| track_changes | 1 |
+| Permissions | Forecourt Administrator: R W C D · operations roles: R |
+
+| Fieldname | Type | Options | Flags | Notes |
+|---|---|---|---|---|
+| station | Link | Station | R I L F | |
+| company | Link | Company | FE station.company, RO I | |
+| pump_code | Data | | R L | P01, P02… |
+| island | Link | Island | L F | Which island this pump belongs to |
+| make, model, serial_no | Data | | | |
+| meters_override | Check | | | Tick for older pumps without electronic meters |
+| record_elec_cash | Check | | depends_on meters_override | Elec Cash meter fitted |
+| record_elec_meter | Check | | depends_on meters_override | Elec Mtr fitted |
+| record_man_meter | Check | | depends_on meters_override | Man Mtr fitted |
+| sales_basis | Select | Elec Cash / Elec Mtr / Man Mtr / Highest | depends_on meters_override, R when override | Must be one of this pump's recorded meters (FMS-M603; design guide D23) |
+| status | Select | Active / Out of service | D Active, L F | |
+
+**Controller:** `validate`: when `meters_override` is ticked, the selected `sales_basis` must map to a meter check that is also ticked (FMS-M603).
+
+### 6.4 Customer Vehicle
 
 | Attribute | Value |
 |---|---|
@@ -486,6 +513,8 @@ Child tables: `Customer Vehicle Item` (`item` Link Item) · `Customer Vehicle Dr
 | Fieldname | Type | Options | Flags | Notes |
 |---|---|---|---|---|
 | tank | Link | Fuel Tank | R I L F | |
+| station | Link | Station | FE tank.station, RO I F | |
+| company | Link | Company | FE tank.company, RO I | |
 | valid_from | Date | | R L | |
 | source | Data | | | Calibration company, certificate number |
 | certificate | Attach | | | |
@@ -503,28 +532,37 @@ Child tables: `Customer Vehicle Item` (`item` Link Item) · `Customer Vehicle Dr
 | Attribute | Value |
 |---|---|
 | module | Wetstock |
-| autoname | `format:{dispenser}-N{nozzle_no}` |
+| autoname | `format:{pump}-N{nozzle_no}` |
 | title_field | nozzle_label |
-| search_fields | dispenser, tank, item |
+| search_fields | pump, tank, item |
 | track_changes | 1 |
 | Permissions | Forecourt Administrator: R W C D · operations roles: R |
 
 | Fieldname | Type | Options | Flags | Notes |
 |---|---|---|---|---|
-| dispenser | Link | Dispenser | R I L F | |
-| station | Link | Station | FE dispenser.station, RO I F | |
+| pump | Link | Pump | R I L F | |
+| station | Link | Station | FE pump.station, RO I F | |
+| company | Link | Company | FE pump.company, RO I | |
 | nozzle_no | Int | | R L | |
-| nozzle_label | Data | | | e.g. "D01 N1 PMS" |
+| nozzle_label | Data | | | e.g. "P01 N1 PMS" |
 | tank | Link | Fuel Tank | R L F | Filter: same station |
 | item | Link | Item | FE tank.item, RO L | |
-| ecash_max, evol_max, mvol_max | Float | | | Rollover maxima per meter |
+| ecash_max | Float | | | Elec Cash Max — rollover maximum |
+| evol_max | Float | | | Elec Mtr Max — rollover maximum |
+| mvol_max | Float | | | Man Mtr Max — rollover maximum |
 | decimals_volume, decimals_cash | Int | | D 2 | |
-| last_ecash, last_evol, last_mvol | Float | | RO | Updated by shift close and Meter Change |
+| last_ecash | Float | | RO | Last Elec Cash — updated by shift close and Meter Change |
+| last_evol | Float | | RO | Last Elec Mtr — updated by shift close and Meter Change |
+| last_mvol | Float | | RO | Last Man Mtr — updated by shift close and Meter Change |
 | last_reading_shift | Link | Forecourt Shift | RO | Added in FMS-F01 (section 3.1) |
+| opening_date | Date | | | Opening reading date (first shift uses this if no prior shift) |
+| opening_ecash | Float | | | Opening Elec Cash |
+| opening_evol | Float | | | Opening Elec Mtr |
+| opening_mvol | Float | | | Opening Man Mtr |
 | max_test_volume_l | Float | | | Per-shift pump test limit; blank = no limit (FMS-S115, design guide D29) |
 | status | Select | Active / Out of service | D Active, L F | |
 
-**Controller:** `validate`: tank belongs to the same station (FMS-M606); `last_*` fields are only writable by system code (`self.flags.from_fms`, FMS-M607).
+**Controller:** `validate`: tank belongs to the same station (FMS-M606); `last_*` fields are only writable by system code (`self.flags.from_fms`, FMS-M607); opening reading fields (`opening_ecash`, `opening_evol`, `opening_mvol`, `opening_date`) are blocked from change once a Nozzle Ledger Entry exists for this nozzle (FMS-M609).
 
 ---
 
@@ -702,7 +740,7 @@ Added to Purchase Receipt as the custom field `fms_delivery_dips` (section 12).
 | approved_by_user | Link | User | RO | Set by the *Approve* transition; must differ from the preparer |
 | previous_shift | Link | Forecourt Shift | RO | Found on insert |
 | shift_title | Data | | RO H | |
-| dip_entry_mode, sales_basis, price_change_mode | Data | | RO | Snapshot of the station's effective settings at creation; tanks and dispensers may override (rows carry their own values) |
+| dip_entry_mode, sales_basis, price_change_mode | Data | | RO | Snapshot of the station's effective settings at creation; tanks and pumps may override (rows carry their own values) |
 | record_elec_cash, record_elec_meter, record_man_meter | Check | | RO | Snapshot of the station default; a column is shown when any row records that meter |
 
 **Tables (tabs in this order)**
@@ -758,8 +796,8 @@ All are `istable` 1, `editable_grid` 1, module Forecourt Shift.
 | attendant | Link | Employee | | Information only |
 | segment_no | Int | | RO | |
 | price | Currency | | RO | From the segment |
-| rec_elec_cash, rec_elec_meter, rec_man_meter | Check | | RO | Meters recorded for this nozzle (dispenser override, else station); drive `mandatory_depends_on` of the closings |
-| row_sales_basis | Data | | RO | Sales basis for this nozzle (dispenser override, else station) |
+| rec_elec_cash, rec_elec_meter, rec_man_meter | Check | | RO | Meters recorded for this nozzle (pump override, else station); drive `mandatory_depends_on` of the closings |
+| row_sales_basis | Data | | RO | Sales basis for this nozzle (pump override, else station) |
 | opening_elec_cash, closing_elec_cash | Float | | depends_on rec_elec_cash | Opening RO |
 | opening_elec_meter, closing_elec_meter | Float | | depends_on rec_elec_meter | |
 | opening_man_meter, closing_man_meter | Float | | depends_on rec_man_meter | |
@@ -918,12 +956,12 @@ Composite index: (`tank`, `posting_date`).
 
 ### 10.2 Nozzle Ledger Entry
 
-Extra fields: `shift_template`, `island`, `dispenser`, `nozzle` (I), `tank`, `item`, `cashier` (I), `attendant`, `segment_no`, `price`, `opening_*`/`closing_*` for each meter, `ecash_delta`, `evol_delta`, `mvol_delta`, `basis_meter`, `gross_l`, `test_l`, `own_use_l`, `net_l`, `amount`, the three drift fields, `source`.
+Extra fields: `shift_template`, `island`, `pump`, `nozzle` (I), `tank`, `item`, `cashier` (I), `attendant`, `segment_no`, `price`, `opening_*`/`closing_*` for each meter, `ecash_delta`, `evol_delta`, `mvol_delta`, `basis_meter`, `gross_l`, `test_l`, `own_use_l`, `net_l`, `amount`, the three drift fields, `source`.
 Composite index: (`nozzle`, `posting_date`).
 
 ### 10.3 Sales Ledger Entry
 
-Extra fields: `shift_template`, `cashier` (I), `item` (I), `item_group`, `is_fuel`, `nozzle`, `dispenser`, `island`, `tank`, `payment_type` (Cash / Mobile Money / Card / Credit / Voucher), `mode_of_payment`, `customer`, `customer_vehicle`, `qty`, `amount`, `basis` (Exact / Attributed).
+Extra fields: `shift_template`, `cashier` (I), `item` (I), `item_group`, `is_fuel`, `nozzle`, `pump`, `island`, `tank`, `payment_type` (Cash / Mobile Money / Card / Credit / Voucher), `mode_of_payment`, `customer`, `customer_vehicle`, `qty`, `amount`, `basis` (Exact / Attributed).
 Composite indexes: (`item`, `posting_date`), (`cashier`, `posting_date`).
 
 ### 10.4 Cashier Ledger Entry
@@ -1174,7 +1212,7 @@ Forecourt                      (parent, Station Manager home)
 |---|---|
 | Number cards | Tank variance this month (L) · Tanks below reorder |
 | Chart | Cumulative tank variance % · Delivery variance by supplier |
-| Link cards | *Equipment*: Fuel Tank, Tank Calibration Chart, Dispenser, Nozzle · *Movements*: Purchase Receipt (fuel), Tank Dip, Tank Transfer, Meter Change, Stock Entry (Fuel Own Use) · *Reports*: Tank Stock Position, Wetstock Variance, Delivery Variance, Meter Drift, Sales by Tank, Sales by Pump and Nozzle, Run-out Forecast |
+| Link cards | *Equipment*: Fuel Tank, Tank Calibration Chart, Island, Pump, Nozzle · *Movements*: Purchase Receipt (fuel), Tank Dip, Tank Transfer, Meter Change, Stock Entry (Fuel Own Use) · *Reports*: Tank Stock Position, Wetstock Variance, Delivery Variance, Meter Drift, Sales by Tank, Sales by Pump and Nozzle, Run-out Forecast |
 
 **Forecourt Finance** (module Forecourt Finance; roles Forecourt Accountant, Area Manager, Station Manager read)
 
@@ -1205,7 +1243,7 @@ Forecourt                      (parent, Station Manager home)
 | Block | Content |
 |---|---|
 | Link cards | *Settings*: Forecourt Settings, Forecourt Company Settings · *Network*: Station Group, Station · *Masters*: Variance Reason, Expense Type, Own Use Purpose, Payment Provider · *Integrations*: Integration Inbox · *Health*: FMS Health |
-| Onboarding | Module Onboarding steps: create company settings → station → tanks → charts → dispensers → nozzles → shift template → first shift |
+| Onboarding | Module Onboarding steps: create company settings → station → tanks → charts → islands → pumps → nozzles → shift template → first shift |
 
 ### 14.3 Other navigation
 
@@ -1228,7 +1266,8 @@ Forecourt                      (parent, Station Manager home)
 | 7 | Payment Provider | 0 | Forecourt Integrations | Master | | field |
 | 8 | Station (+ Station Till Account, Station Payment Terminal) | 1 | Forecourt Setup | Master | | field:station_code |
 | 9 | Fuel Tank | 2 | Wetstock | Master | | format |
-| 10 | Dispenser | 2 | Wetstock | Master | | format |
+| 10 | Island | 2 | Wetstock | Master | | format |
+| 10b | Pump | 2 | Wetstock | Master | | format |
 | 11 | Customer Vehicle (+ Item, Driver) | 2 | Forecourt Finance | Master | | format |
 | 12 | Tank Calibration Chart (+ Tank Calibration Row) | 3 | Wetstock | Master | | format |
 | 13 | Nozzle | 3 | Wetstock | Master | | format |

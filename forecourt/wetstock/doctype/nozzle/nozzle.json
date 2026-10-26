@@ -110,17 +110,17 @@
   {
    "fieldname": "ecash_max",
    "fieldtype": "Float",
-   "label": "E-Cash Max"
+   "label": "Elec Cash Max"
   },
   {
    "fieldname": "evol_max",
    "fieldtype": "Float",
-   "label": "E-Vol Max"
+   "label": "Elec Mtr Max"
   },
   {
    "fieldname": "mvol_max",
    "fieldtype": "Float",
-   "label": "M-Vol Max"
+   "label": "Man Mtr Max"
   },
   {
    "fieldname": "last_readings_section",
@@ -131,19 +131,19 @@
   {
    "fieldname": "last_ecash",
    "fieldtype": "Float",
-   "label": "Last E-Cash",
+   "label": "Last Elec Cash",
    "read_only": 1
   },
   {
    "fieldname": "last_evol",
    "fieldtype": "Float",
-   "label": "Last E-Vol",
+   "label": "Last Elec Mtr",
    "read_only": 1
   },
   {
    "fieldname": "last_mvol",
    "fieldtype": "Float",
-   "label": "Last M-Vol",
+   "label": "Last Man Mtr",
    "read_only": 1
   },
   {
@@ -160,7 +160,7 @@
   {
    "fieldname": "opening_ecash",
    "fieldtype": "Float",
-   "label": "Opening E-Cash"
+   "label": "Opening Elec Cash"
   },
   {
    "fieldname": "col_break_2",
@@ -169,12 +169,12 @@
   {
    "fieldname": "opening_evol",
    "fieldtype": "Float",
-   "label": "Opening E-Vol"
+   "label": "Opening Elec Mtr"
   },
   {
    "fieldname": "opening_mvol",
    "fieldtype": "Float",
-   "label": "Opening M-Vol"
+   "label": "Opening Man Mtr"
   },
   {
    "fieldname": "precision_section",
