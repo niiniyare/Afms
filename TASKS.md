@@ -15,7 +15,7 @@
 | Section | Tasks | Done |
 |---|---|---|
 | A. Environment | 9 | 9 |
-| B. Repository and app scaffold | 9 | 6 |
+| B. Repository and app scaffold | 9 | 8 |
 | C. Foundation masters (Phase 0) | 14 | 0 |
 | D. Calculation core | 8 | 0 |
 | E. Station movements | 10 | 0 |
@@ -28,7 +28,7 @@
 | L. CI/CD | 4 | 0 |
 | M. Deployment and operations | 8 | 0 |
 | N. Pilot and go-live | 5 | 0 |
-| **Total (Phases 0–3)** | **124** | **15** |
+| **Total (Phases 0–3)** | **124** | **17** |
 | P. Later phases (backlog) | 8 epics | — |
 
 Update the *Done* column in the same commit that ticks a task.
@@ -194,7 +194,7 @@ Types: `feat`, `fix`, `test`, `chore`, `docs`, `refactor`, `ci`. Modules: `setup
   - **Verify:** `bench --site fms.localhost export-fixtures --app forecourt` runs without error.
   - **Commit:** `chore(setup): declare fixtures`
 
-- [ ] **FMS-B09 · Review · Architecture review checkpoint** · S · B01–B08
+- [x] **FMS-B09 · Review · Architecture review checkpoint** · S · B01–B08
   - **Skills:** `frappe-agent-architect`, `frappe-agent-validator`
   - **Description:** Ask Claude Code to review the scaffold against CLAUDE.md and the catalogue: one app, no core overrides, module layout, pure `calc/`, `ignore_permissions` only in `posting/`, `corrections/` and `setup/`.
   - **Deliverables:** Review notes appended to the Bug log (if any findings).
