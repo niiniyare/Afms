@@ -414,62 +414,62 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
 
 ## F. Forecourt Shift (Phase 1 core)
 
-- [ ] **FMS-F01 · Writing Feature · Shift DocType and child tables** · L · E02
+- [x] **FMS-F01 · Writing Feature · Shift DocType and child tables** · L · E02
   - **Skills:** `frappe-syntax-doctypes`, `frappe-syntax-controllers`
   - **Description:** Forecourt Shift and its nine child tables exactly as catalogue 9.1–9.2, no logic yet beyond required fields. Tabs in the specified order. Shift Collection's `feed_entry` and `import_batch` are left out (added in J04 and J01). Also add the forward links that target Forecourt Shift (catalogue 3.1): `Nozzle.last_reading_shift` and the `fms_forecourt_shift` custom fields on the eight native DocTypes.
   - **Verify (UI):** New Forecourt Shift form shows all tabs and grids; saves a draft.
   - **Commit:** `feat(shift): add Forecourt Shift structure`
 
-- [ ] **FMS-F02 · Writing Feature · Shift creation pre-fill** · M · F01, D01
+- [x] **FMS-F02 · Writing Feature · Shift creation pre-fill** · M · F01, D01
   - **Skills:** `frappe-impl-controllers`
   - **Description:** `before_insert`: previous shift, roster, reading rows with locked openings (from Nozzle last readings) and each row's meters and sales basis (dispenser override, else station), tank rows with opening stock and dip entry mode (tank override, else station), first price segment, settings snapshot, shift window in station time zone, `shift_date` = date of `shift_start` in station time (D20).
   - **Expectation:** A new shift for the test station is ready with 4 reading rows, 2 tank rows, prices, and no typing.
   - **Verify (UI):** Create a shift → all rows present; opening fields read-only.
   - **Commit:** `feat(shift): pre-fill new shift`
 
-- [ ] **FMS-F03 · Writing Feature · Live calculations in the form** · M · F02, D03–D06
+- [x] **FMS-F03 · Writing Feature · Live calculations in the form** · M · F02, D03–D06
   - **Skills:** `frappe-impl-clientscripts`, `frappe-syntax-clientscripts`
   - **Description:** Server-side `validate` recomputes everything through `calc/`; client script refreshes totals and the reconciliation summary on change (calling a whitelisted `preview` method, debounced). Enter-to-next-row on the meter and tank grids.
   - **Verify (UI):** Typing closing readings updates litres, amounts and cashier expected immediately.
   - **Commit:** `feat(shift): live calculations`
 
-- [ ] **FMS-F04 · Writing Feature · Meter modes and drift in the shift** · M · F03, D04
+- [x] **FMS-F04 · Writing Feature · Meter modes and drift in the shift** · M · F03, D04
   - **Description:** Show only the recorded meters (per row, from the dispenser override or the station); compute basis and drift; drift reason required beyond tolerance when configured.
   - **Verify (UI):** Switch the station to all three meters → three columns appear; a dispenser with an M-vol-only override requires only M-vol on its rows; a 2% drift asks for a reason.
   - **Commit:** `feat(shift): meter modes and drift`
 
-- [ ] **FMS-F05 · Writing Feature · Tank dips in the shift** · S · F03, D05
+- [x] **FMS-F05 · Writing Feature · Tank dips in the shift** · S · F03, D05
   - **Description:** Both dip entry modes; receipts pulled from submitted GRNs in the window; own use pulled; variance and tolerance status.
   - **Verify (UI):** With a GRN posted mid-shift, the tank row shows the receipt automatically.
   - **Commit:** `feat(shift): tank dips with pulled receipts`
 
-- [ ] **FMS-F06 · Writing Feature · Own use pull-in** · S · F05, E05
+- [x] **FMS-F06 · Writing Feature · Own use pull-in** · S · F05, E05
   - **Description:** A new Fuel Own Use entry defaults its shift to the open shift at the station; submitted entries in the window reduce the nozzle's net litres; drafts block close (FMS-S113).
   - **Verify (UI):** 40 L generator use appears on D01-N2's row.
   - **Commit:** `feat(shift): pull own use into shift`
 
-- [ ] **FMS-F07 · Writing Feature · Price segments** · M · F02, E09
+- [x] **FMS-F07 · Writing Feature · Price segments** · M · F02, E09
   - **Skills:** `frappe-impl-controllers`
   - **Description:** Add `Fuel Price Change.applied_to_shift`. On Fuel Price Change submit in *Latest price with segments* mode, add a segment to the open shift and split the affected reading rows; manager enters change-time readings; FMS-S112 gate.
   - **Verify (UI):** Approve a PMS change at 14:00 → the shift shows two PMS segments; closing without the 14:00 readings is refused.
   - **Commit:** `feat(shift): mid-shift price segments`
 
-- [ ] **FMS-F08 · Writing Feature · Credit sales** · M · F03, E01
+- [x] **FMS-F08 · Writing Feature · Credit sales** · M · F03, E01
   - **Description:** Credit Sale grid with vehicle filter, price from the segment at `sold_at`, slip uniqueness, vehicle belongs to customer and allows the product, credit limit and vehicle monthly litre limit checks with over-limit approval (FMS-S107).
   - **Verify (UI):** A slip over Coast Haulage's limit shows the limit warning and requires approval.
   - **Commit:** `feat(shift): credit sales`
 
-- [ ] **FMS-F09 · Writing Feature · Item sales and POS pull-in** · S · F03
+- [x] **FMS-F09 · Writing Feature · Item sales and POS pull-in** · S · F03
   - **Description:** Manual item sales; submitted POS Invoices and POS-created Sales Invoices (`is_pos`) for each cashier in the window pulled in as read-only lines (excluded from posting) (D25); POS cashier defaulted from `Employee.user_id`.
   - **Verify (UI):** A POS Invoice by cashier Amina during the shift appears under Items.
   - **Commit:** `feat(shift): item sales and POS pull-in`
 
-- [ ] **FMS-F10 · Writing Feature · Cashier counts and collections** · M · F03, C06
+- [x] **FMS-F10 · Writing Feature · Cashier counts and collections** · M · F03, C06
   - **Description:** Cash count grid per cashier and currency; collections grid for mobile money, card, voucher, expense, drop, debt receipt (with `paid_by`, design guide 7.2, D21); reference mandatory and unique per provider (FMS-S114); expense limits and receipts.
   - **Verify (UI):** Entering the same M-Pesa reference twice is refused.
   - **Commit:** `feat(shift): cashier counts and collections`
 
-- [ ] **FMS-F11 · Writing Feature · Resolutions** · M · F10, F05
+- [x] **FMS-F11 · Writing Feature · Resolutions** · M · F10, F05
   - **Description:** Shift Resolution grid: *Resolve* buttons on each cashier and tank row create a resolution line pre-filled with the policy default; write-offs above the small limit and tank variances above the approval threshold need approval.
   - **Verify (UI):** A −500 shortage cannot be submitted until a resolution line is confirmed.
   - **Commit:** `feat(shift): resolution lines`
