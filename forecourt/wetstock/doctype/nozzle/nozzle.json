@@ -1,12 +1,13 @@
 {
  "actions": [],
- "autoname": "format:{dispenser}-N{nozzle_no}",
+ "autoname": "format:{pump}-N{nozzle_no}",
  "creation": "2026-01-01 00:00:00.000000",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "dispenser",
+  "pump",
   "station",
+  "company",
   "nozzle_no",
   "nozzle_label",
   "col_break_1",
@@ -20,6 +21,12 @@
   "last_ecash",
   "last_evol",
   "last_mvol",
+  "opening_section",
+  "opening_date",
+  "opening_ecash",
+  "col_break_2",
+  "opening_evol",
+  "opening_mvol",
   "precision_section",
   "decimals_volume",
   "decimals_cash",
@@ -29,10 +36,10 @@
  ],
  "fields": [
   {
-   "fieldname": "dispenser",
+   "fieldname": "pump",
    "fieldtype": "Link",
-   "label": "Dispenser",
-   "options": "Dispenser",
+   "label": "Pump",
+   "options": "Pump",
    "reqd": 1,
    "in_list_view": 1,
    "in_standard_filter": 1,
@@ -43,10 +50,20 @@
    "fieldtype": "Link",
    "label": "Station",
    "options": "Station",
-   "fetch_from": "dispenser.station",
+   "fetch_from": "pump.station",
    "fetch_if_empty": 0,
    "read_only": 1,
    "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "fetch_from": "pump.company",
+   "fetch_if_empty": 0,
+   "read_only": 1,
    "search_index": 1
   },
   {
@@ -130,6 +147,36 @@
    "read_only": 1
   },
   {
+   "fieldname": "opening_section",
+   "fieldtype": "Section Break",
+   "label": "Opening Readings",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "opening_date",
+   "fieldtype": "Date",
+   "label": "Opening Date"
+  },
+  {
+   "fieldname": "opening_ecash",
+   "fieldtype": "Float",
+   "label": "Opening E-Cash"
+  },
+  {
+   "fieldname": "col_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "opening_evol",
+   "fieldtype": "Float",
+   "label": "Opening E-Vol"
+  },
+  {
+   "fieldname": "opening_mvol",
+   "fieldtype": "Float",
+   "label": "Opening M-Vol"
+  },
+  {
    "fieldname": "precision_section",
    "fieldtype": "Section Break",
    "label": "Precision",
@@ -191,8 +238,8 @@
   {"permlevel": 0, "read": 1, "role": "Station Accountant"},
   {"permlevel": 0, "read": 1, "role": "Integration Service Account"}
  ],
- "search_fields": "dispenser,tank,item",
- "sort_field": "dispenser",
+ "search_fields": "pump,tank,item",
+ "sort_field": "pump",
  "sort_order": "ASC",
  "title_field": "nozzle_label",
  "track_changes": 1

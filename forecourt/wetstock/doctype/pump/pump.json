@@ -1,13 +1,14 @@
 {
  "actions": [],
- "autoname": "format:{station}-{dispenser_code}",
+ "autoname": "format:{station}-{pump_code}",
  "creation": "2026-01-01 00:00:00.000000",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "station",
   "col_break_1",
-  "dispenser_code",
+  "company",
+  "pump_code",
   "island",
   "equipment_section",
   "make",
@@ -39,16 +40,28 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "dispenser_code",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "fetch_from": "station.company",
+   "fetch_if_empty": 0,
+   "read_only": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "pump_code",
    "fieldtype": "Data",
-   "label": "Dispenser Code",
+   "label": "Pump Code",
    "reqd": 1,
    "in_list_view": 1
   },
   {
    "fieldname": "island",
-   "fieldtype": "Data",
+   "fieldtype": "Link",
    "label": "Island",
+   "options": "Island",
    "in_list_view": 1,
    "in_standard_filter": 1
   },
@@ -90,26 +103,26 @@
   {
    "fieldname": "record_elec_cash",
    "fieldtype": "Check",
-   "label": "Record E-Cash",
+   "label": "Elec Cash",
    "depends_on": "eval:doc.meters_override"
   },
   {
    "fieldname": "record_elec_meter",
    "fieldtype": "Check",
-   "label": "Record E-Meter",
+   "label": "Elec Mtr",
    "depends_on": "eval:doc.meters_override"
   },
   {
    "fieldname": "record_man_meter",
    "fieldtype": "Check",
-   "label": "Record M-Meter",
+   "label": "Man Mtr",
    "depends_on": "eval:doc.meters_override"
   },
   {
    "fieldname": "sales_basis",
    "fieldtype": "Select",
    "label": "Sales Basis Override",
-   "options": "Elec Cash\nElec Meter\nMan Meter\nHighest",
+   "options": "Elec Cash\nElec Mtr\nMan Mtr\nHighest",
    "depends_on": "eval:doc.meters_override",
    "mandatory_depends_on": "eval:doc.meters_override"
   },
@@ -131,7 +144,7 @@
  "modified": "2026-01-01 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Wetstock",
- "name": "Dispenser",
+ "name": "Pump",
  "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
@@ -155,6 +168,6 @@
  "search_fields": "station,island",
  "sort_field": "station",
  "sort_order": "ASC",
- "title_field": "dispenser_code",
+ "title_field": "pump_code",
  "track_changes": 1
 }

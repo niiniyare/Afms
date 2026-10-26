@@ -6,7 +6,9 @@
  "engine": "InnoDB",
  "field_order": [
   "tank",
+  "station",
   "col_break_1",
+  "company",
   "valid_from",
   "source",
   "certificate",
@@ -31,8 +33,29 @@
    "search_index": 1
   },
   {
+   "fieldname": "station",
+   "fieldtype": "Link",
+   "label": "Station",
+   "options": "Station",
+   "fetch_from": "tank.station",
+   "fetch_if_empty": 0,
+   "read_only": 1,
+   "in_standard_filter": 1,
+   "search_index": 1
+  },
+  {
    "fieldname": "col_break_1",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "fetch_from": "tank.company",
+   "fetch_if_empty": 0,
+   "read_only": 1,
+   "search_index": 1
   },
   {
    "fieldname": "valid_from",

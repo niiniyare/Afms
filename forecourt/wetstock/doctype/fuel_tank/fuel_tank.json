@@ -25,6 +25,10 @@
   "col_break_4",
   "tolerance_pct",
   "tolerance_l",
+  "opening_dip_section",
+  "opening_dip_date",
+  "col_break_5",
+  "opening_dip_l",
   "status_section",
   "status"
  ],
@@ -147,6 +151,26 @@
    "fieldname": "tolerance_l",
    "fieldtype": "Float",
    "label": "Tolerance (L)"
+  },
+  {
+   "fieldname": "opening_dip_section",
+   "fieldtype": "Section Break",
+   "label": "Opening Dip",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "opening_dip_date",
+   "fieldtype": "Date",
+   "label": "Opening Dip Date"
+  },
+  {
+   "fieldname": "col_break_5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "opening_dip_l",
+   "fieldtype": "Float",
+   "label": "Opening Dip (L)"
   },
   {
    "fieldname": "status_section",

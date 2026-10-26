@@ -1,16 +1,20 @@
+from __future__ import annotations
+
 import frappe
 from frappe import _
 from frappe.model.document import Document
 
-from forecourt.errors import FMS_M606, FMS_M607, FMSValidationError
+from forecourt.errors import FMS_M606, FMS_M607, FMS_M609, FMSValidationError
 
 _LAST_FIELDS: frozenset[str] = frozenset(["last_ecash", "last_evol", "last_mvol"])
+_OPENING_FIELDS: frozenset[str] = frozenset(["opening_date", "opening_ecash", "opening_evol", "opening_mvol"])
 
 
 class Nozzle(Document):
 	def validate(self) -> None:
 		self._validate_tank_station()
 		self._validate_last_fields()
+		self._validate_opening_fields()
 
 	def _validate_tank_station(self) -> None:
 		if not self.tank:
@@ -40,3 +44,22 @@ class Nozzle(Document):
 						FMS_M607
 					),
 				)
+
+	def _validate_opening_fields(self) -> None:
+		if self.flags.get("from_fms"):
+			return
+		if self.is_new():
+			return
+		before = self.get_doc_before_save()
+		if not before:
+			return
+		changed = any(getattr(self, f) != getattr(before, f, None) for f in _OPENING_FIELDS)
+		if not changed:
+			return
+		if frappe.db.exists("Nozzle Ledger Entry", {"nozzle": self.name}):
+			raise FMSValidationError(
+				FMS_M609,
+				_("[{0}] Opening readings cannot be changed after a shift references this nozzle.").format(
+					FMS_M609
+				),
+			)

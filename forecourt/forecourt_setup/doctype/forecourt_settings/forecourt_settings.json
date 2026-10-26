@@ -47,21 +47,21 @@
    "default": "1",
    "fieldname": "record_elec_cash",
    "fieldtype": "Check",
-   "label": "Record Elec Cash",
+   "label": "Elec Cash",
    "description": "Record the electronic cash (value) meter on each nozzle"
   },
   {
    "default": "0",
    "fieldname": "record_elec_meter",
    "fieldtype": "Check",
-   "label": "Record Elec Meter",
+   "label": "Elec Mtr",
    "description": "Record the electronic volume meter on each nozzle"
   },
   {
    "default": "0",
    "fieldname": "record_man_meter",
    "fieldtype": "Check",
-   "label": "Record Man Meter",
+   "label": "Man Mtr",
    "description": "Record the mechanical (manual) volume meter on each nozzle"
   },
   {
@@ -73,7 +73,7 @@
    "fieldname": "sales_basis",
    "fieldtype": "Select",
    "label": "Sales Basis",
-   "options": "Elec Cash\nElec Meter\nMan Meter\nHighest"
+   "options": "Elec Cash\nElec Mtr\nMan Mtr\nHighest"
   },
   {
    "fieldname": "sb_dip",
