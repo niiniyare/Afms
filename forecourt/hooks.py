@@ -281,6 +281,7 @@ doc_events = {
 
 doctype_js = {
 	"Purchase Receipt": "public/js/purchase_receipt.js",
+	"Forecourt Shift": "public/js/forecourt_shift.js",
 }
 
 # Scheduled Tasks

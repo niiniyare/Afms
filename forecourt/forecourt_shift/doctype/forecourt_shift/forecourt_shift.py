@@ -1,19 +1,35 @@
 """Forecourt Shift controller.
 
-F01: DocType structure (no logic).
+F01: DocType structure.
 F02: before_insert pre-fill.
-F03+: validate, before_submit, on_submit (added in later tasks).
+F03: validate calculations.
+F04+: meter modes/drift, before_submit gates (added in later tasks).
 """
 
 from __future__ import annotations
+
+from collections import defaultdict
 
 import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt, get_datetime
 
+from forecourt.calc import cashier as calc_cashier
+from forecourt.calc import drift as calc_drift
+from forecourt.calc import meters as calc_meters
+from forecourt.calc import reconciliation as calc_reconciliation
+
 
 class ForecourtShift(Document):
+	# ------------------------------------------------------------------ F03
+	def validate(self) -> None:
+		self._compute_item_sale_amounts()
+		self._compute_meter_rows()
+		self._compute_tank_dip_rows()
+		self._compute_cashier_rows()
+		self._compute_parent_totals()
+
 	# ------------------------------------------------------------------ F02
 	def before_insert(self) -> None:
 		"""Pre-fill the shift from the template and previous shift."""
@@ -25,7 +41,222 @@ class ForecourtShift(Document):
 		self._create_tank_rows()
 		self._set_title()
 
-	# ------------------------------------------------------------------ helpers
+	# ------------------------------------------------------------------ F03 helpers
+
+	def _compute_item_sale_amounts(self) -> None:
+		for row in self.item_sales:
+			row.amount = flt(flt(row.qty) * flt(row.rate), 2)
+
+	def _compute_meter_rows(self) -> None:
+		for row in self.meter_readings:
+			price = flt(row.price)
+			if price <= 0:
+				continue
+
+			ecash = (
+				calc_meters.MeterReading(
+					opening=flt(row.opening_elec_cash),
+					closing=flt(row.closing_elec_cash),
+					rollover=bool(row.rollover_elec_cash),
+					rollover_max=flt(frappe.db.get_value("Nozzle", row.nozzle, "ecash_rollover_max") or 0),
+				)
+				if row.rec_elec_cash and row.closing_elec_cash
+				else None
+			)
+			evol = (
+				calc_meters.MeterReading(
+					opening=flt(row.opening_elec_meter),
+					closing=flt(row.closing_elec_meter),
+					rollover=bool(row.rollover_elec_meter),
+					rollover_max=flt(frappe.db.get_value("Nozzle", row.nozzle, "evol_rollover_max") or 0),
+				)
+				if row.rec_elec_meter and row.closing_elec_meter
+				else None
+			)
+			mvol = (
+				calc_meters.MeterReading(
+					opening=flt(row.opening_man_meter),
+					closing=flt(row.closing_man_meter),
+					rollover=bool(row.rollover_man_meter),
+					rollover_max=flt(frappe.db.get_value("Nozzle", row.nozzle, "mvol_rollover_max") or 0),
+				)
+				if row.rec_man_meter and row.closing_man_meter
+				else None
+			)
+
+			if not (ecash or evol or mvol):
+				continue
+
+			try:
+				result = calc_meters.segment_sales(
+					ecash=ecash,
+					evol=evol,
+					mvol=mvol,
+					price=price,
+					sales_basis=row.row_sales_basis or "Elec Cash",
+				)
+			except ValueError:
+				continue
+
+			row.basis_meter = result.basis
+			row.basis_volume_l = flt(result.basis_litres, 3)
+			test_l = flt(row.test_volume_l)
+			own_use_l = flt(row.own_use_l)
+			row.net_volume_l = flt(result.basis_litres - test_l - own_use_l, 3)
+			row.amount = flt(row.net_volume_l * price, 2)
+
+			# drift
+			ecash_l = result.ecash_litres
+			evol_l = result.evol_litres
+			mvol_l = result.mvol_litres
+			row.drift_ecash_evol_l = flt(calc_drift.ecash_vs_evol(ecash_l, evol_l), 3)
+			row.drift_ecash_mvol_l = flt(calc_drift.ecash_vs_mvol(ecash_l, mvol_l), 3)
+			row.drift_evol_mvol_l = flt(calc_drift.evol_vs_mvol(evol_l, mvol_l), 3)
+
+			max_drift = max(
+				abs(row.drift_ecash_evol_l),
+				abs(row.drift_ecash_mvol_l),
+				abs(row.drift_evol_mvol_l),
+			)
+			row.drift_breach = int(not calc_drift.within_tolerance(max_drift, result.basis_litres))
+
+	def _compute_tank_dip_rows(self) -> None:
+		# sum net_volume_l per tank from meter readings
+		tank_sales: dict[str, float] = defaultdict(float)
+		for row in self.meter_readings:
+			if row.tank:
+				tank_sales[row.tank] += flt(row.net_volume_l)
+
+		for row in self.tank_dips:
+			row.sales_l = flt(tank_sales.get(row.tank, 0.0), 3)
+
+			rec = calc_reconciliation.TankReconciliation(
+				opening_volume=flt(row.opening_l),
+				receipts=flt(row.receipts_l),
+				net_sales=flt(row.sales_l),
+				own_use=flt(row.own_use_l),
+				transfers=flt(row.transfers_l),
+				closing_dip=flt(row.dip_l) if row.dip_l else None,
+			)
+			calc_reconciliation.reconcile(rec)
+			row.expected_l = flt(rec.expected_closing, 3)
+			if rec.variance is not None:
+				row.variance_l = flt(rec.variance, 3)
+				row.variance_pct = flt(rec.variance_pct or 0.0, 4)
+				in_tol = calc_reconciliation.within_tolerance(rec.variance, flt(row.sales_l))
+				row.within_tolerance = int(in_tol)
+				row.needs_approval = int(not in_tol)
+
+	def _compute_cashier_rows(self) -> None:
+		# fuel_amount per cashier from meter readings
+		fuel_amount: dict[str, float] = defaultdict(float)
+		for row in self.meter_readings:
+			if row.cashier:
+				fuel_amount[row.cashier] += flt(row.amount)
+
+		# item_amount per cashier from item_sales
+		item_amount: dict[str, float] = defaultdict(float)
+		for row in self.item_sales:
+			if row.cashier:
+				item_amount[row.cashier] += flt(row.amount)
+
+		# credit per cashier from credit_sales
+		credit: dict[str, float] = defaultdict(float)
+		for row in self.credit_sales:
+			if row.cashier:
+				credit[row.cashier] += flt(row.amount)
+
+		# cash per cashier from cash_counts
+		cash_counted: dict[str, float] = defaultdict(float)
+		for row in self.cash_counts:
+			if row.cashier:
+				cash_counted[row.cashier] += flt(row.base_amount or row.amount)
+
+		# collections per cashier by type
+		mobile: dict[str, float] = defaultdict(float)
+		card: dict[str, float] = defaultdict(float)
+		voucher: dict[str, float] = defaultdict(float)
+		expenses: dict[str, float] = defaultdict(float)
+		drops: dict[str, float] = defaultdict(float)
+		debt_receipts: dict[str, float] = defaultdict(float)
+		for row in self.collections:
+			if not row.cashier:
+				continue
+			t = row.collection_type
+			if t == "Mobile Money":
+				mobile[row.cashier] += flt(row.amount)
+			elif t == "Card":
+				card[row.cashier] += flt(row.amount)
+			elif t == "Voucher":
+				voucher[row.cashier] += flt(row.amount)
+			elif t == "Expense":
+				expenses[row.cashier] += flt(row.amount)
+			elif t == "Drop":
+				drops[row.cashier] += flt(row.amount)
+			elif t == "Debt Receipt":
+				debt_receipts[row.cashier] += flt(row.amount)
+
+		for row in self.cashiers:
+			c = row.cashier
+			row.fuel_amount = flt(fuel_amount.get(c, 0.0), 2)
+			row.item_amount = flt(item_amount.get(c, 0.0), 2)
+			row.debt_receipts = flt(debt_receipts.get(c, 0.0), 2)
+			row.cash_counted = flt(cash_counted.get(c, 0.0), 2)
+			row.mobile = flt(mobile.get(c, 0.0), 2)
+			row.card = flt(card.get(c, 0.0), 2)
+			row.credit = flt(credit.get(c, 0.0), 2)
+			row.voucher = flt(voucher.get(c, 0.0), 2)
+			row.expenses = flt(expenses.get(c, 0.0), 2)
+			row.drops = flt(drops.get(c, 0.0), 2)
+
+			cb = calc_cashier.CashierBalance(
+				fuel_amount=row.fuel_amount,
+				item_amount=row.item_amount,
+				debt_receipts=row.debt_receipts,
+				cash=row.cash_counted,
+				mobile=row.mobile,
+				card=row.card,
+				credit=row.credit,
+				voucher=row.voucher,
+				expenses=row.expenses,
+				drops=row.drops,
+				opening_float=flt(row.float_amount),
+			)
+			calc_cashier.balance(cb)
+			row.expected = flt(cb.expected, 2)
+			row.accounted = flt(cb.accounted, 2)
+			row.difference = flt(cb.difference, 2)
+
+	def _compute_parent_totals(self) -> None:
+		self.total_fuel_volume = flt(sum(flt(r.net_volume_l) for r in self.meter_readings), 3)
+		self.total_fuel_amount = flt(sum(flt(r.amount) for r in self.meter_readings), 2)
+		self.total_item_amount = flt(sum(flt(r.amount) for r in self.item_sales), 2)
+		self.total_credit = flt(sum(flt(r.amount) for r in self.credit_sales), 2)
+
+		col_mobile = col_card = col_voucher = col_exp = col_drop = 0.0
+		for row in self.collections:
+			t = row.collection_type
+			if t == "Mobile Money":
+				col_mobile += flt(row.amount)
+			elif t == "Card":
+				col_card += flt(row.amount)
+			elif t == "Voucher":
+				col_voucher += flt(row.amount)
+			elif t == "Expense":
+				col_exp += flt(row.amount)
+			elif t == "Drop":
+				col_drop += flt(row.amount)
+
+		self.total_mobile = flt(col_mobile, 2)
+		self.total_card = flt(col_card, 2)
+		self.total_cash = flt(sum(flt(r.cash_counted) for r in self.cashiers), 2)
+		self.total_expenses = flt(col_exp, 2)
+		self.total_difference = flt(sum(flt(r.difference) for r in self.cashiers), 2)
+		self.total_tank_variance_l = flt(
+			sum(flt(r.variance_l) for r in self.tank_dips if r.variance_l is not None), 3
+		)
+
+	# ------------------------------------------------------------------ F02 helpers
 
 	def _find_previous_shift(self) -> None:
 		prev = frappe.get_all(
@@ -205,3 +436,45 @@ class ForecourtShift(Document):
 		if self.station and self.shift_template and self.shift_date:
 			station_label = frappe.db.get_value("Station", self.station, "station_name") or self.station
 			self.shift_title = f"{station_label} · {self.shift_template} · {self.shift_date}"
+
+
+@frappe.whitelist()
+def preview(shift_name: str) -> dict:
+	"""Return a live calculation summary without saving.
+
+	Called by the client script on every change to give instant feedback.
+	Returns totals and per-cashier/per-tank summaries.
+	"""
+	doc = frappe.get_doc("Forecourt Shift", shift_name)
+	doc.validate()
+	return {
+		"total_fuel_volume": doc.total_fuel_volume,
+		"total_fuel_amount": doc.total_fuel_amount,
+		"total_item_amount": doc.total_item_amount,
+		"total_credit": doc.total_credit,
+		"total_mobile": doc.total_mobile,
+		"total_card": doc.total_card,
+		"total_cash": doc.total_cash,
+		"total_expenses": doc.total_expenses,
+		"total_difference": doc.total_difference,
+		"total_tank_variance_l": doc.total_tank_variance_l,
+		"cashiers": [
+			{
+				"cashier": r.cashier,
+				"expected": r.expected,
+				"accounted": r.accounted,
+				"difference": r.difference,
+			}
+			for r in doc.cashiers
+		],
+		"tank_dips": [
+			{
+				"tank": r.tank,
+				"expected_l": r.expected_l,
+				"variance_l": r.variance_l,
+				"variance_pct": r.variance_pct,
+				"within_tolerance": r.within_tolerance,
+			}
+			for r in doc.tank_dips
+		],
+	}
