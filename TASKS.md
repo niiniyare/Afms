@@ -16,7 +16,7 @@
 |---|---|---|
 | A. Environment | 9 | 9 |
 | B. Repository and app scaffold | 9 | 8 |
-| C. Foundation masters (Phase 0) | 14 | 0 |
+| C. Foundation masters (Phase 0) | 14 | 1 |
 | D. Calculation core | 8 | 0 |
 | E. Station movements | 10 | 0 |
 | F. Forecourt Shift (Phase 1 core) | 18 | 0 |
@@ -28,7 +28,7 @@
 | L. CI/CD | 4 | 0 |
 | M. Deployment and operations | 8 | 0 |
 | N. Pilot and go-live | 5 | 0 |
-| **Total (Phases 0–3)** | **124** | **17** |
+| **Total (Phases 0–3)** | **124** | **18** |
 | P. Later phases (backlog) | 8 epics | — |
 
 Update the *Done* column in the same commit that ticks a task.
@@ -207,7 +207,7 @@ Types: `feat`, `fix`, `test`, `chore`, `docs`, `refactor`, `ci`. Modules: `setup
 
 Build in catalogue order. Each DocType task includes its JSON, controller, a test file, list or form settings and the role permissions from the catalogue (so every DocType task depends on C01). Fields that link forward to a later DocType are added by the later task (catalogue 3.1). Validation errors use the codes in design guide 15.3 (FMS-M6xx for masters).
 
-- [ ] **FMS-C01 · Writing Feature · Roles** · S · B08
+- [x] **FMS-C01 · Writing Feature · Roles** · S · B08
   - **Skills:** `frappe-core-permissions`
   - **Description:** Create the seven roles (catalogue 2.2). Export as fixtures.
   - **Verify (UI):** Role list shows them; `bench export-fixtures` writes `fixtures/role.json`.
