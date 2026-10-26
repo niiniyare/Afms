@@ -7,6 +7,9 @@ F04: meter modes/drift gate.
 F05: pull GRN receipts and own use into tank dip rows; chart-mode dip.
 F06: pull own use into meter reading rows; FMS-S113 draft own-use gate.
 F07: FMS-S112 gate: every price segment must have meter readings.
+F08: credit sale rates, over-limit flags, FMS-S107 gate.
+F09: POS pull-in into item_sales.
+F10: collection reference uniqueness, expense limits, FMS-S114 gate.
 F12+: remaining before_submit gates (added in later tasks).
 """
 
@@ -24,16 +27,18 @@ from forecourt.calc import cashier as calc_cashier
 from forecourt.calc import drift as calc_drift
 from forecourt.calc import meters as calc_meters
 from forecourt.calc import reconciliation as calc_reconciliation
-from forecourt.errors import FMS_S112, FMS_S113, FMS_W103
+from forecourt.errors import FMS_S107, FMS_S112, FMS_S113, FMS_S114, FMS_W103
 
 
 class ForecourtShift(Document):
-	# ------------------------------------------------------------------ F04 / F06 / F07
+	# ------------------------------------------------------------------ F04 / F06 / F07 / F08 / F10
 	def before_submit(self) -> None:
-		"""Gates: FMS-W103 drift reason; FMS-S113 no draft own use; FMS-S112 segment readings."""
+		"""Gates: drift reason, no draft own use, segment readings, over-limit, ref uniqueness."""
 		self._gate_drift_reason()
 		self._gate_no_draft_own_use()
 		self._gate_segment_readings()
+		self._gate_credit_over_limit()
+		self._gate_collection_refs()
 
 	def _gate_drift_reason(self) -> None:
 		settings = frappe.get_cached_doc("Forecourt Settings")
@@ -101,14 +106,193 @@ class ForecourtShift(Document):
 				title=_("Incomplete Segments"),
 			)
 
-	# ------------------------------------------------------------------ F03 / F05 / F06
+	def _gate_credit_over_limit(self) -> None:
+		"""FMS-S107: over-limit credit sales must be approved."""
+		blocking = [
+			f"{r.customer} slip {r.slip_no}"
+			for r in self.credit_sales
+			if r.over_limit and not r.over_limit_approved_by
+		]
+		if blocking:
+			frappe.throw(
+				_("{0}: Over-limit credit sales require approval: {1}.").format(
+					FMS_S107, ", ".join(blocking)
+				),
+				title=_("Over-Limit Approval Required"),
+			)
+
+	def _gate_collection_refs(self) -> None:
+		"""FMS-S114: mobile money and card collections require unique references per provider."""
+		seen: dict[str, str] = {}
+		errors = []
+		for row in self.collections:
+			if row.collection_type not in ("Mobile Money", "Card"):
+				continue
+			if not row.reference:
+				errors.append(
+					_("Row {0}: {1} collection missing reference.").format(row.idx, row.collection_type)
+				)
+				continue
+			key = f"{row.provider or ''}:{row.reference}"
+			if key in seen:
+				errors.append(
+					_("Row {0}: reference {1} already used in row {2}.").format(
+						row.idx, row.reference, seen[key]
+					)
+				)
+			else:
+				seen[key] = str(row.idx)
+		if errors:
+			frappe.throw(
+				_("{0}: ").format(FMS_S114) + "\n".join(errors),
+				title=_("Duplicate Collection Reference"),
+			)
+
+	# ------------------------------------------------------------------ F08 helpers
+
+	def _compute_credit_sale_rates(self) -> None:
+		"""Set rate and amount on credit sale rows from the shift's price segments."""
+		for row in self.credit_sales:
+			if not (row.item and row.sold_at):
+				continue
+			rate = self._get_segment_price(row.item, get_datetime(row.sold_at))
+			if rate:
+				row.rate = flt(rate)
+				row.amount = flt(flt(row.qty) * row.rate, 2)
+
+	def _get_segment_price(self, item: str, at_dt) -> float | None:
+		for price_row in self.prices:
+			if price_row.item != item:
+				continue
+			eff_from = get_datetime(price_row.effective_from) if price_row.effective_from else None
+			eff_to = get_datetime(price_row.effective_to) if price_row.effective_to else None
+			if eff_from and at_dt < eff_from:
+				continue
+			if eff_to and at_dt >= eff_to:
+				continue
+			return flt(price_row.price)
+		return None
+
+	def _flag_credit_over_limit(self) -> None:
+		"""Flag credit sale rows where vehicle monthly litre limit would be exceeded."""
+		if not self.shift_date:
+			return
+		# Sum litres per vehicle per item for this shift
+		shift_vol: dict[tuple, float] = defaultdict(float)
+		for row in self.credit_sales:
+			if row.vehicle and row.item:
+				shift_vol[(row.vehicle, row.item)] += flt(row.qty)
+
+		for row in self.credit_sales:
+			if not row.vehicle:
+				row.over_limit = 0
+				continue
+			vehicle = frappe.get_cached_doc("Customer Vehicle", row.vehicle)
+			monthly_limit = flt(getattr(vehicle, "monthly_limit_l", 0))
+			if not monthly_limit:
+				row.over_limit = 0
+				continue
+			# Sum all credit sales for this vehicle and item this calendar month
+			from frappe.utils import get_first_day, get_last_day
+
+			month_start = get_first_day(self.shift_date)
+			month_end = get_last_day(self.shift_date)
+			prev_qty = flt(
+				frappe.db.sql(
+					"""
+					SELECT SUM(cs.qty)
+					FROM `tabShift Credit Sale` cs
+					JOIN `tabForecourt Shift` sh ON sh.name = cs.parent
+					WHERE cs.vehicle = %s AND cs.item = %s
+					  AND sh.shift_date BETWEEN %s AND %s
+					  AND sh.docstatus = 1 AND sh.name != %s
+					""",
+					(row.vehicle, row.item, month_start, month_end, self.name or ""),
+				)[0][0]
+				or 0
+			)
+			total = prev_qty + shift_vol.get((row.vehicle, row.item), 0.0)
+			row.over_limit = int(total > monthly_limit)
+
+	# ------------------------------------------------------------------ F09 helpers
+
+	def _pull_pos_items(self) -> None:
+		"""Pull submitted POS Invoices/POS Sales Invoices in the window as read-only item_sales rows."""
+		if not (self.station and self.shift_start and self.shift_end):
+			return
+		# Build cashier → employee map (Employee.user_id → Employee.name)
+		cashier_employees = {row.cashier for row in self.cashiers if row.cashier}
+		if not cashier_employees:
+			return
+		user_to_employee: dict[str, str] = {}
+		for emp in frappe.get_all(
+			"Employee",
+			filters={"name": ["in", list(cashier_employees)]},
+			fields=["name", "user_id"],
+		):
+			if emp.user_id:
+				user_to_employee[emp.user_id] = emp.name
+
+		start_dt = get_datetime(self.shift_start)
+		end_dt = get_datetime(self.shift_end)
+		start_date = start_dt.date() if hasattr(start_dt, "date") else start_dt
+		end_date = end_dt.date() if hasattr(end_dt, "date") else end_dt
+
+		# Remove previously pulled POS rows so we can re-pull cleanly
+		self.item_sales = [r for r in self.item_sales if not r.pos_invoice]
+
+		for doctype in ("POS Invoice", "Sales Invoice"):
+			filters = {
+				"docstatus": 1,
+				"posting_date": ["between", [str(start_date), str(end_date)]],
+			}
+			if doctype == "Sales Invoice":
+				filters["is_pos"] = 1
+			invoices = frappe.get_all(
+				doctype,
+				filters=filters,
+				fields=["name", "owner", "posting_date", "posting_time"],
+			)
+			for inv in invoices:
+				posting_dt = get_datetime(f"{inv.posting_date} {inv.posting_time or '00:00:00'}")
+				if not (start_dt <= posting_dt < end_dt):
+					continue
+				cashier = user_to_employee.get(inv.owner)
+				if not cashier:
+					continue
+				# Pull non-fuel items
+				items = frappe.get_all(
+					f"{doctype} Item",
+					filters={"parent": inv.name, "fms_is_fuel": 0}
+					if doctype == "POS Invoice"
+					else {"parent": inv.name},
+					fields=["item_code", "qty", "rate", "amount"],
+				)
+				for item_row in items:
+					self.append(
+						"item_sales",
+						{
+							"cashier": cashier,
+							"item": item_row.item_code,
+							"qty": flt(item_row.qty),
+							"rate": flt(item_row.rate),
+							"amount": flt(item_row.amount),
+							"pos_doctype": doctype,
+							"pos_invoice": inv.name,
+						},
+					)
+
+	# ------------------------------------------------------------------ F03 / F05 / F06 / F08 / F09 / F10
 	def validate(self) -> None:
 		self._compute_item_sale_amounts()
-		self._pull_own_use_for_nozzles()  # F06: own use → meter rows
+		self._pull_own_use_for_nozzles()  # F06
 		self._compute_meter_rows()
-		self._compute_dip_volumes()  # F05: chart-mode mm→L
-		self._pull_grn_receipts()  # F05: receipts from submitted GRNs
-		self._pull_own_use_for_tanks()  # F05: own use into tank rows
+		self._compute_credit_sale_rates()  # F08
+		self._flag_credit_over_limit()  # F08
+		self._pull_pos_items()  # F09
+		self._compute_dip_volumes()  # F05
+		self._pull_grn_receipts()  # F05
+		self._pull_own_use_for_tanks()  # F05
 		self._compute_tank_dip_rows()
 		self._compute_cashier_rows()
 		self._compute_parent_totals()
