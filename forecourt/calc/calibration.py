@@ -29,6 +29,25 @@ def interpolate(depth_mm: float, rows: list[tuple[float, float]]) -> float:
 	raise ValueError(f"Depth {depth_mm} mm not bracketed by chart rows.")
 
 
+def net_volume(
+	depth_mm: float,
+	product_rows: list[tuple[float, float]],
+	water_rows: list[tuple[float, float]] | None = None,
+	water_dip_mm: float = 0.0,
+) -> float:
+	"""Return net product volume = product volume - water volume.
+
+	water_rows: calibration chart for water layer (same format as product_rows).
+	water_dip_mm: measured water depth; 0 means no water detected.
+	Raises ValueError if depths are out of range.
+	"""
+	product_vol = interpolate(depth_mm, product_rows)
+	if not water_rows or not water_dip_mm:
+		return product_vol
+	water_vol = interpolate(water_dip_mm, water_rows)
+	return product_vol - water_vol
+
+
 def validate_rows(rows: list[tuple[float, float]]) -> list[str]:
 	"""Return list of error messages; empty list means the chart is valid."""
 	errors: list[str] = []
