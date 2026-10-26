@@ -771,7 +771,8 @@ All are `istable` 1, `editable_grid` 1, module Forecourt Shift.
 | net_volume_l | Float | | RO | |
 | amount | Currency | | RO | |
 | drift_evol_mvol_l, drift_ecash_evol_l, drift_ecash_mvol_l | Float | | RO | |
-| drift_reason | Link | Variance Reason | | Required beyond tolerance |
+| drift_breach | Check | | RO | 1 when any drift pair exceeds the tolerance; gates check this before requiring a reason |
+| drift_reason | Link | Variance Reason | | Required when `drift_breach = 1` and `drift_requires_reason` is on |
 | photo | Attach Image | | | Mandatory when settings require |
 | source | Select | Manual / Handheld / FCC / Import | D Manual | |
 
@@ -792,8 +793,9 @@ All are `istable` 1, `editable_grid` 1, module Forecourt Shift.
 | dip_l, water_l | Float | | | Entered in litres mode, computed in chart mode |
 | variance_l, variance_pct | Float / Percent | | RO | |
 | within_tolerance | Check | | RO | |
+| needs_approval | Check | | RO | 1 when variance exceeds tolerance × approval_multiplier, or reason requires approval |
 | reason | Link | Variance Reason | | Required outside tolerance |
-| approved_by | Link | User | RO | Set by the approval transition |
+| approved_by | Link | User | RO | Set by the approval transition; must differ from last editor (segregation of duties) |
 | temperature_c, density | Float / Float | | | Optional, recorded only (design guide D30) |
 | source | Select | Manual / ATG / Import | D Manual | |
 
@@ -839,8 +841,10 @@ All are `istable` 1, `editable_grid` 1, module Forecourt Shift.
 | slip_no | Data | | R | Unique per customer (validated) |
 | sold_at | Datetime | | | |
 | odometer | Int | | | |
+| over_limit | Check | | RO | 1 when this cashier's running total exceeds the customer's credit limit |
 | over_limit_approved_by | Link | User | RO | |
-| sales_invoice | Link | Sales Invoice | RO | Set on close |
+| sales_invoice | Link | Sales Invoice | RO | Set on close (Sales Invoice mode) |
+| delivery_note | Link | Delivery Note | RO | Set on close (monthly invoicing mode) |
 
 **Shift Item Sale**
 
@@ -1025,7 +1029,7 @@ Phase 1 statement import (before feeds exist).
 | rows_read, rows_created, rows_duplicate, rows_rejected | Int | | RO | |
 | log | Long Text | | RO | Row-level errors |
 
-**Whitelisted method:** `forecourt.forecourt_integrations.import.run(batch)` parses the file and creates Shift Collection rows (or Payment Feed Entries when no shift is given), skipping duplicates by reference.
+**Whitelisted method:** `forecourt.forecourt_integrations.statement_import.run(batch)` parses the file and creates Shift Collection rows (or Payment Feed Entries when no shift is given), skipping duplicates by reference. (The module is not named `import.py` because `import` is a Python keyword.)
 
 ---
 
@@ -1044,8 +1048,8 @@ All shipped as fixtures (`Custom Field`, `Property Setter`) filtered by `module 
 | Payment Entry | `fms_forecourt_shift` (Link, I, RO), `fms_cashier` (Link Employee), `fms_provider` (Link Payment Provider), `fms_till_or_terminal` (Data), `fms_transaction_time` (Datetime) | Per-transaction reconciliation; `reference_no` and `reference_date` are standard |
 | Journal Entry | `fms_forecourt_shift` (Link, I, RO) | Resolutions and expenses |
 | Stock Reconciliation | `fms_forecourt_shift` (Link, I, RO) | Tank variance |
-| Stock Entry | `fms_forecourt_shift` (Link, I), `fms_station` (Link Station), `fms_nozzle` (Link Nozzle), `fms_attendant` (Link Employee), `fms_use_purpose` (Link Own Use Purpose), `fms_vehicle_or_asset` (Data), `fms_purchase_receipt` (Link Purchase Receipt) | Fuel Own Use and delivery shortage |
-| Purchase Receipt | `fms_station` (Link Station, I), `fms_delivery_note_no`, `fms_truck`, `fms_driver`, `fms_transporter` (Link Supplier), `fms_seals`, `fms_witness` (Link Employee), `fms_delivery_dips` (Table → GRN Delivery Dip), `fms_forecourt_shift` (Link, RO, set when pulled into a shift) | Manual GRN with dips |
+| Stock Entry | `fms_forecourt_shift` (Link, I), `fms_nozzle` (Link Nozzle), `fms_attendant` (Link Employee), `fms_use_purpose` (Link Own Use Purpose), `fms_vehicle_or_asset` (Data), `fms_purchase_receipt` (Link Purchase Receipt) | Fuel Own Use and delivery shortage; `station` is the accounting dimension field (added by fixture, not a custom field) |
+| Purchase Receipt | `fms_delivery_note_no`, `fms_truck`, `fms_driver`, `fms_transporter` (Link Supplier), `fms_seals`, `fms_witness` (Link Employee), `fms_delivery_dips` (Table → GRN Delivery Dip), `fms_forecourt_shift` (Link, RO, set when pulled into a shift) | Manual GRN with dips; `station` is the accounting dimension field (added by fixture, not a custom field) |
 
 **Records shipped as fixtures**
 
