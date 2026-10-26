@@ -16,7 +16,7 @@
 |---|---|---|
 | A. Environment | 9 | 9 |
 | B. Repository and app scaffold | 9 | 8 |
-| C. Foundation masters (Phase 0) | 14 | 1 |
+| C. Foundation masters (Phase 0) | 14 | 2 |
 | D. Calculation core | 8 | 0 |
 | E. Station movements | 10 | 0 |
 | F. Forecourt Shift (Phase 1 core) | 18 | 0 |
@@ -28,7 +28,7 @@
 | L. CI/CD | 4 | 0 |
 | M. Deployment and operations | 8 | 0 |
 | N. Pilot and go-live | 5 | 0 |
-| **Total (Phases 0–3)** | **124** | **18** |
+| **Total (Phases 0–3)** | **124** | **19** |
 | P. Later phases (backlog) | 8 epics | — |
 
 Update the *Done* column in the same commit that ticks a task.
@@ -213,7 +213,7 @@ Build in catalogue order. Each DocType task includes its JSON, controller, a tes
   - **Verify (UI):** Role list shows them; `bench export-fixtures` writes `fixtures/role.json`.
   - **Commit:** `feat(setup): add FMS roles`
 
-- [ ] **FMS-C02 · Writing Feature · Forecourt Settings** · S · C01
+- [x] **FMS-C02 · Writing Feature · Forecourt Settings** · S · C01
   - **Skills:** `frappe-syntax-doctypes`, `frappe-impl-controllers`
   - **Description:** Single DocType per catalogue 4.1 with the meter validation.
   - **Expectation:** Saving with sales basis *E-vol* while E-vol is not recorded is refused.
