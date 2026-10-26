@@ -1,55 +1,42 @@
-# Byte-compiled / optimized / DLL files
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.pyc
 *.py~
-
-# Distribution / packaging
-.Python
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib64/
-parts/
-sdist/
-var/
-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-tags
+dist/
+.eggs/
 MANIFEST
 
-# Environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
-# Dependency directories
+# Node
 node_modules/
 jspm_packages/
 
-# IDEs and editors
-.vscode/
-.vs/
-.idea/
-.kdev4/
-*.kdev4
-*.DS_Store
+# Build output
+forecourt/public/dist/
+
+# Environments (not bench dirs — those live one level up)
+.env
+.venv
+venv/
+
+# Editor
+.DS_Store
 *.swp
+*.swo
 *.comp.js
 .wnf-lang-status
 *debug.log
-
-# Helix Editor
+.idea/
+.vscode/
+.vs/
 .helix/
 
 # Aider AI Chat
 .aider*
+
+# Pre-commit
+.pre-commit-config.yaml.lock
