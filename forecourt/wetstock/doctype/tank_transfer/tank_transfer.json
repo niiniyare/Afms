@@ -1,0 +1,113 @@
+{
+ "actions": [],
+ "autoname": "format:TT-{station}-{YYYY}-{#####}",
+ "creation": "2026-10-27 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "from_tank",
+  "station",
+  "col_break_1",
+  "to_tank",
+  "volume_l",
+  "section_details",
+  "transferred_at",
+  "col_break_2",
+  "reason",
+  "section_result",
+  "stock_entry"
+ ],
+ "fields": [
+  {
+   "fieldname": "from_tank",
+   "fieldtype": "Link",
+   "label": "From Tank",
+   "options": "Fuel Tank",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "station",
+   "fieldtype": "Link",
+   "label": "Station",
+   "options": "Station",
+   "fetch_from": "from_tank.station",
+   "fetch_if_empty": 0,
+   "read_only": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "col_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "to_tank",
+   "fieldtype": "Link",
+   "label": "To Tank",
+   "options": "Fuel Tank",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "volume_l",
+   "fieldtype": "Float",
+   "label": "Volume (L)",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "section_details",
+   "fieldtype": "Section Break",
+   "label": "Details"
+  },
+  {
+   "fieldname": "transferred_at",
+   "fieldtype": "Datetime",
+   "label": "Transferred At",
+   "reqd": 1
+  },
+  {
+   "fieldname": "col_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Reason",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_result",
+   "fieldtype": "Section Break",
+   "label": "Result",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "stock_entry",
+   "fieldtype": "Link",
+   "label": "Stock Entry",
+   "options": "Stock Entry",
+   "read_only": 1
+  }
+ ],
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-10-27 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Wetstock",
+ "name": "Tank Transfer",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {"create": 1, "delete": 1, "permlevel": 0, "read": 1, "role": "Station Manager", "write": 1},
+  {"create": 1, "submit": 1, "cancel": 1, "amend": 1, "permlevel": 0, "read": 1, "role": "Area Manager", "write": 1},
+  {"permlevel": 0, "read": 1, "role": "Forecourt Administrator"},
+  {"permlevel": 0, "read": 1, "role": "Business Executive"}
+ ],
+ "search_fields": "from_tank,to_tank,station",
+ "sort_field": "transferred_at",
+ "sort_order": "DESC",
+ "title_field": "from_tank",
+ "track_changes": 1
+}

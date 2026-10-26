@@ -339,7 +339,7 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
   - **Verify:** Unit test: 180,000 mobile over 60/40 PMS/AGO → 108,000 / 72,000; totals equal input to the cent.
   - **Commit:** `feat(calc): payment attribution`
 
-- [ ] **FMS-D08 · Writing Test · Property tests for the calculation core** · S · D02–D07
+- [x] **FMS-D08 · Writing Test · Property tests for the calculation core** · S · D02–D07
   - **Skills:** `frappe-testing-unit`
   - **Description:** Randomised tests: totals always balance; attribution sums equal inputs; interpolation monotonic.
   - **Verify:** Tests pass 100 runs.
@@ -355,56 +355,56 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
   - **Verify (UI):** Create *Coast Haulage* vehicle `KDA 123A` → stored as `KDA123A`; duplicate refused.
   - **Commit:** `feat(finance): add Customer Vehicle`
 
-- [ ] **FMS-E02 · Writing Feature · Forecourt Shift Template** · S · C13
+- [x] **FMS-E02 · Writing Feature · Forecourt Shift Template** · S · C13
   - **Skills:** `frappe-syntax-doctypes`
   - **Description:** Catalogue 8.1 with roster child tables.
   - **Verify (UI):** Create *Day* 06:00–18:00 with two cashiers and nozzle assignments.
   - **Commit:** `feat(shift): add Forecourt Shift Template`
 
-- [ ] **FMS-E03 · Writing Feature · GRN delivery dips on Purchase Receipt** · L · C12, D02, D05
+- [x] **FMS-E03 · Writing Feature · GRN delivery dips on Purchase Receipt** · L · C12, D02, D05
   - **Skills:** `frappe-syntax-hooks-events`, `frappe-impl-hooks`, `frappe-syntax-doctypes`
   - **Description:** GRN Delivery Dip child DocType (catalogue 8.6); custom fields on Purchase Receipt (catalogue 12); `doc_events` for validate and submit; both dip entry modes; tolerance check with mandatory reason.
   - **Expectation:** A manually created GRN for 10,000 L PMS into T1 with dips before and after computes received volume and variance. Without dips (when required) it cannot be submitted.
   - **Verify (UI):** Post a GRN with a −0.5% variance → reason required (FMS-T205); submit → the GRN's dip fields are stored. The Wetstock Ledger Entry of type *Delivery* is wired and checked in F15.
   - **Commit:** `feat(wetstock): delivery dips on GRN`
 
-- [ ] **FMS-E04 · Writing Feature · Record delivery shortage** · S · E03
+- [x] **FMS-E04 · Writing Feature · Record delivery shortage** · S · E03
   - **Skills:** `frappe-impl-clientscripts`, `frappe-impl-whitelisted`
   - **Description:** Button on submitted GRNs with a shortage beyond tolerance that prepares a draft Stock Entry (Material Issue, account Delivery Shortage Claims) linked to the GRN.
   - **Verify (UI):** Button creates a draft; submitting it reduces T1 book stock by the shortage.
   - **Commit:** `feat(wetstock): record delivery shortage`
 
-- [ ] **FMS-E05 · Writing Feature · Fuel Own Use stock entry type** · M · C05, C13
+- [x] **FMS-E05 · Writing Feature · Fuel Own Use stock entry type** · M · C05, C13
   - **Skills:** `frappe-syntax-hooks-events`, `frappe-impl-clientscripts`
   - **Description:** Stock Entry Type fixture; custom fields on Stock Entry except `fms_forecourt_shift` (added in F01); validation (narration, purpose, nozzle, vehicle when required); expense account from purpose. Defaulting the shift to the open shift at the station is done in F06.
   - **Verify (UI):** Post 40 L generator use from D01-N2 → T2 stock −40 L; GL shows the generator expense account with station dimension.
   - **Commit:** `feat(wetstock): fuel own use`
 
-- [ ] **FMS-E06 · Writing Feature · Tank Dip (spot dip)** · S · C12, D02
+- [x] **FMS-E06 · Writing Feature · Tank Dip (spot dip)** · S · C12, D02
   - **Skills:** `frappe-syntax-doctypes`
   - **Description:** Catalogue 8.4; computes book volume at the dip time from the stock ledger. The *Spot Dip* ledger row is wired in F15.
   - **Verify (UI):** Spot dip on T1 shows book volume and difference; no stock posted.
   - **Commit:** `feat(wetstock): spot dips`
 
-- [ ] **FMS-E07 · Writing Feature · Tank Transfer** · S · C10
+- [x] **FMS-E07 · Writing Feature · Tank Transfer** · S · C10
   - **Skills:** `frappe-impl-controllers`
   - **Description:** Catalogue 8.5, creating a Material Transfer Stock Entry on submit.
   - **Verify (UI):** Transfer 500 L T2 → T3 (same product); stock balance report shows the move.
   - **Commit:** `feat(wetstock): tank transfer`
 
-- [ ] **FMS-E08 · Writing Feature · Meter Change** · S · C13
+- [x] **FMS-E08 · Writing Feature · Meter Change** · S · C13
   - **Skills:** `frappe-impl-controllers`
   - **Description:** Catalogue 8.3; updates nozzle last readings. The *Meter Change* ledger row is wired in F15.
   - **Verify (UI):** Meter Change on D01-N1 → Nozzle shows new last readings.
   - **Commit:** `feat(wetstock): meter change`
 
-- [ ] **FMS-E09 · Writing Feature · Fuel Price Change** · M · C08
+- [x] **FMS-E09 · Writing Feature · Fuel Price Change** · M · C08
   - **Skills:** `frappe-impl-controllers`, `frappe-core-workflow`
   - **Description:** Catalogue 8.2 without the shift segment part and `applied_to_shift` (added in F07). Workflow Draft → Pending Approval → Approved. `effective_at` may not be in the future. Writes Item Price on the station price list, and the Sales Invoice / POS Invoice `validate` hook that sets fuel rates from the change in force at the posting time (design guide 6.5a, D24).
   - **Verify (UI):** Station Manager creates PMS 180 → 182 at 14:00; Area Manager approves; Item Price shows 182 from the effective date; a Sales Invoice posted at 13:00 the same day keeps 180, one at 15:00 gets 182.
   - **Commit:** `feat(shift): fuel price change`
 
-- [ ] **FMS-E10 · Writing Test · Station movements tests** · M · E01–E09
+- [x] **FMS-E10 · Writing Test · Station movements tests** · M · E01–E09
   - **Skills:** `frappe-testing-unit`
   - **Description:** Integration tests for E03–E09 using the factories.
   - **Verify:** `bench --site test_fms run-tests --app forecourt` passes.

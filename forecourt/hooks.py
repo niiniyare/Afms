@@ -249,13 +249,27 @@ has_permission = {
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+	"Purchase Receipt": {
+		"validate": "forecourt.wetstock.grn_hooks.validate_purchase_receipt",
+		"on_submit": "forecourt.wetstock.grn_hooks.on_submit_purchase_receipt",
+		"on_cancel": "forecourt.wetstock.grn_hooks.on_cancel_purchase_receipt",
+	},
+	"Stock Entry": {
+		"validate": "forecourt.wetstock.stock_entry_hooks.validate_stock_entry",
+		"on_cancel": "forecourt.wetstock.stock_entry_hooks.on_cancel_stock_entry",
+	},
+	"Sales Invoice": {
+		"validate": "forecourt.forecourt_shift.price_hooks.set_fuel_price_on_invoice",
+	},
+	"POS Invoice": {
+		"validate": "forecourt.forecourt_shift.price_hooks.set_fuel_price_on_invoice",
+	},
+}
+
+doctype_js = {
+	"Purchase Receipt": "public/js/purchase_receipt.js",
+}
 
 # Scheduled Tasks
 # ---------------
