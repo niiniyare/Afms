@@ -1,6 +1,7 @@
 # Python
 __pycache__/
 *.py[cod]
+sites/fms.localhost/logs
 logs
 sites/test_fms/logs/
 *$py.class
