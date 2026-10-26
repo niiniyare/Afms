@@ -206,7 +206,7 @@ Global defaults for the whole site. Company-specific values live in Forecourt Co
 | Fieldname | Type | Options | Flags | Notes |
 |---|---|---|---|---|
 | company | Link | Company | R U | |
-| staff_shortage_receivable_account | Link | Account | R | Must accept party type Employee; account type confirmed in FMS-C03 (design guide D17) |
+| staff_shortage_receivable_account | Link | Account | R | Account type **Payable**, root type Liability — ERPNext maps party type Employee → Payable (D17, decided in FMS-C03) |
 | cash_short_account | Link | Account | R | Expense |
 | cash_over_account | Link | Account | R | Income |
 | fuel_stock_variance_account | Link | Account | R | Expense |

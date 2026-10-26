@@ -1,0 +1,329 @@
+{
+ "actions": [
+  {
+   "action": "create_default_accounts",
+   "label": "Create Default Accounts"
+  }
+ ],
+ "autoname": "field:company",
+ "creation": "2026-10-26 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "company",
+  "sb_accounts",
+  "staff_shortage_receivable_account",
+  "cash_short_account",
+  "cb_accounts",
+  "cash_over_account",
+  "fuel_stock_variance_account",
+  "sb_clearing",
+  "delivery_shortage_claims_account",
+  "voucher_clearing_account",
+  "sb_tolerances",
+  "tank_tolerance_pct",
+  "tank_tolerance_l",
+  "cb_tolerances",
+  "approval_multiplier",
+  "cumulative_tolerance_pct",
+  "sb_other_tol",
+  "delivery_tolerance_pct",
+  "small_difference_pct",
+  "cb_other_tol",
+  "small_difference_amount",
+  "sb_posting",
+  "post_tank_variance",
+  "sales_posting_mode",
+  "cb_posting",
+  "credit_invoicing",
+  "float_after_shift",
+  "sb_advanced",
+  "price_cross_check_amount",
+  "allow_overlapping_shifts",
+  "cb_advanced",
+  "temperature_compensation"
+ ],
+ "fields": [
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "sb_accounts",
+   "fieldtype": "Section Break",
+   "label": "Accounts"
+  },
+  {
+   "fieldname": "staff_shortage_receivable_account",
+   "fieldtype": "Link",
+   "label": "Staff Shortage Receivable Account",
+   "options": "Account",
+   "reqd": 1,
+   "description": "Must be of account type Payable (ERPNext uses Payable for Employee party type)"
+  },
+  {
+   "fieldname": "cash_short_account",
+   "fieldtype": "Link",
+   "label": "Cash Short Account",
+   "options": "Account",
+   "reqd": 1,
+   "description": "Expense account for written-off cash shortages"
+  },
+  {
+   "fieldname": "cb_accounts",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cash_over_account",
+   "fieldtype": "Link",
+   "label": "Cash Over Account",
+   "options": "Account",
+   "reqd": 1,
+   "description": "Income account for written-off cash excesses"
+  },
+  {
+   "fieldname": "fuel_stock_variance_account",
+   "fieldtype": "Link",
+   "label": "Fuel Stock Variance Account",
+   "options": "Account",
+   "reqd": 1,
+   "description": "Expense account for tank stock gains and losses"
+  },
+  {
+   "fieldname": "sb_clearing",
+   "fieldtype": "Section Break",
+   "label": "Clearing Accounts"
+  },
+  {
+   "fieldname": "delivery_shortage_claims_account",
+   "fieldtype": "Link",
+   "label": "Delivery Shortage Claims Account",
+   "options": "Account",
+   "reqd": 1,
+   "description": "Current asset account (must not be Receivable type — a Stock Entry cannot carry a party)"
+  },
+  {
+   "fieldname": "voucher_clearing_account",
+   "fieldtype": "Link",
+   "label": "Voucher Clearing Account",
+   "options": "Account",
+   "description": "Current asset account for prepaid fuel vouchers redeemed"
+  },
+  {
+   "fieldname": "sb_tolerances",
+   "fieldtype": "Section Break",
+   "label": "Tank Tolerances"
+  },
+  {
+   "default": "0.5",
+   "fieldname": "tank_tolerance_pct",
+   "fieldtype": "Percent",
+   "label": "Tank Tolerance (%)",
+   "description": "Per-shift tank variance tolerance as percentage of throughput"
+  },
+  {
+   "default": "20",
+   "fieldname": "tank_tolerance_l",
+   "fieldtype": "Float",
+   "label": "Tank Tolerance (L)",
+   "description": "Per-shift tank variance tolerance in litres (whichever gives the larger absolute allowance wins)"
+  },
+  {
+   "fieldname": "cb_tolerances",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "2",
+   "fieldname": "approval_multiplier",
+   "fieldtype": "Float",
+   "label": "Approval Multiplier",
+   "description": "Variance above tolerance × this multiplier requires director approval"
+  },
+  {
+   "default": "0.3",
+   "fieldname": "cumulative_tolerance_pct",
+   "fieldtype": "Percent",
+   "label": "Cumulative Tolerance (%)",
+   "description": "Rolling 30-day cumulative tank variance tolerance"
+  },
+  {
+   "fieldname": "sb_other_tol",
+   "fieldtype": "Section Break",
+   "label": "Cash Tolerances"
+  },
+  {
+   "default": "0.3",
+   "fieldname": "delivery_tolerance_pct",
+   "fieldtype": "Percent",
+   "label": "Delivery Tolerance (%)",
+   "description": "GRN delivery shortage tolerance before a reason is required"
+  },
+  {
+   "default": "0.1",
+   "fieldname": "small_difference_pct",
+   "fieldtype": "Percent",
+   "label": "Small Difference (%)",
+   "description": "Cash shortages or excesses up to this percentage of expected cash are written off without approval"
+  },
+  {
+   "fieldname": "cb_other_tol",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "small_difference_amount",
+   "fieldtype": "Currency",
+   "label": "Small Difference (Amount)",
+   "description": "Fixed-amount alternative for the small difference write-off limit"
+  },
+  {
+   "fieldname": "sb_posting",
+   "fieldtype": "Section Break",
+   "label": "Posting"
+  },
+  {
+   "default": "Every shift with dips",
+   "fieldname": "post_tank_variance",
+   "fieldtype": "Select",
+   "label": "Post Tank Variance",
+   "options": "Every shift with dips\nLast shift of day\nOutside tolerance only"
+  },
+  {
+   "default": "Shift summary",
+   "fieldname": "sales_posting_mode",
+   "fieldtype": "Select",
+   "label": "Sales Posting Mode",
+   "options": "Shift summary\nPer transaction",
+   "description": "Design guide 12.3"
+  },
+  {
+   "fieldname": "cb_posting",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Per customer per shift",
+   "fieldname": "credit_invoicing",
+   "fieldtype": "Select",
+   "label": "Credit Invoicing",
+   "options": "Per customer per shift\nMonthly",
+   "description": "Monthly mode posts Delivery Notes instead of Sales Invoices"
+  },
+  {
+   "default": "Stays in till",
+   "fieldname": "float_after_shift",
+   "fieldtype": "Select",
+   "label": "Float After Shift",
+   "options": "Stays in till\nReturned to safe",
+   "description": "Design guide 7.5"
+  },
+  {
+   "fieldname": "sb_advanced",
+   "fieldtype": "Section Break",
+   "label": "Advanced",
+   "collapsible": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "price_cross_check_amount",
+   "fieldtype": "Currency",
+   "label": "Price Cross-Check Amount",
+   "description": "Maximum allowed difference between meter cash amount and volume × price (design guide 5.6)"
+  },
+  {
+   "default": "0",
+   "fieldname": "allow_overlapping_shifts",
+   "fieldtype": "Check",
+   "label": "Allow Overlapping Shifts",
+   "description": "When set, FMS-S110 (overlapping shift window) is skipped"
+  },
+  {
+   "fieldname": "cb_advanced",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "temperature_compensation",
+   "fieldtype": "Check",
+   "label": "Temperature Compensation",
+   "read_only": 1,
+   "description": "Reserved for backlog epic P7 (Phase 0–3 record temperature and density only)"
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-26 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Forecourt Setup",
+ "name": "Forecourt Company Settings",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "permlevel": 0,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "permlevel": 0,
+   "read": 1,
+   "role": "Forecourt Administrator",
+   "write": 1
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "role": "Station Accountant",
+   "write": 1
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "role": "Business Executive"
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "role": "Station Manager"
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "role": "Assistant Station Manager"
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "role": "Forecourt Supervisor"
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "role": "Forecourt Sales Operator"
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "role": "Site Cashier"
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "role": "Integration Service Account"
+  }
+ ],
+ "sort_field": "company",
+ "sort_order": "ASC",
+ "states": [],
+ "title_field": "company",
+ "track_changes": 1
+}
