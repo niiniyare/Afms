@@ -7,6 +7,69 @@ app_license = "mit"
 
 required_apps = ["erpnext"]
 
+fixtures = [
+	# Custom fields added by FMS — filtered to FMS modules so other apps' fields are not touched
+	{
+		"dt": "Custom Field",
+		"filters": [
+			[
+				"module",
+				"in",
+				[
+					"Forecourt Setup",
+					"Wetstock",
+					"Forecourt Shift",
+					"Forecourt Finance",
+					"Forecourt Integrations",
+				],
+			]
+		],
+	},
+	{
+		"dt": "Property Setter",
+		"filters": [
+			[
+				"module",
+				"in",
+				[
+					"Forecourt Setup",
+					"Wetstock",
+					"Forecourt Shift",
+					"Forecourt Finance",
+					"Forecourt Integrations",
+				],
+			]
+		],
+	},
+	# Roles (catalogue 2.2)
+	{
+		"dt": "Role",
+		"filters": [
+			[
+				"name",
+				"in",
+				[
+					"FMS Director",
+					"FMS Area Manager",
+					"FMS Station Manager",
+					"FMS Accountant",
+					"FMS Cashier",
+					"FMS Auditor",
+					"FMS Integration",
+				],
+			]
+		],
+	},
+	# Workflow and workflow states/actions for FMS DocTypes
+	{"dt": "Workflow State", "filters": [["name", "like", "FMS %"]]},
+	{"dt": "Workflow Action Master", "filters": [["name", "like", "FMS %"]]},
+	{"dt": "Workflow", "filters": [["document_type", "like", "Forecourt %"]]},
+	# FMS stock entry types
+	{"dt": "Stock Entry Type", "filters": [["name", "like", "Fuel %"]]},
+	# Station as an accounting dimension
+	{"dt": "Accounting Dimension", "filters": [["document_type", "=", "Forecourt Station"]]},
+]
+
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [
 # 	{
@@ -273,4 +336,3 @@ required_apps = ["erpnext"]
 # ------------
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
-
