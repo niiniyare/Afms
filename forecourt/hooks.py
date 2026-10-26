@@ -115,12 +115,17 @@ fixtures = [
 # `mount_on` on that same record, and its entries are appended to the host's rail. Mounting keeps
 # the companion off the apps screen, so it takes precedence over any add_to_apps_screen above.
 
+# Boot
+# ----
+# Extend the boot session payload sent to every client on login.
+extend_bootinfo = "forecourt.boot.get_bootinfo"
+
 # Includes in <head>
 # ------------------
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/forecourt/css/forecourt.css"
-# app_include_js = "/assets/forecourt/js/forecourt.js"
+app_include_js = "/assets/forecourt/js/station_default.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/forecourt/css/forecourt.css"
