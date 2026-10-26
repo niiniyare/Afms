@@ -474,7 +474,7 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
   - **Verify (UI):** A −500 shortage cannot be submitted until a resolution line is confirmed.
   - **Commit:** `feat(shift): resolution lines`
 
-- [ ] **FMS-F12 · Writing Feature · Gates** · M · F04–F11
+- [x] **FMS-F12 · Writing Feature · Gates** · M · F04–F11
   - **Skills:** `frappe-errors-controllers`
   - **Description:** All gates in design guide 6.6 (including FMS-S115) in `before_submit`, each raising its coded message from one `forecourt/errors.py` catalogue. Gate failures are listed together, not one at a time. FMS-S110 is skipped when the company allows overlapping shifts.
   - **Verify (UI):** A shift with three problems shows all three codes in one message.
