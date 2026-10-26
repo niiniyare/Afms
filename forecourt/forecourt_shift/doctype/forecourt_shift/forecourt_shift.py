@@ -3,7 +3,8 @@
 F01: DocType structure.
 F02: before_insert pre-fill.
 F03: validate calculations.
-F04+: meter modes/drift, before_submit gates (added in later tasks).
+F04: meter modes/drift gate.
+F12+: remaining before_submit gates (added in later tasks).
 """
 
 from __future__ import annotations
@@ -19,9 +20,26 @@ from forecourt.calc import cashier as calc_cashier
 from forecourt.calc import drift as calc_drift
 from forecourt.calc import meters as calc_meters
 from forecourt.calc import reconciliation as calc_reconciliation
+from forecourt.errors import FMS_W103
 
 
 class ForecourtShift(Document):
+	# ------------------------------------------------------------------ F04
+	def before_submit(self) -> None:
+		"""Gate: drift reason required when configured (FMS-W103)."""
+		settings = frappe.get_cached_doc("Forecourt Settings")
+		if not getattr(settings, "drift_requires_reason", True):
+			return
+		missing = [row.nozzle for row in self.meter_readings if row.drift_breach and not row.drift_reason]
+		if missing:
+			nozzle_list = ", ".join(missing)
+			frappe.throw(
+				_("{0}: Drift beyond tolerance on {1} — record the reason before closing.").format(
+					FMS_W103, nozzle_list
+				),
+				title=_("Drift Reason Required"),
+			)
+
 	# ------------------------------------------------------------------ F03
 	def validate(self) -> None:
 		self._compute_item_sale_amounts()
@@ -118,7 +136,12 @@ class ForecourtShift(Document):
 				abs(row.drift_ecash_mvol_l),
 				abs(row.drift_evol_mvol_l),
 			)
-			row.drift_breach = int(not calc_drift.within_tolerance(max_drift, result.basis_litres))
+			settings = frappe.get_cached_doc("Forecourt Settings")
+			tol_pct = flt(getattr(settings, "drift_tolerance_pct", 0.5) or 0.5)
+			tol_l = flt(getattr(settings, "drift_tolerance_l", 2.0) or 2.0)
+			row.drift_breach = int(
+				not calc_drift.within_tolerance(max_drift, result.basis_litres, tol_pct, tol_l)
+			)
 
 	def _compute_tank_dip_rows(self) -> None:
 		# sum net_volume_l per tank from meter readings
