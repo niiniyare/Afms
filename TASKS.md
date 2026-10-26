@@ -16,7 +16,7 @@
 |---|---|---|
 | A. Environment | 9 | 9 |
 | B. Repository and app scaffold | 9 | 8 |
-| C. Foundation masters (Phase 0) | 14 | 2 |
+| C. Foundation masters (Phase 0) | 14 | 3 |
 | D. Calculation core | 8 | 0 |
 | E. Station movements | 10 | 0 |
 | F. Forecourt Shift (Phase 1 core) | 18 | 0 |
@@ -28,7 +28,7 @@
 | L. CI/CD | 4 | 0 |
 | M. Deployment and operations | 8 | 0 |
 | N. Pilot and go-live | 5 | 0 |
-| **Total (Phases 0–3)** | **124** | **19** |
+| **Total (Phases 0–3)** | **124** | **20** |
 | P. Later phases (backlog) | 8 epics | — |
 
 Update the *Done* column in the same commit that ticks a task.
@@ -221,7 +221,7 @@ Build in catalogue order. Each DocType task includes its JSON, controller, a tes
   - **Verify (CLI):** Its test passes.
   - **Commit:** `feat(setup): add Forecourt Settings`
 
-- [ ] **FMS-C03 · Writing Feature · Forecourt Company Settings** · S · C02
+- [x] **FMS-C03 · Writing Feature · Forecourt Company Settings** · S · C02
   - **Skills:** `frappe-syntax-doctypes`, `frappe-core-database`
   - **Description:** Catalogue 4.2, with account validation (company, root type, account type) and the *Create default accounts* action (design guide 8.1, code in `forecourt/setup/`). Confirm which account type ERPNext accepts with party type *Employee* for the Staff Shortage Receivable account, and record the result in design guide D17 and catalogue 4.2 in the same pull request.
   - **Verify (UI):** Create one for Demo Petroleum; *Create default accounts* creates the missing accounts and fills the mapping; choosing an account from another company or of the wrong type is refused.
