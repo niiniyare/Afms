@@ -16,7 +16,7 @@
 |---|---|---|
 | A. Environment | 9 | 9 |
 | B. Repository and app scaffold | 9 | 8 |
-| C. Foundation masters (Phase 0) | 14 | 3 |
+| C. Foundation masters (Phase 0) | 14 | 4 |
 | D. Calculation core | 8 | 0 |
 | E. Station movements | 10 | 0 |
 | F. Forecourt Shift (Phase 1 core) | 18 | 0 |
@@ -28,7 +28,7 @@
 | L. CI/CD | 4 | 0 |
 | M. Deployment and operations | 8 | 0 |
 | N. Pilot and go-live | 5 | 0 |
-| **Total (Phases 0–3)** | **124** | **20** |
+| **Total (Phases 0–3)** | **124** | **21** |
 | P. Later phases (backlog) | 8 epics | — |
 
 Update the *Done* column in the same commit that ticks a task.
@@ -228,7 +228,7 @@ Build in catalogue order. Each DocType task includes its JSON, controller, a tes
   - **Verify (CLI):** A Journal Entry test posts a shortage to the chosen account with party type Employee.
   - **Commit:** `feat(setup): add Forecourt Company Settings`
 
-- [ ] **FMS-C04 · Writing Feature · Station Group tree** · S · C01
+- [x] **FMS-C04 · Writing Feature · Station Group tree** · S · C01
   - **Skills:** `frappe-syntax-doctypes` (tree)
   - **Description:** Catalogue 4.3, root record as fixture.
   - **Verify (UI):** Tree view shows *All Station Groups*; add Brand → Region → Area groups.
