@@ -181,7 +181,7 @@ Types: `feat`, `fix`, `test`, `chore`, `docs`, `refactor`, `ci`. Modules: `setup
   - **Verify:** `pre-commit run --all-files` passes.
   - **Commit:** `chore(env): configure pre-commit`
 
-- [ ] **FMS-B07 · Writing Test · Test scaffolding and factories** · M · B05, A07
+- [x] **FMS-B07 · Writing Test · Test scaffolding and factories** · M · B05, A07
   - **Skills:** `frappe-testing-unit`
   - **Description:** Create `forecourt/tests/factories.py` with functions that build a complete test station (company, accounts, warehouses, items PMS and AGO, one station, two tanks with charts, two dispensers with four nozzles, two cashiers, one shift template). Factories are idempotent and used by every integration test. Add one smoke `IntegrationTestCase` that calls the factory.
   - **Expectation:** Factories create a usable station in a fresh test site. (They fail until C-tasks exist; build them up as C-tasks land, and keep the smoke test green from C14 on.)
@@ -290,7 +290,7 @@ Build in catalogue order. Each DocType task includes its JSON, controller, a tes
   - **Verify (UI):** Create D01-N1 (T1) and D01-N2 (T2); linking a tank from another station is refused.
   - **Commit:** `feat(wetstock): add Nozzle`
 
-- [ ] **FMS-C14 · Writing Test · Station setup end to end** · S · C01–C13, B07
+- [x] **FMS-C14 · Writing Test · Station setup end to end** · S · C01–C13, B07
   - **Skills:** `frappe-testing-unit`
   - **Description:** Complete the factories; integration test that creates a full station and checks warehouses, walk-in customer and dimension.
   - **Verify:** `bench --site test_fms run-tests --app forecourt` passes.
@@ -302,39 +302,39 @@ Build in catalogue order. Each DocType task includes its JSON, controller, a tes
 
 No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytest) and run in milliseconds.
 
-- [ ] **FMS-D01 · Prototyping · Calculation API sketch** · S · B05
+- [x] **FMS-D01 · Prototyping · Calculation API sketch** · S · B05
   - **Skills:** `frappe-agent-interpreter`
   - **Description:** Write function signatures and docstrings for every calculation in the design guide (sections 5.3, 5.5, 5.6, 6.5a, 7.2, 10.4) using plain dataclasses for inputs and outputs. Review with the owner before implementing.
   - **Deliverables:** `calc/*.py` with signatures and `NotImplementedError`.
   - **Verify:** Owner approves the sketch in the pull request.
   - **Commit:** `feat(calc): sketch calculation API`
 
-- [ ] **FMS-D02 · Writing Feature · Calibration interpolation** · S · D01
+- [x] **FMS-D02 · Writing Feature · Calibration interpolation** · S · D01
   - **Description:** Depth → litres with linear interpolation, out-of-range errors, water deduction.
   - **Verify:** Unit tests cover exact rows, midpoints, below zero, above max.
   - **Commit:** `feat(calc): calibration interpolation`
 
-- [ ] **FMS-D03 · Writing Feature · Meter deltas, rollover and basis** · M · D01
+- [x] **FMS-D03 · Writing Feature · Meter deltas, rollover and basis** · M · D01
   - **Description:** Per-meter delta with rollover; litres from E-cash per price segment; basis selection including *Highest* with the winning meter recorded.
   - **Verify:** Unit tests include rollover on each meter and *Highest* picking each meter in turn.
   - **Commit:** `feat(calc): meter deltas, rollover and sales basis`
 
-- [ ] **FMS-D04 · Writing Feature · Meter drift** · S · D03
+- [x] **FMS-D04 · Writing Feature · Meter drift** · S · D03
   - **Description:** The three drift formulas and tolerance check (litres or %, whichever is larger).
   - **Verify:** Unit tests for each pair and the tolerance edge.
   - **Commit:** `feat(calc): meter drift`
 
-- [ ] **FMS-D05 · Writing Feature · Tank reconciliation and tolerances** · S · D01
+- [x] **FMS-D05 · Writing Feature · Tank reconciliation and tolerances** · S · D01
   - **Description:** Expected closing, variance, variance %, tolerance and approval thresholds, manifold groups.
   - **Verify:** Unit tests reproduce the design guide example numbers.
   - **Commit:** `feat(calc): tank reconciliation`
 
-- [ ] **FMS-D06 · Writing Feature · Cashier balance** · S · D01
+- [x] **FMS-D06 · Writing Feature · Cashier balance** · S · D01
   - **Description:** Expected, accounted, difference (design guide 7.2), multi-currency cash with exchange rates.
   - **Verify:** Unit test reproduces the worked example in design guide 8.2 (difference −500).
   - **Commit:** `feat(calc): cashier balance`
 
-- [ ] **FMS-D07 · Writing Feature · Payment attribution** · S · D06
+- [x] **FMS-D07 · Writing Feature · Payment attribution** · S · D06
   - **Description:** Exact rows for credit and POS; attributed rows spreading remaining payments by value (design guide 10.4), with rounding so totals match exactly.
   - **Verify:** Unit test: 180,000 mobile over 60/40 PMS/AGO → 108,000 / 72,000; totals equal input to the cent.
   - **Commit:** `feat(calc): payment attribution`
@@ -349,7 +349,7 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
 
 ## E. Station movements
 
-- [ ] **FMS-E01 · Writing Feature · Customer Vehicle** · S · C07
+- [x] **FMS-E01 · Writing Feature · Customer Vehicle** · S · C07
   - **Skills:** `frappe-syntax-doctypes`
   - **Description:** Catalogue 6.3 with plate normalisation.
   - **Verify (UI):** Create *Coast Haulage* vehicle `KDA 123A` → stored as `KDA123A`; duplicate refused.
