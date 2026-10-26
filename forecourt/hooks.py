@@ -115,12 +115,17 @@ fixtures = [
 # `mount_on` on that same record, and its entries are appended to the host's rail. Mounting keeps
 # the companion off the apps screen, so it takes precedence over any add_to_apps_screen above.
 
+# Boot
+# ----
+# Extend the boot session payload sent to every client on login.
+extend_bootinfo = "forecourt.boot.get_bootinfo"
+
 # Includes in <head>
 # ------------------
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/forecourt/css/forecourt.css"
-# app_include_js = "/assets/forecourt/js/forecourt.js"
+app_include_js = "/assets/forecourt/js/station_default.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/forecourt/css/forecourt.css"
@@ -244,13 +249,40 @@ has_permission = {
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+	"Purchase Receipt": {
+		"validate": "forecourt.wetstock.grn_hooks.validate_purchase_receipt",
+		"on_submit": "forecourt.wetstock.grn_hooks.on_submit_purchase_receipt",
+		"on_cancel": "forecourt.wetstock.grn_hooks.on_cancel_purchase_receipt",
+	},
+	"Stock Entry": {
+		"validate": "forecourt.wetstock.stock_entry_hooks.validate_stock_entry",
+		"on_cancel": "forecourt.wetstock.stock_entry_hooks.on_cancel_stock_entry",
+	},
+	"Sales Invoice": {
+		"validate": "forecourt.forecourt_shift.price_hooks.set_fuel_price_on_invoice",
+	},
+	"POS Invoice": {
+		"validate": "forecourt.forecourt_shift.price_hooks.set_fuel_price_on_invoice",
+	},
+	"Payment Entry": {
+		"on_cancel": "forecourt.forecourt_shift.cancel_guards.on_cancel_native",
+	},
+	"Delivery Note": {
+		"on_cancel": "forecourt.forecourt_shift.cancel_guards.on_cancel_native",
+	},
+	"Journal Entry": {
+		"on_cancel": "forecourt.forecourt_shift.cancel_guards.on_cancel_native",
+	},
+	"Stock Reconciliation": {
+		"on_cancel": "forecourt.forecourt_shift.cancel_guards.on_cancel_native",
+	},
+}
+
+doctype_js = {
+	"Purchase Receipt": "public/js/purchase_receipt.js",
+	"Forecourt Shift": "public/js/forecourt_shift.js",
+}
 
 # Scheduled Tasks
 # ---------------

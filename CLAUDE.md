@@ -159,7 +159,8 @@ Logs: `logs/` in the bench (`web.error.log`, `worker.error.log`, `frappe.log`) a
 |---|---|
 | Station | A physical site; an Accounting Dimension |
 | Fuel Tank | A tank; one ERPNext Warehouse per tank |
-| Dispenser / Nozzle | Pump / hose; a nozzle draws from one tank |
+| Island | A physical grouping of pumps on one plinth; used for reporting and cashier assignment |
+| Pump / Nozzle | Dispenser / hose; a nozzle draws from one tank |
 | E-cash, E-vol, M-vol | Electronic cash, electronic volume and manual (mechanical) volume meters |
 | Sales basis | The meter that drives sales (default E-cash; may be *Highest*) |
 | Drift | Difference between meters on the same nozzle |

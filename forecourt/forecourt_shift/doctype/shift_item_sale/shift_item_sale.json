@@ -1,0 +1,28 @@
+{
+ "actions": [],
+ "creation": "2026-10-27 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": ["cashier","item","col_break_1","qty","rate","amount","col_break_2","warehouse","pos_doctype","pos_invoice"],
+ "fields": [
+  {"fieldname":"cashier","fieldtype":"Link","label":"Cashier","options":"Employee","reqd":1,"in_list_view":1},
+  {"fieldname":"item","fieldtype":"Link","label":"Item","options":"Item","reqd":1,"in_list_view":1},
+  {"fieldname":"col_break_1","fieldtype":"Column Break"},
+  {"fieldname":"qty","fieldtype":"Float","label":"Qty","reqd":1},
+  {"fieldname":"rate","fieldtype":"Currency","label":"Rate","reqd":1},
+  {"fieldname":"amount","fieldtype":"Currency","label":"Amount","read_only":1,"in_list_view":1},
+  {"fieldname":"col_break_2","fieldtype":"Column Break"},
+  {"fieldname":"warehouse","fieldtype":"Link","label":"Warehouse","options":"Warehouse"},
+  {"fieldname":"pos_doctype","fieldtype":"Select","label":"POS DocType","options":"POS Invoice\nSales Invoice","read_only":1},
+  {"fieldname":"pos_invoice","fieldtype":"Dynamic Link","label":"POS Invoice","options":"pos_doctype","read_only":1}
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-27 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Forecourt Shift",
+ "name": "Shift Item Sale",
+ "owner": "Administrator",
+ "permissions": []
+}

@@ -1,0 +1,129 @@
+{
+ "actions": [],
+ "autoname": "format:FPC-{station}-{YYYY}-{#####}",
+ "creation": "2026-10-27 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "station",
+  "company",
+  "col_break_1",
+  "effective_at",
+  "approval_state",
+  "section_reason",
+  "reason",
+  "col_break_2",
+  "reference",
+  "section_items",
+  "items",
+  "section_shift",
+  "applied_to_shift"
+ ],
+ "fields": [
+  {
+   "fieldname": "station",
+   "fieldtype": "Link",
+   "label": "Station",
+   "options": "Station",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "fetch_from": "station.company",
+   "fetch_if_empty": 0,
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "effective_at",
+   "fieldtype": "Datetime",
+   "label": "Effective At",
+   "reqd": 1,
+   "in_list_view": 1,
+   "default": "Now"
+  },
+  {
+   "fieldname": "approval_state",
+   "fieldtype": "Select",
+   "label": "Approval State",
+   "options": "Draft\nPending Approval\nApproved\nRejected",
+   "default": "Draft",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "section_reason",
+   "fieldtype": "Section Break",
+   "label": "Reason"
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Reason",
+   "reqd": 1
+  },
+  {
+   "fieldname": "col_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "reference",
+   "fieldtype": "Data",
+   "label": "Reference"
+  },
+  {
+   "fieldname": "section_items",
+   "fieldtype": "Section Break",
+   "label": "Items"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "Fuel Price Change Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_shift",
+   "fieldtype": "Section Break",
+   "label": "Shift",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "applied_to_shift",
+   "fieldtype": "Link",
+   "label": "Applied to Shift",
+   "options": "Forecourt Shift",
+   "read_only": 1
+  }
+ ],
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-10-27 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Forecourt Shift",
+ "name": "Fuel Price Change",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {"create": 1, "delete": 1, "permlevel": 0, "read": 1, "role": "Station Manager", "write": 1},
+  {"create": 1, "submit": 1, "permlevel": 0, "read": 1, "role": "Area Manager", "write": 1},
+  {"submit": 1, "permlevel": 0, "read": 1, "role": "Forecourt Director"},
+  {"permlevel": 0, "read": 1, "role": "Station Accountant"},
+  {"permlevel": 0, "read": 1, "role": "Forecourt Administrator"}
+ ],
+ "search_fields": "station,effective_at",
+ "sort_field": "effective_at",
+ "sort_order": "DESC",
+ "title_field": "station",
+ "track_changes": 1
+}
