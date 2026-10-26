@@ -1,0 +1,27 @@
+{
+ "actions": [],
+ "creation": "2026-10-27 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": ["cashier","currency","col_break_1","denomination","count","col_break_2","amount","exchange_rate","base_amount"],
+ "fields": [
+  {"fieldname":"cashier","fieldtype":"Link","label":"Cashier","options":"Employee","reqd":1,"in_list_view":1},
+  {"fieldname":"currency","fieldtype":"Link","label":"Currency","options":"Currency","reqd":1,"in_list_view":1},
+  {"fieldname":"col_break_1","fieldtype":"Column Break"},
+  {"fieldname":"denomination","fieldtype":"Currency","label":"Denomination"},
+  {"fieldname":"count","fieldtype":"Int","label":"Count"},
+  {"fieldname":"col_break_2","fieldtype":"Column Break"},
+  {"fieldname":"amount","fieldtype":"Currency","label":"Amount","reqd":1,"in_list_view":1},
+  {"fieldname":"exchange_rate","fieldtype":"Float","label":"Exchange Rate","read_only":1},
+  {"fieldname":"base_amount","fieldtype":"Currency","label":"Base Amount","read_only":1}
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-27 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Forecourt Shift",
+ "name": "Shift Cash Count",
+ "owner": "Administrator",
+ "permissions": []
+}
