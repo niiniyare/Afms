@@ -1585,7 +1585,7 @@ D19 was decided by the owner. The others are **Proposed**: defaults written into
 | # | Status | Decision | Proposed default | Alternative |
 |---|---|---|---|---|
 | D16 | Proposed | HRMS | Optional. Employee comes from ERPNext. Shortage recovery by cash repayment; salary deduction (Additional Salary) only when HRMS is installed (7.3) | HRMS required |
-| D17 | Proposed | Staff Shortage Receivable account type | An account that ERPNext accepts with party type *Employee*; the exact type is confirmed against ERPNext's party-type rules in FMS-C03 (7.3, 8.1) | HRMS Employee Advance |
+| D17 | **Decided** | Staff Shortage Receivable account type | **Payable** — ERPNext's `Party Type` record for *Employee* maps to account type *Payable* (`frappe.db.get_value("Party Type", "Employee", "account_type")` returns `"Payable"`). The account sits under the Liability root. Confirmed in FMS-C03. | HRMS Employee Advance |
 | D18 | Proposed | Delivery Shortage Claims account | Current asset, not Receivable-type (a Stock Entry cannot carry a party); claim moved to the supplier or transporter by Debit Note or Journal Entry (8.1) | — |
 | D19 | **Decided** | Shift status model | Controller sets `status`; a Frappe Workflow only drives `approval_state` (6.2) | Workflow owns all states |
 | D20 | Proposed | Shift date of overnight shifts | Date of `shift_start` in the station's time zone (6.1) | Date of `shift_end` |
