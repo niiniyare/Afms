@@ -177,18 +177,18 @@ Global defaults for the whole site. Company-specific values live in Forecourt Co
 |---|---|---|---|---|
 | accountable_person_label | Select | Cashier / Salesperson | D Cashier | Label used in the UI |
 | dip_entry_mode | Select | Depth via calibration chart / Litres entered directly | D chart | Default for stations |
-| record_ecash | Check | | D 1 | Meters recorded by default |
-| record_evol | Check | | D 0 | |
-| record_mvol | Check | | D 0 | |
-| sales_basis | Select | E-cash / E-vol / M-vol / Highest | D E-cash | Must be a recorded meter (validated) |
+| record_elec_cash | Check | | D 1 | Meters recorded by default |
+| record_elec_meter | Check | | D 0 | |
+| record_man_meter | Check | | D 0 | |
+| sales_basis | Select | Elec Cash / Elec Meter / Man Meter / Highest | D Elec Cash | Must be a recorded meter (validated) |
 | drift_tolerance_pct | Percent | | D 0.5 | |
 | drift_tolerance_l | Float | | D 2 | |
 | drift_requires_reason | Check | | D 1 | |
 | price_change_mode | Select | Latest price with segments / Between shifts only | D Latest | |
-| allow_time_estimated_segments | Check | | D 0 | Design guide 6.5a |
+| allow_estimated_segments | Check | | D 0 | Design guide 6.5a |
 | background_close_threshold | Int | | D 200 | Payment rows above which close runs as a job |
 | allow_backdated_shift_days | Int | | D 2 | |
-| require_meter_photo | Check | | D 0 | |
+| require_meter_reading_photo | Check | | D 0 | |
 | require_expense_receipt | Check | | D 1 | |
 
 **Controller:** `validate`: `sales_basis` must be one of the recorded meters; at least one meter recorded (FMS-M603).
@@ -370,9 +370,9 @@ Global defaults for the whole site. Company-specific values live in Forecourt Co
 | payment_terminals | Table | Station Payment Terminal | | Tills and card terminals |
 | *Section: Policy overrides* (blank = use settings) | | | | |
 | dip_entry_mode | Select | (blank) / Depth via calibration chart / Litres entered directly | | |
-| record_ecash, record_evol, record_mvol | Check | | | Overrides; a "use settings" check controls whether they apply |
+| record_elec_cash, record_elec_meter, record_man_meter | Check | | | Overrides; a "use settings" check controls whether they apply |
 | use_settings_meters | Check | | D 1 | |
-| sales_basis | Select | (blank) / E-cash / E-vol / M-vol / Highest | | |
+| sales_basis | Select | (blank) / Elec Cash / Elec Meter / Man Meter / Highest | | |
 | price_change_mode | Select | (blank) / Latest price with segments / Between shifts only | | |
 | tank_tolerance_pct, tank_tolerance_l | Percent / Float | | | Override company tolerances (blank = company) |
 | delivery_dips_required | Check | | D 1 | The only place this setting lives (design guide 5.4) |
@@ -440,8 +440,8 @@ Global defaults for the whole site. Company-specific values live in Forecourt Co
 | island | Data | | L F | Island 1… |
 | make, model, serial_no | Data | | | |
 | meters_override | Check | | | Older pumps without electronic meters |
-| record_ecash, record_evol, record_mvol | Check | | depends_on meters_override | |
-| sales_basis | Select | E-cash / E-vol / M-vol / Highest | depends_on meters_override, R when override | Must be one of this dispenser's recorded meters (FMS-M603; design guide D23) |
+| record_elec_cash, record_elec_meter, record_man_meter | Check | | depends_on meters_override | |
+| sales_basis | Select | Elec Cash / Elec Meter / Man Meter / Highest | depends_on meters_override, R when override | Must be one of this dispenser's recorded meters (FMS-M603; design guide D23) |
 | status | Select | Active / Out of service | D Active, L F | |
 
 ### 6.3 Customer Vehicle
@@ -703,7 +703,7 @@ Added to Purchase Receipt as the custom field `fms_delivery_dips` (section 12).
 | previous_shift | Link | Forecourt Shift | RO | Found on insert |
 | shift_title | Data | | RO H | |
 | dip_entry_mode, sales_basis, price_change_mode | Data | | RO | Snapshot of the station's effective settings at creation; tanks and dispensers may override (rows carry their own values) |
-| record_ecash, record_evol, record_mvol | Check | | RO | Snapshot of the station default; a column is shown when any row records that meter |
+| record_elec_cash, record_elec_meter, record_man_meter | Check | | RO | Snapshot of the station default; a column is shown when any row records that meter |
 
 **Tables (tabs in this order)**
 
@@ -758,12 +758,12 @@ All are `istable` 1, `editable_grid` 1, module Forecourt Shift.
 | attendant | Link | Employee | | Information only |
 | segment_no | Int | | RO | |
 | price | Currency | | RO | From the segment |
-| rec_ecash, rec_evol, rec_mvol | Check | | RO | Meters recorded for this nozzle (dispenser override, else station); drive `mandatory_depends_on` of the closings |
+| rec_elec_cash, rec_elec_meter, rec_man_meter | Check | | RO | Meters recorded for this nozzle (dispenser override, else station); drive `mandatory_depends_on` of the closings |
 | row_sales_basis | Data | | RO | Sales basis for this nozzle (dispenser override, else station) |
-| opening_ecash, closing_ecash | Float | | depends_on rec_ecash | Opening RO |
-| opening_evol, closing_evol | Float | | depends_on rec_evol | |
-| opening_mvol, closing_mvol | Float | | depends_on rec_mvol | |
-| rollover_ecash, rollover_evol, rollover_mvol | Check | | | |
+| opening_elec_cash, closing_elec_cash | Float | | depends_on rec_elec_cash | Opening RO |
+| opening_elec_meter, closing_elec_meter | Float | | depends_on rec_elec_meter | |
+| opening_man_meter, closing_man_meter | Float | | depends_on rec_man_meter | |
+| rollover_elec_cash, rollover_elec_meter, rollover_man_meter | Check | | | |
 | basis_meter | Data | | RO | Which meter drove sales |
 | basis_volume_l | Float | | RO | |
 | test_volume_l | Float | | | |

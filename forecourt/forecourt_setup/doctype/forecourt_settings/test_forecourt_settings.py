@@ -7,20 +7,20 @@ def _settings(**kwargs):
 	doc = frappe.get_doc(
 		{
 			"doctype": "Forecourt Settings",
-			"record_ecash": 1,
-			"record_evol": 0,
-			"record_mvol": 0,
-			"sales_basis": "E-cash",
+			"record_elec_cash": 1,
+			"record_elec_meter": 0,
+			"record_man_meter": 0,
+			"sales_basis": "Elec Cash",
 			"accountable_person_label": "Cashier",
 			"dip_entry_mode": "Depth via calibration chart",
 			"drift_tolerance_pct": 0.5,
 			"drift_tolerance_l": 2,
 			"drift_requires_reason": 1,
 			"price_change_mode": "Latest price with segments",
-			"allow_time_estimated_segments": 0,
+			"allow_estimated_segments": 0,
 			"background_close_threshold": 200,
 			"allow_backdated_shift_days": 2,
-			"require_meter_photo": 0,
+			"require_meter_reading_photo": 0,
 			"require_expense_receipt": 1,
 		}
 	)
@@ -30,38 +30,40 @@ def _settings(**kwargs):
 
 
 class TestForecourtSettings(FrappeTestCase):
-	def test_valid_ecash_default(self):
+	def test_valid_elec_cash_default(self):
 		_settings().validate()
 
-	def test_valid_evol_with_evol_recorded(self):
-		_settings(record_evol=1, sales_basis="E-vol").validate()
+	def test_valid_elec_meter_with_elec_meter_recorded(self):
+		_settings(record_elec_meter=1, sales_basis="Elec Meter").validate()
 
-	def test_valid_mvol_with_mvol_recorded(self):
-		_settings(record_mvol=1, sales_basis="M-vol").validate()
+	def test_valid_man_meter_with_man_meter_recorded(self):
+		_settings(record_man_meter=1, sales_basis="Man Meter").validate()
 
 	def test_valid_highest_with_both_recorded(self):
-		_settings(record_evol=1, sales_basis="Highest").validate()
+		_settings(record_elec_meter=1, sales_basis="Highest").validate()
 
-	def test_evol_basis_without_evol_recorded(self):
+	def test_elec_meter_basis_without_elec_meter_recorded(self):
 		with self.assertRaises(frappe.ValidationError):
-			_settings(record_evol=0, sales_basis="E-vol").validate()
+			_settings(record_elec_meter=0, sales_basis="Elec Meter").validate()
 
-	def test_mvol_basis_without_mvol_recorded(self):
+	def test_man_meter_basis_without_man_meter_recorded(self):
 		with self.assertRaises(frappe.ValidationError):
-			_settings(record_mvol=0, sales_basis="M-vol").validate()
+			_settings(record_man_meter=0, sales_basis="Man Meter").validate()
 
-	def test_highest_without_evol(self):
+	def test_highest_without_elec_meter(self):
 		with self.assertRaises(frappe.ValidationError):
-			_settings(record_evol=0, sales_basis="Highest").validate()
+			_settings(record_elec_meter=0, sales_basis="Highest").validate()
 
-	def test_highest_without_ecash(self):
+	def test_highest_without_elec_cash(self):
 		with self.assertRaises(frappe.ValidationError):
-			_settings(record_ecash=0, record_evol=1, sales_basis="Highest").validate()
+			_settings(record_elec_cash=0, record_elec_meter=1, sales_basis="Highest").validate()
 
 	def test_no_meters_recorded(self):
 		with self.assertRaises(frappe.ValidationError):
-			_settings(record_ecash=0, record_evol=0, record_mvol=0, sales_basis="E-cash").validate()
+			_settings(
+				record_elec_cash=0, record_elec_meter=0, record_man_meter=0, sales_basis="Elec Cash"
+			).validate()
 
 	def test_error_code_in_message(self):
 		with self.assertRaisesRegex(frappe.ValidationError, r"FMS-M603"):
-			_settings(record_evol=0, sales_basis="E-vol").validate()
+			_settings(record_elec_meter=0, sales_basis="Elec Meter").validate()
