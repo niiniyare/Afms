@@ -9,44 +9,14 @@ from __future__ import annotations
 import frappe
 from frappe import _
 
-# (bare name, account_type, root_type, description)
-_ACCOUNT_SPECS: list[tuple[str, str, str, str]] = [
-	(
-		"Staff Shortage Receivable",
-		"Payable",
-		"Liability",
-		_("Cash shortages charged to cashiers"),
-	),
-	(
-		"Cash Short",
-		"Expense Account",
-		"Expense",
-		_("Written-off cash shortages"),
-	),
-	(
-		"Cash Over",
-		"Income Account",
-		"Income",
-		_("Written-off cash excesses"),
-	),
-	(
-		"Fuel Stock Variance",
-		"Expense Account",
-		"Expense",
-		_("Tank stock gains and losses"),
-	),
-	(
-		"Delivery Shortage Claims",
-		"Current Asset",
-		"Asset",
-		_("Delivery shortages claimed from suppliers or transporters"),
-	),
-	(
-		"Voucher Clearing",
-		"Current Asset",
-		"Asset",
-		_("Prepaid fuel vouchers redeemed at the station"),
-	),
+# (bare name, account_type, root_type)
+_ACCOUNT_SPECS: list[tuple[str, str, str]] = [
+	("Staff Shortage Receivable", "Payable", "Liability"),
+	("Cash Short", "Expense Account", "Expense"),
+	("Cash Over", "Income Account", "Income"),
+	("Fuel Stock Variance", "Expense Account", "Expense"),
+	("Delivery Shortage Claims", "Current Asset", "Asset"),
+	("Voucher Clearing", "Current Asset", "Asset"),
 ]
 
 # Maps bare account name → Forecourt Company Settings fieldname
@@ -71,7 +41,7 @@ def create_default_accounts(settings_doc: "frappe.Document") -> None:
 	created: list[str] = []
 	existing: list[str] = []
 
-	for bare_name, account_type, root_type, _description in _ACCOUNT_SPECS:
+	for bare_name, account_type, root_type in _ACCOUNT_SPECS:
 		full_name = f"{bare_name} - {abbr}"
 		if not frappe.db.exists("Account", full_name):
 			parent = _find_parent(company, root_type, account_type)
