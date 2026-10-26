@@ -14,8 +14,8 @@
 
 | Section | Tasks | Done |
 |---|---|---|
-| A. Environment | 9 | 0 |
-| B. Repository and app scaffold | 9 | 0 |
+| A. Environment | 9 | 9 |
+| B. Repository and app scaffold | 9 | 6 |
 | C. Foundation masters (Phase 0) | 14 | 0 |
 | D. Calculation core | 8 | 0 |
 | E. Station movements | 10 | 0 |
@@ -28,7 +28,7 @@
 | L. CI/CD | 4 | 0 |
 | M. Deployment and operations | 8 | 0 |
 | N. Pilot and go-live | 5 | 0 |
-| **Total (Phases 0–3)** | **124** | **0** |
+| **Total (Phases 0–3)** | **124** | **15** |
 | P. Later phases (backlog) | 8 epics | — |
 
 Update the *Done* column in the same commit that ticks a task.
@@ -84,7 +84,7 @@ Types: `feat`, `fix`, `test`, `chore`, `docs`, `refactor`, `ci`. Modules: `setup
 
 ## A. Environment
 
-- [ ] **FMS-A01 · Initialize · Install system prerequisites** · S · —
+- [x] **FMS-A01 · Initialize · Install system prerequisites** · S · —
   - **Skills:** `frappe-ops-bench`, `frappe-ops-upgrades` (version requirements)
   - **Description:** On the development machine (Ubuntu 24.04 or newer, macOS, or WSL2), install the versions Frappe v16 requires: Python 3.14+, Node.js 24+, Yarn, MariaDB (the version listed in the v16 install notes), Redis, git, and the PDF prerequisites listed for v16. Use `uv` or `pyenv` for Python and `nvm` for Node so other projects are not affected.
   - **Expectation:** All tools report the required versions.
@@ -92,50 +92,50 @@ Types: `feat`, `fix`, `test`, `chore`, `docs`, `refactor`, `ci`. Modules: `setup
   - **Verify:** `python3.14 --version`, `node --version` (v24.x), `yarn --version`, `mariadb --version`, `redis-server --version`.
   - **Commit:** none (documented in B03).
 
-- [ ] **FMS-A02 · Configure · Configure MariaDB for Frappe** · S · A01
+- [x] **FMS-A02 · Configure · Configure MariaDB for Frappe** · S · A01
   - **Skills:** `frappe-ops-bench`, `frappe-ops-performance`
   - **Description:** Set `character-set-server = utf8mb4`, `collation-server = utf8mb4_unicode_ci`, and the `[mysql] default-character-set = utf8mb4` client setting. Set a root password.
   - **Expectation:** MariaDB restarts with utf8mb4 defaults.
   - **Verify:** `mariadb -uroot -p -e "SHOW VARIABLES LIKE 'character_set_server';"` → `utf8mb4`.
   - **Commit:** none.
 
-- [ ] **FMS-A03 · Initialize · Install bench CLI** · S · A01
+- [x] **FMS-A03 · Initialize · Install bench CLI** · S · A01
   - **Skills:** `frappe-ops-bench`
   - **Description:** Install `frappe-bench` with `uv tool install frappe-bench` (or `pipx`).
   - **Verify:** `bench --version` prints a version.
   - **Commit:** none.
 
-- [ ] **FMS-A04 · Initialize · Create the v16 bench** · S · A02, A03
+- [x] **FMS-A04 · Initialize · Create the v16 bench** · S · A02, A03
   - **Skills:** `frappe-ops-bench`
   - **Description:** `bench init --frappe-branch version-16 frappe-bench`, then inside it `bench get-app --branch version-16 erpnext` and `bench get-app --branch version-16 hrms`.
   - **Expectation:** Bench builds assets without errors.
   - **Verify:** `ls apps` → `frappe erpnext hrms`; `bench version` shows 16.x for all three.
   - **Commit:** none.
 
-- [ ] **FMS-A05 · Initialize · Create the development site** · S · A04
+- [x] **FMS-A05 · Initialize · Create the development site** · S · A04
   - **Skills:** `frappe-ops-bench`
   - **Description:** `bench new-site fms.localhost --db-root-password … --admin-password …`, then `bench --site fms.localhost install-app erpnext hrms`, `bench --site fms.localhost set-config developer_mode 1`, `bench use fms.localhost`.
   - **Expectation:** The site opens and the ERPNext setup wizard appears.
   - **Verify (UI):** `bench start`, open http://fms.localhost:8000, log in as Administrator.
   - **Commit:** none.
 
-- [ ] **FMS-A06 · Configure · Complete the ERPNext setup wizard with test data** · S · A05
+- [x] **FMS-A06 · Configure · Complete the ERPNext setup wizard with test data** · S · A05
   - **Description:** Company *Demo Petroleum Ltd* (Kenya, KES, standard chart of accounts), fiscal year, one admin user. Do not create demo data.
   - **Verify (UI):** Desk opens with the Accounting, Stock and Selling workspaces; Chart of Accounts shows the company.
   - **Commit:** none.
 
-- [ ] **FMS-A07 · Initialize · Create the test site** · S · A05
+- [x] **FMS-A07 · Initialize · Create the test site** · S · A05
   - **Skills:** `frappe-testing-unit`
   - **Description:** `bench new-site test_fms …`, install erpnext and hrms, `bench --site test_fms set-config allow_tests true`. This site is only for automated tests.
   - **Verify:** `bench --site test_fms run-tests --app erpnext --module erpnext.accounts.doctype.account.test_account` passes (smoke test of the test runner).
   - **Commit:** none.
 
-- [ ] **FMS-A08 · Initialize · Install Claude Code and the Frappe skill package** · S · A04
+- [x] **FMS-A08 · Initialize · Install Claude Code and the Frappe skill package** · S · A04
   - **Description:** Install Claude Code. Clone the skill package into a scratch folder: `git clone https://github.com/OpenAEC-Foundation/Frappe_Claude_Skill_Package.git`. The skills are copied into the app repository in B04 so every session uses the same version.
   - **Verify:** `ls Frappe_Claude_Skill_Package/skills/source/*/` lists 61 skill folders (syntax, core, impl, errors, ops, agents, testing).
   - **Commit:** none.
 
-- [ ] **FMS-A09 · Configure · Editor and debugging setup** · S · A05
+- [x] **FMS-A09 · Configure · Editor and debugging setup** · S · A05
   - **Skills:** `frappe-agent-debugger`
   - **Description:** VS Code (or similar) with Python and ESLint extensions, debug configuration for `bench serve` (web) and `bench worker`. Learn `bench --site fms.localhost console` and `bench --site fms.localhost mariadb`.
   - **Verify:** Breakpoint in a whitelisted method hits when called from the browser.
@@ -150,7 +150,7 @@ Types: `feat`, `fix`, `test`, `chore`, `docs`, `refactor`, `ci`. Modules: `setup
   - **Verify (UI):** Branch protection on `main` of `niiniyare/Afms`.
   - **Commit:** none.
 
-- [ ] **FMS-B02 · Initialize · Scaffold the app** · S · A05, B01
+- [x] **FMS-B02 · Initialize · Scaffold the app** · S · A05, B01
   - **Skills:** `frappe-impl-customapp`, `frappe-syntax-customapp`, `frappe-ops-app-lifecycle`
   - **Description:** `bench new-app forecourt` (title "Forecourt Management", publisher, email, licence MIT or as the owner chooses, GitHub workflow yes, pre-commit yes). Then join it to the existing repository, keeping its history: in `apps/forecourt`, `git remote add origin https://github.com/niiniyare/Afms`, `git fetch origin`, `git merge origin/main --allow-unrelated-histories`, keep the repository's `README.md` (add the generated app description to it), and push on a feature branch. `bench --site fms.localhost install-app forecourt`. HRMS is not a required app (design guide D16).
   - **Expectation:** App installs on the dev site; `required_apps = ["erpnext"]` in hooks; the repository root holds the app, the documents and `.claude/skills/`.
@@ -158,24 +158,24 @@ Types: `feat`, `fix`, `test`, `chore`, `docs`, `refactor`, `ci`. Modules: `setup
   - **Verify:** `bench --site fms.localhost list-apps` shows `forecourt`; `git log` shows the scaffold commit on top of the documentation history.
   - **Commit:** `chore(env): scaffold forecourt app`
 
-- [ ] **FMS-B03 · Documentation · Development setup notes** · S · B02
+- [x] **FMS-B03 · Documentation · Development setup notes** · S · B02
   - **Description:** The design guide (`docs/fms.md`), the catalogue (`docs/catalogue.md`), this file and `CLAUDE.md` are already in the repository. Add `docs/dev-setup.md` from A01 and check that the scaffold from B02 did not overwrite any of them.
   - **Verify:** `docs/dev-setup.md`, `docs/fms.md`, `docs/catalogue.md`, `TASKS.md` and `CLAUDE.md` visible on GitHub.
   - **Commit:** `docs: add development setup notes`
 
-- [ ] **FMS-B04 · Configure · Install the skill package as project skills** · S · A08, B02
+- [x] **FMS-B04 · Configure · Install the skill package as project skills** · S · A08, B02
   - **Description:** The 61 skills are already flattened into `.claude/skills/` (repository commit `7e4b3b0`). Check them against the package clone from A08 (`cp -r <package>/skills/source/*/* .claude/skills/` if they differ) and record the package commit hash in `.claude/skills/VERSION`, which is still missing.
   - **Expectation:** Claude Code started in the repo lists the frappe-* skills.
   - **Verify:** In Claude Code, ask "List the Frappe skills you have" → 61 `frappe-*` skills.
   - **Commit:** `chore(env): add Frappe Claude skill package <hash>`
 
-- [ ] **FMS-B05 · Configure · Define the modules** · S · B02
+- [x] **FMS-B05 · Configure · Define the modules** · S · B02
   - **Skills:** `frappe-syntax-customapp`
   - **Description:** Replace the default module in `forecourt/modules.txt` with: Forecourt Setup, Wetstock, Forecourt Shift, Forecourt Finance, Forecourt Integrations (catalogue 2.1). Create each module folder with `__init__.py`. Create the non-DocType packages: `calc/`, `posting/`, `corrections/`, `setup/`, `api/`, `tests/` with `__init__.py`, and `errors.py` with the code ranges of design guide 15.3.
   - **Verify:** `bench --site fms.localhost migrate` clean; in Desk, *Module Def* list shows the five modules with app `forecourt`.
   - **Commit:** `chore(setup): define modules and package layout`
 
-- [ ] **FMS-B06 · Configure · Pre-commit and code style** · S · B02
+- [x] **FMS-B06 · Configure · Pre-commit and code style** · S · B02
   - **Skills:** `frappe-testing-cicd`
   - **Description:** Keep the pre-commit config generated by `new-app` (ruff, eslint, prettier); set ruff line length and target Python 3.14 in `pyproject.toml`. Run `pre-commit install`.
   - **Verify:** `pre-commit run --all-files` passes.
@@ -188,7 +188,7 @@ Types: `feat`, `fix`, `test`, `chore`, `docs`, `refactor`, `ci`. Modules: `setup
   - **Verify:** `bench --site test_fms run-tests --app forecourt --module forecourt.tests.test_factories` passes (from C14).
   - **Commit:** `test(setup): add station factories`
 
-- [ ] **FMS-B08 · Configure · Fixtures configuration** · S · B05
+- [x] **FMS-B08 · Configure · Fixtures configuration** · S · B05
   - **Skills:** `frappe-impl-customapp`, `frappe-syntax-hooks`
   - **Description:** In `hooks.py`, declare `fixtures` for Custom Field and Property Setter filtered by `module` in the FMS modules, and for Role, Workflow, Workflow State, Workflow Action Master, Stock Entry Type, Accounting Dimension, Variance Reason, Own Use Purpose filtered by name lists (or by the FMS modules where the DocType has a module field).
   - **Verify:** `bench --site fms.localhost export-fixtures --app forecourt` runs without error.
