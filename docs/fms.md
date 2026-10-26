@@ -1306,7 +1306,7 @@ The data model does not change. Only the `source` of values changes.
 | **Forecourt Cashier** | Use the handheld app; see own shifts and statement | Desk access, other cashiers' data |
 | **Station Manager** | Create and submit shifts, deliveries, dips for their station; view station reports | Approve own large variances, approve prices, apply corrections, see other stations |
 | **Area Manager** | Approve variances and price changes; view and compare stations in their groups; spot dips | Edit accounting settings |
-| **Forecourt Accountant** | Bank and clearing reconciliation, supplier invoices, receivables, period close | Submit shifts (by default) |
+| **Station Accountant** | Bank and clearing reconciliation, supplier invoices, receivables, period close | Submit shifts (by default) |
 | **Forecourt Director** | Approve Shift Corrections and price policy; read-only dashboards and financial reports for their companies or portfolio | Any other edit |
 | **Forecourt Investor** | Read-only dashboards and reports for their companies | Any edit, any approval |
 | **Forecourt Administrator** | Masters (stations, tanks, nozzles, charts), settings | Cancel shifts (System Manager only, section 6.8) |

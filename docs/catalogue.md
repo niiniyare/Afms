@@ -201,7 +201,7 @@ Global defaults for the whole site. Company-specific values live in Forecourt Co
 | autoname | `field:company` |
 | title_field | company |
 | track_changes | 1 |
-| Permissions | Forecourt Administrator: R W C D · Forecourt Accountant: R W · others: R |
+| Permissions | Forecourt Administrator: R W C D · Station Accountant: R W · others: R |
 
 | Fieldname | Type | Options | Flags | Notes |
 |---|---|---|---|---|
@@ -278,7 +278,7 @@ Global defaults for the whole site. Company-specific values live in Forecourt Co
 |---|---|
 | module | Forecourt Setup |
 | autoname | `field:expense_type` |
-| Permissions | Forecourt Administrator, Forecourt Accountant: R W C D · others: R |
+| Permissions | Forecourt Administrator, Station Accountant: R W C D · others: R |
 
 | Fieldname | Type | Options | Flags | Notes |
 |---|---|---|---|---|
@@ -296,7 +296,7 @@ Global defaults for the whole site. Company-specific values live in Forecourt Co
 |---|---|
 | module | Forecourt Setup |
 | autoname | `field:purpose` |
-| Permissions | Forecourt Administrator, Forecourt Accountant: R W C D · others: R |
+| Permissions | Forecourt Administrator, Station Accountant: R W C D · others: R |
 
 | Fieldname | Type | Options | Flags | Notes |
 |---|---|---|---|---|
@@ -313,7 +313,7 @@ Global defaults for the whole site. Company-specific values live in Forecourt Co
 |---|---|
 | module | Forecourt Integrations |
 | autoname | `field:provider_name` |
-| Permissions | Forecourt Administrator: R W C D · Forecourt Accountant: R W · others: R |
+| Permissions | Forecourt Administrator: R W C D · Station Accountant: R W · others: R |
 
 | Fieldname | Type | Options | Flags | Notes |
 |---|---|---|---|---|
@@ -971,7 +971,7 @@ Composite index: (`cashier`, `posting_date`).
 | autoname | `hash` |
 | in_create | 1 |
 | track_changes | 0 |
-| Permissions | Forecourt Administrator, Forecourt Accountant: R W (retry button) · System Manager: R W D |
+| Permissions | Forecourt Administrator, Station Accountant: R W (retry button) · System Manager: R W D |
 
 | Fieldname | Type | Options | Flags | Notes |
 |---|---|---|---|---|
@@ -1176,7 +1176,7 @@ Forecourt                      (parent, Station Manager home)
 | Chart | Cumulative tank variance % · Delivery variance by supplier |
 | Link cards | *Equipment*: Fuel Tank, Tank Calibration Chart, Dispenser, Nozzle · *Movements*: Purchase Receipt (fuel), Tank Dip, Tank Transfer, Meter Change, Stock Entry (Fuel Own Use) · *Reports*: Tank Stock Position, Wetstock Variance, Delivery Variance, Meter Drift, Sales by Tank, Sales by Pump and Nozzle, Run-out Forecast |
 
-**Forecourt Finance** (module Forecourt Finance; roles Forecourt Accountant, Area Manager, Station Manager read)
+**Forecourt Finance** (module Forecourt Finance; roles Station Accountant, Area Manager, Station Manager read)
 
 | Block | Content |
 |---|---|
