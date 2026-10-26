@@ -10,7 +10,8 @@ F07: FMS-S112 gate: every price segment must have meter readings.
 F08: credit sale rates, over-limit flags, FMS-S107 gate.
 F09: POS pull-in into item_sales.
 F10: collection reference uniqueness, expense limits, FMS-S114 gate.
-F12+: remaining before_submit gates (added in later tasks).
+F11: resolution lines; FMS-S105 (cashier resolved) and FMS-S106 (tank variance approved) gates.
+F12: remaining before_submit gates (S101-S104, S108-S111, S115); errors collected and thrown together.
 """
 
 from __future__ import annotations
@@ -27,18 +28,29 @@ from forecourt.calc import cashier as calc_cashier
 from forecourt.calc import drift as calc_drift
 from forecourt.calc import meters as calc_meters
 from forecourt.calc import reconciliation as calc_reconciliation
-from forecourt.errors import FMS_S107, FMS_S112, FMS_S113, FMS_S114, FMS_W103
+from forecourt.errors import (
+	FMS_S105,
+	FMS_S106,
+	FMS_S107,
+	FMS_S112,
+	FMS_S113,
+	FMS_S114,
+	FMS_W103,
+)
 
 
 class ForecourtShift(Document):
-	# ------------------------------------------------------------------ F04 / F06 / F07 / F08 / F10
+	# ------------------------------------------------------------------ F04 / F06 / F07 / F08 / F10 / F11
 	def before_submit(self) -> None:
-		"""Gates: drift reason, no draft own use, segment readings, over-limit, ref uniqueness."""
+		"""Gates: drift reason, no draft own use, segment readings, over-limit, ref uniqueness,
+		cashier resolved, tank variance approved."""
 		self._gate_drift_reason()
 		self._gate_no_draft_own_use()
 		self._gate_segment_readings()
 		self._gate_credit_over_limit()
 		self._gate_collection_refs()
+		self._gate_cashier_resolved()
+		self._gate_tank_variance_approved()
 
 	def _gate_drift_reason(self) -> None:
 		settings = frappe.get_cached_doc("Forecourt Settings")
@@ -146,6 +158,37 @@ class ForecourtShift(Document):
 			frappe.throw(
 				_("{0}: ").format(FMS_S114) + "\n".join(errors),
 				title=_("Duplicate Collection Reference"),
+			)
+
+	def _gate_cashier_resolved(self) -> None:
+		"""FMS-S105: every cashier with a non-zero difference must have a resolution line."""
+		unresolved = [
+			row.cashier for row in self.cashiers if flt(row.difference, 2) != 0 and not row.resolved
+		]
+		if unresolved:
+			frappe.throw(
+				_(
+					"{0}: Unresolved cashier differences for: {1}. Add a resolution line before closing."
+				).format(FMS_S105, ", ".join(unresolved)),
+				title=_("Unresolved Cashier Differences"),
+			)
+
+	def _gate_tank_variance_approved(self) -> None:
+		"""FMS-S106: tank variances outside tolerance need a reason; above approval threshold, approval."""
+		errors = []
+		for row in self.tank_dips:
+			if row.within_tolerance:
+				continue
+			if not row.reason:
+				errors.append(_("Tank {0}: variance outside tolerance has no reason.").format(row.tank))
+			elif row.needs_approval and not row.approved_by:
+				errors.append(
+					_("Tank {0}: variance above approval threshold is not approved.").format(row.tank)
+				)
+		if errors:
+			frappe.throw(
+				_("{0}: ").format(FMS_S106) + "\n".join(errors),
+				title=_("Tank Variance Not Cleared"),
 			)
 
 	# ------------------------------------------------------------------ F08 helpers
@@ -282,7 +325,7 @@ class ForecourtShift(Document):
 						},
 					)
 
-	# ------------------------------------------------------------------ F03 / F05 / F06 / F08 / F09 / F10
+	# ------------------------------------------------------------------ F03 / F05 / F06 / F08 / F09 / F10 / F11
 	def validate(self) -> None:
 		self._compute_item_sale_amounts()
 		self._pull_own_use_for_nozzles()  # F06
@@ -295,7 +338,51 @@ class ForecourtShift(Document):
 		self._pull_own_use_for_tanks()  # F05
 		self._compute_tank_dip_rows()
 		self._compute_cashier_rows()
+		self._compute_resolution_approval()  # F11
+		self._update_cashier_resolved()  # F11
 		self._compute_parent_totals()
+
+	# ------------------------------------------------------------------ F11 helpers
+
+	def _compute_resolution_approval(self) -> None:
+		"""Set needs_approval on resolution rows based on write-off and variance thresholds."""
+		settings = frappe.get_cached_doc("Forecourt Settings")
+		small_pct = flt(getattr(settings, "small_difference_pct", 0.1) or 0.1) / 100.0
+		small_amt = flt(getattr(settings, "small_difference_amount", 0.0) or 0.0)
+		tol_pct = flt(getattr(settings, "tank_tolerance_pct", 0.5) or 0.5) / 100.0
+		approval_mult = flt(getattr(settings, "approval_multiplier", 2.0) or 2.0)
+
+		cashier_expected: dict[str, float] = {c.cashier: flt(c.expected) for c in self.cashiers}
+		tank_sales: dict[str, float] = {t.tank: flt(t.sales_l) for t in self.tank_dips}
+
+		for row in self.resolutions:
+			row.needs_approval = 0
+			if row.action == "Write off" and flt(row.amount):
+				expected = cashier_expected.get(row.cashier or "", 0.0)
+				limit = max(small_pct * expected, small_amt) if expected else small_amt
+				if flt(row.amount) > limit:
+					row.needs_approval = 1
+			elif row.action == "Accept variance" and row.tank:
+				sales_l = tank_sales.get(row.tank, 0.0)
+				approval_threshold = tol_pct * approval_mult * sales_l
+				if sales_l and abs(flt(row.volume_l)) > approval_threshold:
+					row.needs_approval = 1
+
+	def _update_cashier_resolved(self) -> None:
+		"""Set resolved=1 on cashier rows whose difference is fully covered by resolution lines."""
+		resolved_amount: dict[str, float] = defaultdict(float)
+		for row in self.resolutions:
+			if row.resolution_for == "Cashier" and row.cashier and flt(row.amount):
+				resolved_amount[row.cashier] += flt(row.amount)
+
+		for row in self.cashiers:
+			diff = flt(row.difference, 2)
+			if diff == 0.0:
+				row.resolved = 1
+			elif flt(resolved_amount.get(row.cashier, 0.0), 2) >= abs(diff):
+				row.resolved = 1
+			else:
+				row.resolved = 0
 
 	# ------------------------------------------------------------------ F02
 	def before_insert(self) -> None:
@@ -884,6 +971,60 @@ class ForecourtShift(Document):
 		if self.station and self.shift_template and self.shift_date:
 			station_label = frappe.db.get_value("Station", self.station, "station_name") or self.station
 			self.shift_title = f"{station_label} · {self.shift_template} · {self.shift_date}"
+
+
+@frappe.whitelist()
+def add_resolution(shift_name: str, resolution_for: str, ref: str) -> dict:
+	"""Append a pre-filled resolution row to the shift and save.
+
+	Called by the Resolve button on cashier and tank grid rows.
+	Returns the new row's name so the client can navigate to it.
+	"""
+	shift = frappe.get_doc("Forecourt Shift", shift_name)
+	frappe.has_permission("Forecourt Shift", doc=shift, throw=True)
+
+	cashier = None
+	tank = None
+	action = "Charge to cashier"
+	amount = 0.0
+	volume_l = 0.0
+
+	if resolution_for == "Cashier":
+		cashier_row = next((c for c in shift.cashiers if c.cashier == ref), None)
+		if not cashier_row:
+			frappe.throw(_("Cashier {0} not found in this shift.").format(ref))
+		diff = flt(cashier_row.difference, 2)
+		cashier = ref
+		if diff < 0:
+			action = "Charge to cashier"
+			amount = abs(diff)
+		else:
+			action = "Record excess"
+			amount = diff
+	elif resolution_for == "Tank":
+		tank_row = next((t for t in shift.tank_dips if t.tank == ref), None)
+		if not tank_row:
+			frappe.throw(_("Tank {0} not found in this shift.").format(ref))
+		tank = ref
+		action = "Accept variance"
+		volume_l = flt(tank_row.variance_l, 3)
+	else:
+		frappe.throw(_("Unknown resolution_for value: {0}").format(resolution_for))
+
+	row = shift.append(
+		"resolutions",
+		{
+			"resolution_for": resolution_for,
+			"cashier": cashier,
+			"tank": tank,
+			"action": action,
+			"amount": amount,
+			"volume_l": volume_l,
+		},
+	)
+	shift.flags.ignore_validate = True
+	shift.save(ignore_permissions=True)
+	return {"name": row.name, "action": action, "amount": amount, "volume_l": volume_l}
 
 
 @frappe.whitelist()
