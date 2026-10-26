@@ -4,6 +4,7 @@ F01: DocType structure.
 F02: before_insert pre-fill.
 F03: validate calculations.
 F04: meter modes/drift gate.
+F05: pull GRN receipts and own use into tank dip rows; chart-mode dip.
 F12+: remaining before_submit gates (added in later tasks).
 """
 
@@ -16,6 +17,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt, get_datetime
 
+from forecourt.calc import calibration as calc_calibration
 from forecourt.calc import cashier as calc_cashier
 from forecourt.calc import drift as calc_drift
 from forecourt.calc import meters as calc_meters
@@ -40,10 +42,13 @@ class ForecourtShift(Document):
 				title=_("Drift Reason Required"),
 			)
 
-	# ------------------------------------------------------------------ F03
+	# ------------------------------------------------------------------ F03 / F05
 	def validate(self) -> None:
 		self._compute_item_sale_amounts()
 		self._compute_meter_rows()
+		self._compute_dip_volumes()  # F05: chart-mode mm→L
+		self._pull_grn_receipts()  # F05: receipts from submitted GRNs
+		self._pull_own_use_for_tanks()  # F05: own use into tank rows
 		self._compute_tank_dip_rows()
 		self._compute_cashier_rows()
 		self._compute_parent_totals()
@@ -142,6 +147,136 @@ class ForecourtShift(Document):
 			row.drift_breach = int(
 				not calc_drift.within_tolerance(max_drift, result.basis_litres, tol_pct, tol_l)
 			)
+
+	# ------------------------------------------------------------------ F05 helpers
+
+	def _compute_dip_volumes(self) -> None:
+		"""Convert dip_mm to dip_l via calibration chart when dip_entry_mode is Chart."""
+		for row in self.tank_dips:
+			if row.dip_entry_mode != "Chart":
+				continue
+			chart = frappe.db.get_value(
+				"Tank Calibration Chart",
+				{"tank": row.tank, "valid_from": ["<=", self.shift_date or frappe.utils.today()]},
+				fieldname=["name", "max_depth_mm", "max_volume_l"],
+				order_by="valid_from desc",
+				as_dict=True,
+			)
+			if not chart:
+				continue
+			rows_raw = frappe.get_all(
+				"Tank Calibration Row",
+				filters={"parent": chart.name, "parentfield": "rows"},
+				fields=["depth_mm", "volume_l"],
+				order_by="depth_mm asc",
+			)
+			water_rows_raw = frappe.get_all(
+				"Tank Calibration Row",
+				filters={"parent": chart.name, "parentfield": "water_rows"},
+				fields=["depth_mm", "volume_l"],
+				order_by="depth_mm asc",
+			)
+			chart_rows = [(flt(r.depth_mm), flt(r.volume_l)) for r in rows_raw]
+			water_chart = [(flt(r.depth_mm), flt(r.volume_l)) for r in water_rows_raw]
+			if chart_rows and row.dip_mm:
+				try:
+					row.dip_l = flt(calc_calibration.interpolate(flt(row.dip_mm), chart_rows), 3)
+				except ValueError:
+					pass
+			if water_chart and row.water_mm:
+				try:
+					row.water_l = flt(calc_calibration.interpolate(flt(row.water_mm), water_chart), 3)
+				except ValueError:
+					pass
+
+	def _pull_grn_receipts(self) -> None:
+		"""Pull received_l from submitted GRNs in the shift window per tank."""
+		if not (self.station and self.shift_start and self.shift_end):
+			return
+		tanks = {row.tank for row in self.tank_dips}
+		if not tanks:
+			return
+		from datetime import date
+
+		start_dt = get_datetime(self.shift_start)
+		end_dt = get_datetime(self.shift_end)
+		start_date = start_dt.date() if not isinstance(start_dt, date) else start_dt
+		end_date = end_dt.date() if not isinstance(end_dt, date) else end_dt
+		if hasattr(start_dt, "date"):
+			start_date = start_dt.date()
+		if hasattr(end_dt, "date"):
+			end_date = end_dt.date()
+
+		grns = frappe.get_all(
+			"Purchase Receipt",
+			filters={
+				"station": self.station,
+				"docstatus": 1,
+				"posting_date": ["between", [str(start_date), str(end_date)]],
+			},
+			fields=["name", "posting_date", "posting_time"],
+		)
+		receipts: dict[str, float] = defaultdict(float)
+		for grn in grns:
+			posting_dt = get_datetime(f"{grn.posting_date} {grn.posting_time or '00:00:00'}")
+			if start_dt <= posting_dt < end_dt:
+				dip_rows = frappe.get_all(
+					"GRN Delivery Dip",
+					filters={"parent": grn.name, "tank": ["in", list(tanks)]},
+					fields=["tank", "received_l"],
+				)
+				for dr in dip_rows:
+					receipts[dr.tank] += flt(dr.received_l)
+		for row in self.tank_dips:
+			row.receipts_l = flt(receipts.get(row.tank, 0.0), 3)
+
+	def _pull_own_use_for_tanks(self) -> None:
+		"""Pull Fuel Own Use stock entries into tank_dip.own_use_l."""
+		if not (self.station and self.shift_start and self.shift_end):
+			return
+		# Map warehouse → tank for this shift's tanks
+		tank_to_warehouse: dict[str, str] = {}
+		wh_to_tank: dict[str, str] = {}
+		for row in self.tank_dips:
+			wh = frappe.db.get_value("Fuel Tank", row.tank, "warehouse")
+			if wh:
+				tank_to_warehouse[row.tank] = wh
+				wh_to_tank[wh] = row.tank
+		if not wh_to_tank:
+			return
+		from datetime import date
+
+		start_dt = get_datetime(self.shift_start)
+		end_dt = get_datetime(self.shift_end)
+		start_date = start_dt.date() if hasattr(start_dt, "date") else start_dt
+		end_date = end_dt.date() if hasattr(end_dt, "date") else end_dt
+
+		entries = frappe.get_all(
+			"Stock Entry",
+			filters={
+				"station": self.station,
+				"stock_entry_type": "Fuel Own Use",
+				"docstatus": 1,
+				"posting_date": ["between", [str(start_date), str(end_date)]],
+			},
+			fields=["name", "posting_date", "posting_time"],
+		)
+		own_use: dict[str, float] = defaultdict(float)
+		for entry in entries:
+			posting_dt = get_datetime(f"{entry.posting_date} {entry.posting_time or '00:00:00'}")
+			if start_dt <= posting_dt < end_dt:
+				items = frappe.get_all(
+					"Stock Entry Detail",
+					filters={"parent": entry.name, "s_warehouse": ["in", list(wh_to_tank.keys())]},
+					fields=["s_warehouse", "qty"],
+				)
+				for item in items:
+					tank = wh_to_tank.get(item.s_warehouse)
+					if tank:
+						own_use[tank] += flt(item.qty)
+		for row in self.tank_dips:
+			if row.tank in own_use:
+				row.own_use_l = flt(own_use[row.tank], 3)
 
 	def _compute_tank_dip_rows(self) -> None:
 		# sum net_volume_l per tank from meter readings
