@@ -16,7 +16,7 @@
 |---|---|---|
 | A. Environment | 9 | 9 |
 | B. Repository and app scaffold | 9 | 8 |
-| C. Foundation masters (Phase 0) | 14 | 3 |
+| C. Foundation masters (Phase 0) | 14 | 4 |
 | D. Calculation core | 8 | 0 |
 | E. Station movements | 10 | 0 |
 | F. Forecourt Shift (Phase 1 core) | 18 | 0 |
@@ -28,7 +28,7 @@
 | L. CI/CD | 4 | 0 |
 | M. Deployment and operations | 8 | 0 |
 | N. Pilot and go-live | 5 | 0 |
-| **Total (Phases 0–3)** | **124** | **20** |
+| **Total (Phases 0–3)** | **124** | **21** |
 | P. Later phases (backlog) | 8 epics | — |
 
 Update the *Done* column in the same commit that ticks a task.
@@ -234,7 +234,7 @@ Build in catalogue order. Each DocType task includes its JSON, controller, a tes
   - **Verify (UI):** Tree view shows *All Station Groups*; add Brand → Region → Area groups.
   - **Commit:** `feat(setup): add Station Group tree`
 
-- [ ] **FMS-C05 · Writing Feature · Reference masters** · M · C01
+- [x] **FMS-C05 · Writing Feature · Reference masters** · M · C01
   - **Skills:** `frappe-syntax-doctypes`
   - **Description:** Variance Reason, Expense Type (+ Expense Type Account), Own Use Purpose (+ Own Use Purpose Account) per catalogue 4.4–4.6, with default records as fixtures.
   - **Verify (UI):** The three lists show the default records; quick entry works for Variance Reason.

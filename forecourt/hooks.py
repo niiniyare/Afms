@@ -69,6 +69,28 @@ fixtures = [
 	{"dt": "Stock Entry Type", "filters": [["name", "like", "Fuel %"]]},
 	# Station as an accounting dimension
 	{"dt": "Accounting Dimension", "filters": [["document_type", "=", "Forecourt Station"]]},
+	# Reference master seed records (catalogue 4.4)
+	{
+		"dt": "Variance Reason",
+		"filters": [
+			[
+				"name",
+				"in",
+				[
+					"Dip error",
+					"Suspected leak",
+					"Suspected theft",
+					"Meter fault",
+					"Temperature",
+					"Delivery",
+					"Counting error",
+					"Drive-off (cashier)",
+					"Spillage (tank)",
+					"Unknown",
+				],
+			],
+		],
+	},
 ]
 
 # Each item in the list will be shown as an app in the apps page
