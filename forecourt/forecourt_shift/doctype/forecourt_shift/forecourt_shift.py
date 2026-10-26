@@ -5,6 +5,7 @@ F02: before_insert pre-fill.
 F03: validate calculations.
 F04: meter modes/drift gate.
 F05: pull GRN receipts and own use into tank dip rows; chart-mode dip.
+F06: pull own use into meter reading rows; FMS-S113 draft own-use gate.
 F12+: remaining before_submit gates (added in later tasks).
 """
 
@@ -22,29 +23,64 @@ from forecourt.calc import cashier as calc_cashier
 from forecourt.calc import drift as calc_drift
 from forecourt.calc import meters as calc_meters
 from forecourt.calc import reconciliation as calc_reconciliation
-from forecourt.errors import FMS_W103
+from forecourt.errors import FMS_S113, FMS_W103
 
 
 class ForecourtShift(Document):
-	# ------------------------------------------------------------------ F04
+	# ------------------------------------------------------------------ F04 / F06
 	def before_submit(self) -> None:
-		"""Gate: drift reason required when configured (FMS-W103)."""
+		"""Gates: FMS-W103 drift reason; FMS-S113 no draft own use in window."""
+		self._gate_drift_reason()
+		self._gate_no_draft_own_use()
+
+	def _gate_drift_reason(self) -> None:
 		settings = frappe.get_cached_doc("Forecourt Settings")
 		if not getattr(settings, "drift_requires_reason", True):
 			return
 		missing = [row.nozzle for row in self.meter_readings if row.drift_breach and not row.drift_reason]
 		if missing:
-			nozzle_list = ", ".join(missing)
 			frappe.throw(
 				_("{0}: Drift beyond tolerance on {1} — record the reason before closing.").format(
-					FMS_W103, nozzle_list
+					FMS_W103, ", ".join(missing)
 				),
 				title=_("Drift Reason Required"),
 			)
 
-	# ------------------------------------------------------------------ F03 / F05
+	def _gate_no_draft_own_use(self) -> None:
+		"""FMS-S113: no draft Fuel Own Use entry may exist inside the shift window."""
+		if not (self.station and self.shift_start and self.shift_end):
+			return
+		start_dt = get_datetime(self.shift_start)
+		end_dt = get_datetime(self.shift_end)
+		start_date = start_dt.date() if hasattr(start_dt, "date") else start_dt
+		end_date = end_dt.date() if hasattr(end_dt, "date") else end_dt
+		drafts = frappe.get_all(
+			"Stock Entry",
+			filters={
+				"station": self.station,
+				"stock_entry_type": "Fuel Own Use",
+				"docstatus": 0,
+				"posting_date": ["between", [str(start_date), str(end_date)]],
+			},
+			fields=["name", "posting_date", "posting_time"],
+		)
+		blocking = [
+			e.name
+			for e in drafts
+			if start_dt <= get_datetime(f"{e.posting_date} {e.posting_time or '00:00:00'}") < end_dt
+		]
+		if blocking:
+			frappe.throw(
+				_(
+					"{0}: Draft Fuel Own Use entries exist in the shift window: {1}. Submit or delete them before closing."
+				).format(FMS_S113, ", ".join(blocking)),
+				title=_("Draft Own Use Entry"),
+			)
+
+	# ------------------------------------------------------------------ F03 / F05 / F06
 	def validate(self) -> None:
 		self._compute_item_sale_amounts()
+		self._pull_own_use_for_nozzles()  # F06: own use → meter rows
 		self._compute_meter_rows()
 		self._compute_dip_volumes()  # F05: chart-mode mm→L
 		self._pull_grn_receipts()  # F05: receipts from submitted GRNs
@@ -147,6 +183,52 @@ class ForecourtShift(Document):
 			row.drift_breach = int(
 				not calc_drift.within_tolerance(max_drift, result.basis_litres, tol_pct, tol_l)
 			)
+
+	# ------------------------------------------------------------------ F06 helpers
+
+	def _pull_own_use_for_nozzles(self) -> None:
+		"""Pull submitted Fuel Own Use entries in shift window into meter_reading.own_use_l."""
+		if not (self.station and self.shift_start and self.shift_end):
+			return
+		nozzles = {row.nozzle for row in self.meter_readings if row.nozzle}
+		if not nozzles:
+			return
+		start_dt = get_datetime(self.shift_start)
+		end_dt = get_datetime(self.shift_end)
+		start_date = start_dt.date() if hasattr(start_dt, "date") else start_dt
+		end_date = end_dt.date() if hasattr(end_dt, "date") else end_dt
+
+		entries = frappe.get_all(
+			"Stock Entry",
+			filters={
+				"station": self.station,
+				"stock_entry_type": "Fuel Own Use",
+				"docstatus": 1,
+				"posting_date": ["between", [str(start_date), str(end_date)]],
+			},
+			fields=["name", "posting_date", "posting_time", "fms_nozzle"],
+		)
+		own_use: dict[str, float] = defaultdict(float)
+		for entry in entries:
+			if not entry.fms_nozzle or entry.fms_nozzle not in nozzles:
+				continue
+			posting_dt = get_datetime(f"{entry.posting_date} {entry.posting_time or '00:00:00'}")
+			if not (start_dt <= posting_dt < end_dt):
+				continue
+			qty = flt(
+				frappe.db.get_value(
+					"Stock Entry Detail",
+					{"parent": entry.name},
+					"qty",
+					order_by="idx asc",
+				)
+				or 0
+			)
+			own_use[entry.fms_nozzle] += qty
+
+		for row in self.meter_readings:
+			if row.nozzle in own_use:
+				row.own_use_l = flt(own_use[row.nozzle], 3)
 
 	# ------------------------------------------------------------------ F05 helpers
 
