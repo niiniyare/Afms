@@ -6,6 +6,7 @@ F03: validate calculations.
 F04: meter modes/drift gate.
 F05: pull GRN receipts and own use into tank dip rows; chart-mode dip.
 F06: pull own use into meter reading rows; FMS-S113 draft own-use gate.
+F07: FMS-S112 gate: every price segment must have meter readings.
 F12+: remaining before_submit gates (added in later tasks).
 """
 
@@ -23,15 +24,16 @@ from forecourt.calc import cashier as calc_cashier
 from forecourt.calc import drift as calc_drift
 from forecourt.calc import meters as calc_meters
 from forecourt.calc import reconciliation as calc_reconciliation
-from forecourt.errors import FMS_S113, FMS_W103
+from forecourt.errors import FMS_S112, FMS_S113, FMS_W103
 
 
 class ForecourtShift(Document):
-	# ------------------------------------------------------------------ F04 / F06
+	# ------------------------------------------------------------------ F04 / F06 / F07
 	def before_submit(self) -> None:
-		"""Gates: FMS-W103 drift reason; FMS-S113 no draft own use in window."""
+		"""Gates: FMS-W103 drift reason; FMS-S113 no draft own use; FMS-S112 segment readings."""
 		self._gate_drift_reason()
 		self._gate_no_draft_own_use()
+		self._gate_segment_readings()
 
 	def _gate_drift_reason(self) -> None:
 		settings = frappe.get_cached_doc("Forecourt Settings")
@@ -75,6 +77,28 @@ class ForecourtShift(Document):
 					"{0}: Draft Fuel Own Use entries exist in the shift window: {1}. Submit or delete them before closing."
 				).format(FMS_S113, ", ".join(blocking)),
 				title=_("Draft Own Use Entry"),
+			)
+
+	def _gate_segment_readings(self) -> None:
+		"""FMS-S112: every price segment must have closing meter readings."""
+		missing = []
+		for price_row in self.prices:
+			item = price_row.item
+			seg = int(price_row.segment_no or 1)
+			has_reading = any(
+				r.item == item
+				and int(r.segment_no or 1) == seg
+				and (r.closing_elec_cash or r.closing_elec_meter or r.closing_man_meter)
+				for r in self.meter_readings
+			)
+			if not has_reading:
+				missing.append(f"{item} seg {seg}")
+		if missing:
+			frappe.throw(
+				_(
+					"{0}: Missing meter readings for: {1}. Enter readings for all segments before closing."
+				).format(FMS_S112, ", ".join(missing)),
+				title=_("Incomplete Segments"),
 			)
 
 	# ------------------------------------------------------------------ F03 / F05 / F06
