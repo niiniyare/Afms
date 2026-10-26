@@ -1,1 +1,93 @@
-[]
+[
+ {
+  "desk_access": 1,
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Role",
+  "home_page": "",
+  "is_custom": 0,
+  "modified": "2026-10-26 16:40:41.703268",
+  "name": "Forecourt Administrator",
+  "restrict_to_domain": "",
+  "role_name": "Forecourt Administrator",
+  "two_factor_auth": 0
+ },
+ {
+  "desk_access": 1,
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Role",
+  "home_page": "",
+  "is_custom": 0,
+  "modified": "2026-10-26 16:40:41.867994",
+  "name": "Station Manager",
+  "restrict_to_domain": "",
+  "role_name": "Station Manager",
+  "two_factor_auth": 0
+ },
+ {
+  "desk_access": 1,
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Role",
+  "home_page": "",
+  "is_custom": 0,
+  "modified": "2026-10-26 16:40:41.877522",
+  "name": "Area Manager",
+  "restrict_to_domain": "",
+  "role_name": "Area Manager",
+  "two_factor_auth": 0
+ },
+ {
+  "desk_access": 1,
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Role",
+  "home_page": "",
+  "is_custom": 0,
+  "modified": "2026-10-26 16:40:41.885146",
+  "name": "Forecourt Accountant",
+  "restrict_to_domain": "",
+  "role_name": "Forecourt Accountant",
+  "two_factor_auth": 0
+ },
+ {
+  "desk_access": 1,
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Role",
+  "home_page": "",
+  "is_custom": 0,
+  "modified": "2026-10-26 16:40:41.891769",
+  "name": "Forecourt Director",
+  "restrict_to_domain": "",
+  "role_name": "Forecourt Director",
+  "two_factor_auth": 0
+ },
+ {
+  "desk_access": 1,
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Role",
+  "home_page": "",
+  "is_custom": 0,
+  "modified": "2026-10-26 16:40:41.899082",
+  "name": "Forecourt Investor",
+  "restrict_to_domain": "",
+  "role_name": "Forecourt Investor",
+  "two_factor_auth": 0
+ },
+ {
+  "desk_access": 0,
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Role",
+  "home_page": "",
+  "is_custom": 0,
+  "modified": "2026-10-26 16:40:41.905620",
+  "name": "Forecourt Cashier",
+  "restrict_to_domain": "",
+  "role_name": "Forecourt Cashier",
+  "two_factor_auth": 0
+ }
+]
