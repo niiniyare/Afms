@@ -81,17 +81,38 @@ Each DocType section has an **attributes** table using the DocType JSON property
 
 ### 2.2 Roles
 
+#### Custom FMS roles (created as fixtures)
+
 | Role | Desk access | Purpose |
 |---|---|---|
-| Forecourt Administrator | Yes | Masters and settings |
-| Station Manager | Yes | Daily operations at their station(s) |
-| Area Manager | Yes | Approvals and comparisons across their station group |
-| Forecourt Accountant | Yes | Reconciliation, GRN invoices, period close |
-| Forecourt Director | Yes | Approves Shift Corrections and price policy, read-only otherwise |
-| Forecourt Investor | Yes | Read-only dashboards and reports for their companies |
-| Forecourt Cashier | No (API and handheld only) | Phase 4 handheld app |
+| Business Executive | Yes | Group-level dashboards and reports; read-only across companies |
+| Station Manager | Yes | Daily operations at their station(s); shift oversight |
+| Assistant Station Manager | Yes | Day-to-day operations; deputises for Station Manager |
+| Forecourt Supervisor | Yes | Shift supervision; nozzle and tank entry |
+| Forecourt Sales Operator | Yes | Sales entry, meter readings, own-use recording |
+| Site Cashier | Yes | Cash reconciliation on Desk; collection entry |
+| Station Accountant | Yes | Reconciliation, GRN invoices, period close |
+| Integration Service Account | No (API only) | M-Pesa, pump controllers, eTIMS integrations |
 
-Standard ERPNext roles (Accounts User, Stock User, Purchase User) are given to managers and accountants as needed for the native documents they post (GRN, Fuel Own Use Stock Entry).
+Integration accounts: create one dedicated service user per integration (M-Pesa, pump controller, eTIMS) with narrowly scoped permissions rather than sharing a single privileged account.
+
+#### Standard ERPNext / Frappe roles (reused, not recreated as fixtures)
+
+Assign these to FMS users where their permissions match the intended responsibilities. Verify each role's permission set in your installed version before assigning.
+
+| Role | Typically assigned to |
+|---|---|
+| Sales User | Station Manager, Forecourt Sales Operator |
+| Sales Manager | Station Manager, Area Manager |
+| Stock User | Station Manager, Forecourt Supervisor |
+| Stock Manager | Station Accountant |
+| Accounts User | Station Accountant |
+| Accounts Manager | Station Accountant (senior) |
+| Employee | All staff users (HRMS integration) |
+| HR User | Station Accountant, HR staff |
+| HR Manager | Head-office HR staff |
+| Customer | Customer portal users |
+| Supplier | Supplier portal users |
 
 ---
 
