@@ -1,0 +1,239 @@
+{
+ "actions": [],
+ "creation": "2026-10-26 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "accountable_person_label",
+  "sb_meters",
+  "record_ecash",
+  "record_evol",
+  "record_mvol",
+  "cb_meters",
+  "sales_basis",
+  "sb_dip",
+  "dip_entry_mode",
+  "sb_drift",
+  "drift_tolerance_pct",
+  "cb_drift",
+  "drift_tolerance_l",
+  "drift_requires_reason",
+  "sb_pricing",
+  "price_change_mode",
+  "allow_time_estimated_segments",
+  "sb_shift",
+  "background_close_threshold",
+  "cb_shift",
+  "allow_backdated_shift_days",
+  "sb_media",
+  "require_meter_photo",
+  "cb_media",
+  "require_expense_receipt"
+ ],
+ "fields": [
+  {
+   "default": "Cashier",
+   "fieldname": "accountable_person_label",
+   "fieldtype": "Select",
+   "label": "Accountable Person Label",
+   "options": "Cashier\nSalesperson"
+  },
+  {
+   "fieldname": "sb_meters",
+   "fieldtype": "Section Break",
+   "label": "Meters"
+  },
+  {
+   "default": "1",
+   "fieldname": "record_ecash",
+   "fieldtype": "Check",
+   "label": "Record E-Cash"
+  },
+  {
+   "default": "0",
+   "fieldname": "record_evol",
+   "fieldtype": "Check",
+   "label": "Record E-Vol"
+  },
+  {
+   "default": "0",
+   "fieldname": "record_mvol",
+   "fieldtype": "Check",
+   "label": "Record M-Vol"
+  },
+  {
+   "fieldname": "cb_meters",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "E-cash",
+   "fieldname": "sales_basis",
+   "fieldtype": "Select",
+   "label": "Sales Basis",
+   "options": "E-cash\nE-vol\nM-vol\nHighest"
+  },
+  {
+   "fieldname": "sb_dip",
+   "fieldtype": "Section Break",
+   "label": "Dip Entry"
+  },
+  {
+   "default": "Depth via calibration chart",
+   "fieldname": "dip_entry_mode",
+   "fieldtype": "Select",
+   "label": "Dip Entry Mode",
+   "options": "Depth via calibration chart\nLitres entered directly"
+  },
+  {
+   "fieldname": "sb_drift",
+   "fieldtype": "Section Break",
+   "label": "Drift"
+  },
+  {
+   "default": "0.5",
+   "fieldname": "drift_tolerance_pct",
+   "fieldtype": "Percent",
+   "label": "Drift Tolerance (%)"
+  },
+  {
+   "fieldname": "cb_drift",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "2",
+   "fieldname": "drift_tolerance_l",
+   "fieldtype": "Float",
+   "label": "Drift Tolerance (L)"
+  },
+  {
+   "default": "1",
+   "fieldname": "drift_requires_reason",
+   "fieldtype": "Check",
+   "label": "Drift Beyond Tolerance Requires Reason"
+  },
+  {
+   "fieldname": "sb_pricing",
+   "fieldtype": "Section Break",
+   "label": "Pricing"
+  },
+  {
+   "default": "Latest price with segments",
+   "fieldname": "price_change_mode",
+   "fieldtype": "Select",
+   "label": "Price Change Mode",
+   "options": "Latest price with segments\nBetween shifts only"
+  },
+  {
+   "default": "0",
+   "fieldname": "allow_time_estimated_segments",
+   "fieldtype": "Check",
+   "label": "Allow Time-Estimated Segments"
+  },
+  {
+   "fieldname": "sb_shift",
+   "fieldtype": "Section Break",
+   "label": "Shift"
+  },
+  {
+   "default": "200",
+   "fieldname": "background_close_threshold",
+   "fieldtype": "Int",
+   "label": "Background Close Threshold (payment rows)"
+  },
+  {
+   "fieldname": "cb_shift",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "2",
+   "fieldname": "allow_backdated_shift_days",
+   "fieldtype": "Int",
+   "label": "Allow Backdated Shift (days)"
+  },
+  {
+   "fieldname": "sb_media",
+   "fieldtype": "Section Break",
+   "label": "Media"
+  },
+  {
+   "default": "0",
+   "fieldname": "require_meter_photo",
+   "fieldtype": "Check",
+   "label": "Require Meter Photo"
+  },
+  {
+   "fieldname": "cb_media",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "require_expense_receipt",
+   "fieldtype": "Check",
+   "label": "Require Expense Receipt"
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-10-26 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Forecourt Setup",
+ "name": "Forecourt Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "permlevel": 0,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "role": "Forecourt Administrator",
+   "write": 1
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "role": "Business Executive"
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "role": "Station Manager"
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "role": "Assistant Station Manager"
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "role": "Forecourt Supervisor"
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "role": "Forecourt Sales Operator"
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "role": "Site Cashier"
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "role": "Station Accountant"
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "role": "Integration Service Account"
+  }
+ ],
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
