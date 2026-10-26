@@ -1,6 +1,8 @@
 # Python
 __pycache__/
 *.py[cod]
+logs
+sites/test_fms/logs/
 *$py.class
 *.pyc
 *.py~
@@ -18,6 +20,18 @@ jspm_packages/
 # Build output
 forecourt/public/dist/
 
+# Bench runtime — each app has its own git repo; bench root does not track them
+apps/
+config/
+sites/
+logs/
+Procfile
+patches.txt
+env/
+
+# Stale scaffolded copy at bench root — authoritative source is apps/forecourt/
+forecourt/
+
 # Environments (not bench dirs — those live one level up)
 .env
 .venv
@@ -31,8 +45,7 @@ venv/
 .wnf-lang-status
 *debug.log
 .idea/
-.vscode/
-.vs/
+.vscode/.vs/
 .helix/
 
 # Aider AI Chat

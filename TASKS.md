@@ -16,7 +16,7 @@
 |---|---|---|
 | A. Environment | 9 | 9 |
 | B. Repository and app scaffold | 9 | 8 |
-| C. Foundation masters (Phase 0) | 14 | 4 |
+| C. Foundation masters (Phase 0) | 14 | 13 |
 | D. Calculation core | 8 | 0 |
 | E. Station movements | 10 | 0 |
 | F. Forecourt Shift (Phase 1 core) | 18 | 0 |
@@ -28,7 +28,7 @@
 | L. CI/CD | 4 | 0 |
 | M. Deployment and operations | 8 | 0 |
 | N. Pilot and go-live | 5 | 0 |
-| **Total (Phases 0–3)** | **124** | **21** |
+| **Total (Phases 0–3)** | **124** | **30** |
 | P. Later phases (backlog) | 8 epics | — |
 
 Update the *Done* column in the same commit that ticks a task.
@@ -181,7 +181,7 @@ Types: `feat`, `fix`, `test`, `chore`, `docs`, `refactor`, `ci`. Modules: `setup
   - **Verify:** `pre-commit run --all-files` passes.
   - **Commit:** `chore(env): configure pre-commit`
 
-- [ ] **FMS-B07 · Writing Test · Test scaffolding and factories** · M · B05, A07
+- [x] **FMS-B07 · Writing Test · Test scaffolding and factories** · M · B05, A07
   - **Skills:** `frappe-testing-unit`
   - **Description:** Create `forecourt/tests/factories.py` with functions that build a complete test station (company, accounts, warehouses, items PMS and AGO, one station, two tanks with charts, two dispensers with four nozzles, two cashiers, one shift template). Factories are idempotent and used by every integration test. Add one smoke `IntegrationTestCase` that calls the factory.
   - **Expectation:** Factories create a usable station in a fresh test site. (They fail until C-tasks exist; build them up as C-tasks land, and keep the smoke test green from C14 on.)
@@ -228,7 +228,7 @@ Build in catalogue order. Each DocType task includes its JSON, controller, a tes
   - **Verify (CLI):** A Journal Entry test posts a shortage to the chosen account with party type Employee.
   - **Commit:** `feat(setup): add Forecourt Company Settings`
 
-- [ ] **FMS-C04 · Writing Feature · Station Group tree** · S · C01
+- [x] **FMS-C04 · Writing Feature · Station Group tree** · S · C01
   - **Skills:** `frappe-syntax-doctypes` (tree)
   - **Description:** Catalogue 4.3, root record as fixture.
   - **Verify (UI):** Tree view shows *All Station Groups*; add Brand → Region → Area groups.
@@ -240,57 +240,57 @@ Build in catalogue order. Each DocType task includes its JSON, controller, a tes
   - **Verify (UI):** The three lists show the default records; quick entry works for Variance Reason.
   - **Commit:** `feat(setup): add variance reasons, expense types, own use purposes`
 
-- [ ] **FMS-C06 · Writing Feature · Payment Provider** · S · C01
+- [x] **FMS-C06 · Writing Feature · Payment Provider** · S · C01
   - **Skills:** `frappe-syntax-doctypes`
   - **Description:** Catalogue 4.7 (import mapping JSON is used in J01).
   - **Verify (UI):** Create *M-Pesa* (Mobile Money) linked to a Mode of Payment *M-Pesa* whose company account is *Mobile Money Clearing*.
   - **Commit:** `feat(integrations): add Payment Provider`
 
-- [ ] **FMS-C07 · Writing Feature · Custom fields on Item, Employee, Customer** · S · B08
+- [x] **FMS-C07 · Writing Feature · Custom fields on Item, Employee, Customer** · S · B08
   - **Skills:** `frappe-impl-customapp` (fixtures)
   - **Description:** `fms_is_fuel`, `fms_is_forecourt_cashier`, `fms_default_station`, `fms_is_walk_in`, `fms_station` (catalogue 12). Export fixtures.
   - **Verify (UI):** Item form shows *Is Fuel*; Employee shows *Is Forecourt Cashier*.
   - **Commit:** `feat(setup): add custom fields on Item, Employee, Customer`
 
-- [ ] **FMS-C08 · Writing Feature · Station** · M · C03, C04, C06, C07
+- [x] **FMS-C08 · Writing Feature · Station** · M · C03, C04, C06, C07
   - **Skills:** `frappe-syntax-doctypes`, `frappe-impl-controllers`
   - **Description:** Station with Station Till Account and Station Payment Terminal (catalogue 5.1). Code pattern validation, company consistency, tolerance overrides, walk-in customer creation on insert (in `forecourt/setup/`).
   - **Expectation:** Creating station `KE-NBO-WSTL` creates customer *Walk-in – Westlands*.
   - **Verify (UI):** Create the station; invalid code `westlands` is refused; walk-in customer exists and is flagged.
   - **Commit:** `feat(setup): add Station`
 
-- [ ] **FMS-C09 · Writing Feature · Station accounting dimension** · S · C08
+- [x] **FMS-C09 · Writing Feature · Station accounting dimension** · S · C08
   - **Skills:** `frappe-impl-customapp`, `frappe-core-database`
   - **Description:** Ship the Accounting Dimension *Station* as a fixture (or create it in `after_install`), document type Station.
   - **Expectation:** Sales Invoice, Payment Entry, Journal Entry, Stock Entry forms show a *Station* field; GL Entry has a `station` column.
   - **Verify (UI):** Open a new Journal Entry → *Station* field present. **(CLI)** `bench --site fms.localhost mariadb -e "SHOW COLUMNS FROM \`tabGL Entry\` LIKE 'station'"` returns one row.
   - **Commit:** `feat(setup): add Station accounting dimension`
 
-- [ ] **FMS-C10 · Writing Feature · Fuel Tank** · M · C08
+- [x] **FMS-C10 · Writing Feature · Fuel Tank** · M · C08
   - **Skills:** `frappe-syntax-doctypes`, `frappe-impl-controllers`
   - **Description:** Catalogue 6.1, creating the tank Warehouse on insert and blocking deletion once stock exists.
   - **Verify (UI):** Create T1 (PMS, 30,000 L) → warehouse *T1 - KE-NBO-WSTL - DPL* (ERPNext adds the company abbreviation) exists under the station's group warehouse.
   - **Commit:** `feat(wetstock): add Fuel Tank`
 
-- [ ] **FMS-C11 · Writing Feature · Dispenser** · S · C08
+- [x] **FMS-C11 · Writing Feature · Dispenser** · S · C08
   - **Skills:** `frappe-syntax-doctypes`
   - **Description:** Catalogue 6.2, including the meter and sales basis override.
   - **Verify (UI):** Create D01 (Island 1) and D02; an override with basis E-vol and E-vol not recorded is refused.
   - **Commit:** `feat(wetstock): add Dispenser`
 
-- [ ] **FMS-C12 · Writing Feature · Tank Calibration Chart** · M · C10, D02
+- [x] **FMS-C12 · Writing Feature · Tank Calibration Chart** · M · C10, D02
   - **Skills:** `frappe-syntax-doctypes`, `frappe-impl-clientscripts`
   - **Description:** Catalogue 7.1 with validation; uses `calc/calibration.py` for max depth and volume. Client script: paste rows from a spreadsheet; preview chart.
   - **Verify (UI):** Upload a 300-row chart from CSV; non-increasing volume is refused.
   - **Commit:** `feat(wetstock): add Tank Calibration Chart`
 
-- [ ] **FMS-C13 · Writing Feature · Nozzle** · S · C10, C11
+- [x] **FMS-C13 · Writing Feature · Nozzle** · S · C10, C11
   - **Skills:** `frappe-syntax-doctypes`
   - **Description:** Catalogue 7.2 without `last_reading_shift` (added in F01); tank must belong to the same station.
   - **Verify (UI):** Create D01-N1 (T1) and D01-N2 (T2); linking a tank from another station is refused.
   - **Commit:** `feat(wetstock): add Nozzle`
 
-- [ ] **FMS-C14 · Writing Test · Station setup end to end** · S · C01–C13, B07
+- [x] **FMS-C14 · Writing Test · Station setup end to end** · S · C01–C13, B07
   - **Skills:** `frappe-testing-unit`
   - **Description:** Complete the factories; integration test that creates a full station and checks warehouses, walk-in customer and dimension.
   - **Verify:** `bench --site test_fms run-tests --app forecourt` passes.
@@ -302,39 +302,39 @@ Build in catalogue order. Each DocType task includes its JSON, controller, a tes
 
 No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytest) and run in milliseconds.
 
-- [ ] **FMS-D01 · Prototyping · Calculation API sketch** · S · B05
+- [x] **FMS-D01 · Prototyping · Calculation API sketch** · S · B05
   - **Skills:** `frappe-agent-interpreter`
   - **Description:** Write function signatures and docstrings for every calculation in the design guide (sections 5.3, 5.5, 5.6, 6.5a, 7.2, 10.4) using plain dataclasses for inputs and outputs. Review with the owner before implementing.
   - **Deliverables:** `calc/*.py` with signatures and `NotImplementedError`.
   - **Verify:** Owner approves the sketch in the pull request.
   - **Commit:** `feat(calc): sketch calculation API`
 
-- [ ] **FMS-D02 · Writing Feature · Calibration interpolation** · S · D01
+- [x] **FMS-D02 · Writing Feature · Calibration interpolation** · S · D01
   - **Description:** Depth → litres with linear interpolation, out-of-range errors, water deduction.
   - **Verify:** Unit tests cover exact rows, midpoints, below zero, above max.
   - **Commit:** `feat(calc): calibration interpolation`
 
-- [ ] **FMS-D03 · Writing Feature · Meter deltas, rollover and basis** · M · D01
+- [x] **FMS-D03 · Writing Feature · Meter deltas, rollover and basis** · M · D01
   - **Description:** Per-meter delta with rollover; litres from E-cash per price segment; basis selection including *Highest* with the winning meter recorded.
   - **Verify:** Unit tests include rollover on each meter and *Highest* picking each meter in turn.
   - **Commit:** `feat(calc): meter deltas, rollover and sales basis`
 
-- [ ] **FMS-D04 · Writing Feature · Meter drift** · S · D03
+- [x] **FMS-D04 · Writing Feature · Meter drift** · S · D03
   - **Description:** The three drift formulas and tolerance check (litres or %, whichever is larger).
   - **Verify:** Unit tests for each pair and the tolerance edge.
   - **Commit:** `feat(calc): meter drift`
 
-- [ ] **FMS-D05 · Writing Feature · Tank reconciliation and tolerances** · S · D01
+- [x] **FMS-D05 · Writing Feature · Tank reconciliation and tolerances** · S · D01
   - **Description:** Expected closing, variance, variance %, tolerance and approval thresholds, manifold groups.
   - **Verify:** Unit tests reproduce the design guide example numbers.
   - **Commit:** `feat(calc): tank reconciliation`
 
-- [ ] **FMS-D06 · Writing Feature · Cashier balance** · S · D01
+- [x] **FMS-D06 · Writing Feature · Cashier balance** · S · D01
   - **Description:** Expected, accounted, difference (design guide 7.2), multi-currency cash with exchange rates.
   - **Verify:** Unit test reproduces the worked example in design guide 8.2 (difference −500).
   - **Commit:** `feat(calc): cashier balance`
 
-- [ ] **FMS-D07 · Writing Feature · Payment attribution** · S · D06
+- [x] **FMS-D07 · Writing Feature · Payment attribution** · S · D06
   - **Description:** Exact rows for credit and POS; attributed rows spreading remaining payments by value (design guide 10.4), with rounding so totals match exactly.
   - **Verify:** Unit test: 180,000 mobile over 60/40 PMS/AGO → 108,000 / 72,000; totals equal input to the cent.
   - **Commit:** `feat(calc): payment attribution`
@@ -349,7 +349,7 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
 
 ## E. Station movements
 
-- [ ] **FMS-E01 · Writing Feature · Customer Vehicle** · S · C07
+- [x] **FMS-E01 · Writing Feature · Customer Vehicle** · S · C07
   - **Skills:** `frappe-syntax-doctypes`
   - **Description:** Catalogue 6.3 with plate normalisation.
   - **Verify (UI):** Create *Coast Haulage* vehicle `KDA 123A` → stored as `KDA123A`; duplicate refused.
