@@ -1,0 +1,28 @@
+# Bench runtime — not versioned
+apps/
+env/
+sites/
+logs/
+config/
+Procfile
+patches.txt
+node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+.eggs/
+
+# Editor
+.DS_Store
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+.helix/
+
+# Pre-commit
+.pre-commit-config.yaml.lock
