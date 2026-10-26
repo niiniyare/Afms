@@ -1,0 +1,305 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:station_code",
+ "creation": "2026-10-26 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "station_code",
+  "station_name",
+  "col_break_1",
+  "company",
+  "station_group",
+  "brand",
+  "region",
+  "country",
+  "ownership_type",
+  "timezone",
+  "status",
+  "stock_section",
+  "warehouse_group",
+  "shop_warehouse",
+  "price_list",
+  "walk_in_customer",
+  "cost_center",
+  "cash_section",
+  "till_accounts",
+  "safe_account",
+  "cash_in_transit_account",
+  "default_float",
+  "payments_section",
+  "payment_terminals",
+  "policy_section",
+  "dip_entry_mode",
+  "use_settings_meters",
+  "record_elec_cash",
+  "record_elec_meter",
+  "record_man_meter",
+  "sales_basis",
+  "price_change_mode",
+  "tank_tolerance_pct",
+  "tank_tolerance_l",
+  "delivery_dips_required"
+ ],
+ "fields": [
+  {
+   "fieldname": "station_code",
+   "fieldtype": "Data",
+   "label": "Station Code",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1,
+   "description": "Pattern: CC-AREA-CODE e.g. KE-NBO-WSTL"
+  },
+  {
+   "fieldname": "station_name",
+   "fieldtype": "Data",
+   "label": "Station Name",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "col_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "search_index": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "station_group",
+   "fieldtype": "Link",
+   "label": "Station Group",
+   "options": "Station Group",
+   "reqd": 1,
+   "search_index": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "brand",
+   "fieldtype": "Data",
+   "label": "Brand",
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "region",
+   "fieldtype": "Data",
+   "label": "Region",
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "country",
+   "fieldtype": "Link",
+   "label": "Country",
+   "options": "Country",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "ownership_type",
+   "fieldtype": "Select",
+   "label": "Ownership Type",
+   "options": "\nCompany-owned\nDealer-owned\nInvestor-owned\nFranchise",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "timezone",
+   "fieldtype": "Autocomplete",
+   "label": "Time Zone",
+   "reqd": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Active\nInactive",
+   "default": "Active",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "stock_section",
+   "fieldtype": "Section Break",
+   "label": "Stock"
+  },
+  {
+   "fieldname": "warehouse_group",
+   "fieldtype": "Link",
+   "label": "Warehouse Group",
+   "options": "Warehouse",
+   "reqd": 1
+  },
+  {
+   "fieldname": "shop_warehouse",
+   "fieldtype": "Link",
+   "label": "Shop Warehouse",
+   "options": "Warehouse"
+  },
+  {
+   "fieldname": "price_list",
+   "fieldtype": "Link",
+   "label": "Price List",
+   "options": "Price List",
+   "reqd": 1
+  },
+  {
+   "fieldname": "walk_in_customer",
+   "fieldtype": "Link",
+   "label": "Walk-in Customer",
+   "options": "Customer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cost_center",
+   "fieldtype": "Link",
+   "label": "Cost Center",
+   "options": "Cost Center",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cash_section",
+   "fieldtype": "Section Break",
+   "label": "Cash"
+  },
+  {
+   "fieldname": "till_accounts",
+   "fieldtype": "Table",
+   "label": "Till Accounts",
+   "options": "Station Till Account",
+   "reqd": 1
+  },
+  {
+   "fieldname": "safe_account",
+   "fieldtype": "Link",
+   "label": "Safe Account",
+   "options": "Account",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cash_in_transit_account",
+   "fieldtype": "Link",
+   "label": "Cash in Transit Account",
+   "options": "Account"
+  },
+  {
+   "fieldname": "default_float",
+   "fieldtype": "Currency",
+   "label": "Default Float"
+  },
+  {
+   "fieldname": "payments_section",
+   "fieldtype": "Section Break",
+   "label": "Payments"
+  },
+  {
+   "fieldname": "payment_terminals",
+   "fieldtype": "Table",
+   "label": "Payment Terminals",
+   "options": "Station Payment Terminal"
+  },
+  {
+   "fieldname": "policy_section",
+   "fieldtype": "Section Break",
+   "label": "Policy Overrides",
+   "collapsible": 1,
+   "description": "Leave blank to use company / global settings"
+  },
+  {
+   "fieldname": "dip_entry_mode",
+   "fieldtype": "Select",
+   "label": "Dip Entry Mode",
+   "options": "\nDepth via calibration chart\nLitres entered directly"
+  },
+  {
+   "fieldname": "use_settings_meters",
+   "fieldtype": "Check",
+   "label": "Use Global Meter Settings",
+   "default": "1"
+  },
+  {
+   "fieldname": "record_elec_cash",
+   "fieldtype": "Check",
+   "label": "Record Electronic Cash",
+   "depends_on": "eval:!doc.use_settings_meters"
+  },
+  {
+   "fieldname": "record_elec_meter",
+   "fieldtype": "Check",
+   "label": "Record Electronic Meter",
+   "depends_on": "eval:!doc.use_settings_meters"
+  },
+  {
+   "fieldname": "record_man_meter",
+   "fieldtype": "Check",
+   "label": "Record Manual Meter",
+   "depends_on": "eval:!doc.use_settings_meters"
+  },
+  {
+   "fieldname": "sales_basis",
+   "fieldtype": "Select",
+   "label": "Sales Basis Override",
+   "options": "\nElec Cash\nElec Meter\nMan Meter\nHighest",
+   "depends_on": "eval:!doc.use_settings_meters"
+  },
+  {
+   "fieldname": "price_change_mode",
+   "fieldtype": "Select",
+   "label": "Price Change Mode",
+   "options": "\nLatest price with segments\nBetween shifts only"
+  },
+  {
+   "fieldname": "tank_tolerance_pct",
+   "fieldtype": "Percent",
+   "label": "Tank Tolerance (%)"
+  },
+  {
+   "fieldname": "tank_tolerance_l",
+   "fieldtype": "Float",
+   "label": "Tank Tolerance (L)"
+  },
+  {
+   "fieldname": "delivery_dips_required",
+   "fieldtype": "Check",
+   "label": "Delivery Dips Required",
+   "default": "1"
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-26 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Forecourt Setup",
+ "name": "Station",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "permlevel": 0,
+   "read": 1,
+   "role": "Forecourt Administrator",
+   "write": 1
+  },
+  {"permlevel": 0, "read": 1, "role": "Business Executive"},
+  {"permlevel": 0, "read": 1, "role": "Station Manager"},
+  {"permlevel": 0, "read": 1, "role": "Assistant Station Manager"},
+  {"permlevel": 0, "read": 1, "role": "Forecourt Supervisor"},
+  {"permlevel": 0, "read": 1, "role": "Forecourt Sales Operator"},
+  {"permlevel": 0, "read": 1, "role": "Site Cashier"},
+  {"permlevel": 0, "read": 1, "role": "Station Accountant"},
+  {"permlevel": 0, "read": 1, "role": "Integration Service Account"}
+ ],
+ "search_fields": "station_name,company,station_group",
+ "show_title_field_in_link": 1,
+ "sort_field": "station_code",
+ "sort_order": "ASC",
+ "title_field": "station_name",
+ "track_changes": 1
+}

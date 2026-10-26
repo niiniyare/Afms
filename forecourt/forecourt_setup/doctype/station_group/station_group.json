@@ -1,0 +1,130 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:station_group_name",
+ "creation": "2026-10-26 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "station_group_name",
+  "group_type",
+  "parent_station_group",
+  "is_group",
+  "lft",
+  "rgt",
+  "old_parent"
+ ],
+ "fields": [
+  {
+   "fieldname": "station_group_name",
+   "fieldtype": "Data",
+   "label": "Station Group Name",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "group_type",
+   "fieldtype": "Select",
+   "label": "Group Type",
+   "options": "\nBrand\nRegion\nArea\nPortfolio\nOther",
+   "reqd": 1
+  },
+  {
+   "fieldname": "parent_station_group",
+   "fieldtype": "Link",
+   "label": "Parent Station Group",
+   "options": "Station Group",
+   "search_index": 1
+  },
+  {
+   "fieldname": "is_group",
+   "fieldtype": "Check",
+   "label": "Is Group"
+  },
+  {
+   "fieldname": "lft",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Lft",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rgt",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Rgt",
+   "read_only": 1
+  },
+  {
+   "fieldname": "old_parent",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Old Parent",
+   "options": "Station Group",
+   "read_only": 1
+  }
+ ],
+ "is_tree": 1,
+ "links": [],
+ "modified": "2026-10-26 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Forecourt Setup",
+ "name": "Station Group",
+ "nsm_parent_field": "parent_station_group",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "permlevel": 0,
+   "read": 1,
+   "role": "Forecourt Administrator",
+   "write": 1
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "role": "Business Executive"
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "role": "Station Manager"
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "role": "Assistant Station Manager"
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "role": "Forecourt Supervisor"
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "role": "Forecourt Sales Operator"
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "role": "Site Cashier"
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "role": "Station Accountant"
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "role": "Integration Service Account"
+  }
+ ],
+ "sort_field": "lft",
+ "sort_order": "ASC",
+ "title_field": "station_group_name",
+ "track_changes": 1
+}
