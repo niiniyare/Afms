@@ -16,7 +16,7 @@
 |---|---|---|
 | A. Environment | 9 | 9 |
 | B. Repository and app scaffold | 9 | 8 |
-| C. Foundation masters (Phase 0) | 14 | 4 |
+| C. Foundation masters (Phase 0) | 14 | 9 |
 | D. Calculation core | 8 | 0 |
 | E. Station movements | 10 | 0 |
 | F. Forecourt Shift (Phase 1 core) | 18 | 0 |
@@ -28,7 +28,7 @@
 | L. CI/CD | 4 | 0 |
 | M. Deployment and operations | 8 | 0 |
 | N. Pilot and go-live | 5 | 0 |
-| **Total (Phases 0–3)** | **124** | **21** |
+| **Total (Phases 0–3)** | **124** | **26** |
 | P. Later phases (backlog) | 8 epics | — |
 
 Update the *Done* column in the same commit that ticks a task.
@@ -228,7 +228,7 @@ Build in catalogue order. Each DocType task includes its JSON, controller, a tes
   - **Verify (CLI):** A Journal Entry test posts a shortage to the chosen account with party type Employee.
   - **Commit:** `feat(setup): add Forecourt Company Settings`
 
-- [ ] **FMS-C04 · Writing Feature · Station Group tree** · S · C01
+- [x] **FMS-C04 · Writing Feature · Station Group tree** · S · C01
   - **Skills:** `frappe-syntax-doctypes` (tree)
   - **Description:** Catalogue 4.3, root record as fixture.
   - **Verify (UI):** Tree view shows *All Station Groups*; add Brand → Region → Area groups.
@@ -240,26 +240,26 @@ Build in catalogue order. Each DocType task includes its JSON, controller, a tes
   - **Verify (UI):** The three lists show the default records; quick entry works for Variance Reason.
   - **Commit:** `feat(setup): add variance reasons, expense types, own use purposes`
 
-- [ ] **FMS-C06 · Writing Feature · Payment Provider** · S · C01
+- [x] **FMS-C06 · Writing Feature · Payment Provider** · S · C01
   - **Skills:** `frappe-syntax-doctypes`
   - **Description:** Catalogue 4.7 (import mapping JSON is used in J01).
   - **Verify (UI):** Create *M-Pesa* (Mobile Money) linked to a Mode of Payment *M-Pesa* whose company account is *Mobile Money Clearing*.
   - **Commit:** `feat(integrations): add Payment Provider`
 
-- [ ] **FMS-C07 · Writing Feature · Custom fields on Item, Employee, Customer** · S · B08
+- [x] **FMS-C07 · Writing Feature · Custom fields on Item, Employee, Customer** · S · B08
   - **Skills:** `frappe-impl-customapp` (fixtures)
   - **Description:** `fms_is_fuel`, `fms_is_forecourt_cashier`, `fms_default_station`, `fms_is_walk_in`, `fms_station` (catalogue 12). Export fixtures.
   - **Verify (UI):** Item form shows *Is Fuel*; Employee shows *Is Forecourt Cashier*.
   - **Commit:** `feat(setup): add custom fields on Item, Employee, Customer`
 
-- [ ] **FMS-C08 · Writing Feature · Station** · M · C03, C04, C06, C07
+- [x] **FMS-C08 · Writing Feature · Station** · M · C03, C04, C06, C07
   - **Skills:** `frappe-syntax-doctypes`, `frappe-impl-controllers`
   - **Description:** Station with Station Till Account and Station Payment Terminal (catalogue 5.1). Code pattern validation, company consistency, tolerance overrides, walk-in customer creation on insert (in `forecourt/setup/`).
   - **Expectation:** Creating station `KE-NBO-WSTL` creates customer *Walk-in – Westlands*.
   - **Verify (UI):** Create the station; invalid code `westlands` is refused; walk-in customer exists and is flagged.
   - **Commit:** `feat(setup): add Station`
 
-- [ ] **FMS-C09 · Writing Feature · Station accounting dimension** · S · C08
+- [x] **FMS-C09 · Writing Feature · Station accounting dimension** · S · C08
   - **Skills:** `frappe-impl-customapp`, `frappe-core-database`
   - **Description:** Ship the Accounting Dimension *Station* as a fixture (or create it in `after_install`), document type Station.
   - **Expectation:** Sales Invoice, Payment Entry, Journal Entry, Stock Entry forms show a *Station* field; GL Entry has a `station` column.

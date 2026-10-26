@@ -1,0 +1,124 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:provider_name",
+ "creation": "2026-10-26 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "provider_name",
+  "provider_type",
+  "mode_of_payment",
+  "country",
+  "disabled",
+  "import_section",
+  "import_format",
+  "import_mapping",
+  "reference_pattern",
+  "adapter_section",
+  "adapter"
+ ],
+ "fields": [
+  {
+   "fieldname": "provider_name",
+   "fieldtype": "Data",
+   "label": "Provider Name",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "provider_type",
+   "fieldtype": "Select",
+   "label": "Provider Type",
+   "options": "\nMobile Money\nCard\nVoucher\nBank",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "mode_of_payment",
+   "fieldtype": "Link",
+   "label": "Mode of Payment",
+   "options": "Mode of Payment",
+   "reqd": 1
+  },
+  {
+   "fieldname": "country",
+   "fieldtype": "Link",
+   "label": "Country",
+   "options": "Country"
+  },
+  {
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled"
+  },
+  {
+   "fieldname": "import_section",
+   "fieldtype": "Section Break",
+   "label": "Statement Import"
+  },
+  {
+   "fieldname": "import_format",
+   "fieldtype": "Select",
+   "label": "Import Format",
+   "options": "None\nCSV mapping\nExcel mapping"
+  },
+  {
+   "fieldname": "import_mapping",
+   "fieldtype": "JSON",
+   "label": "Import Mapping",
+   "description": "Column mapping for statement import (used in J01)"
+  },
+  {
+   "fieldname": "reference_pattern",
+   "fieldtype": "Data",
+   "label": "Reference Pattern",
+   "description": "Optional regex to validate transaction references"
+  },
+  {
+   "fieldname": "adapter_section",
+   "fieldtype": "Section Break",
+   "label": "Adapter (Phase 3)"
+  },
+  {
+   "fieldname": "adapter",
+   "fieldtype": "Data",
+   "label": "Adapter Module",
+   "description": "Name of adapter under forecourt_integrations/payment_adapters/"
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-26 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Forecourt Integrations",
+ "name": "Payment Provider",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "permlevel": 0,
+   "read": 1,
+   "role": "Forecourt Administrator",
+   "write": 1
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "write": 1,
+   "role": "Station Accountant"
+  },
+  {"permlevel": 0, "read": 1, "role": "Business Executive"},
+  {"permlevel": 0, "read": 1, "role": "Station Manager"},
+  {"permlevel": 0, "read": 1, "role": "Assistant Station Manager"},
+  {"permlevel": 0, "read": 1, "role": "Forecourt Supervisor"},
+  {"permlevel": 0, "read": 1, "role": "Forecourt Sales Operator"},
+  {"permlevel": 0, "read": 1, "role": "Site Cashier"},
+  {"permlevel": 0, "read": 1, "role": "Integration Service Account"}
+ ],
+ "sort_field": "provider_name",
+ "sort_order": "ASC",
+ "title_field": "provider_name",
+ "track_changes": 1
+}

@@ -1,1 +1,56 @@
-[]
+[
+ {
+  "doctype": "Custom Field",
+  "name": "Item-fms_is_fuel",
+  "dt": "Item",
+  "module": "Forecourt Setup",
+  "fieldname": "fms_is_fuel",
+  "label": "Is Fuel",
+  "fieldtype": "Check",
+  "search_index": 1,
+  "insert_after": "item_name"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Employee-fms_is_forecourt_cashier",
+  "dt": "Employee",
+  "module": "Forecourt Setup",
+  "fieldname": "fms_is_forecourt_cashier",
+  "label": "Is Forecourt Cashier",
+  "fieldtype": "Check",
+  "search_index": 1,
+  "insert_after": "employee_name"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Employee-fms_default_station",
+  "dt": "Employee",
+  "module": "Forecourt Setup",
+  "fieldname": "fms_default_station",
+  "label": "Default Station",
+  "fieldtype": "Link",
+  "options": "Station",
+  "insert_after": "fms_is_forecourt_cashier"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Customer-fms_is_walk_in",
+  "dt": "Customer",
+  "module": "Forecourt Setup",
+  "fieldname": "fms_is_walk_in",
+  "label": "Is Walk-in",
+  "fieldtype": "Check",
+  "insert_after": "customer_name"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Customer-fms_station",
+  "dt": "Customer",
+  "module": "Forecourt Setup",
+  "fieldname": "fms_station",
+  "label": "Station",
+  "fieldtype": "Link",
+  "options": "Station",
+  "insert_after": "fms_is_walk_in"
+ }
+]
