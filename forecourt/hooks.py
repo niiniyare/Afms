@@ -69,6 +69,8 @@ fixtures = [
 	{"dt": "Stock Entry Type", "filters": [["name", "like", "Fuel %"]]},
 	# Station as an accounting dimension
 	{"dt": "Accounting Dimension", "filters": [["document_type", "=", "Forecourt Station"]]},
+	# Station Group root seed record
+	{"dt": "Station Group", "filters": [["name", "=", "All Station Groups"]]},
 ]
 
 # Each item in the list will be shown as an app in the apps page
@@ -208,13 +210,13 @@ fixtures = [
 # -----------
 # Permissions evaluated in scripted ways
 
-# permission_query_conditions = {
-# 	"Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
-# }
-#
-# has_permission = {
-# 	"Event": "frappe.desk.doctype.event.event.has_permission",
-# }
+permission_query_conditions = {
+	"Station Group": "forecourt.forecourt_setup.doctype.station_group.station_group.permission_query_conditions",
+}
+
+has_permission = {
+	"Station Group": "forecourt.forecourt_setup.doctype.station_group.station_group.has_permission",
+}
 
 # Document Events
 # ---------------

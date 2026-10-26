@@ -1,0 +1,10 @@
+[
+ {
+  "doctype": "Station Group",
+  "is_group": 1,
+  "name": "All Station Groups",
+  "station_group_name": "All Station Groups",
+  "group_type": "Other",
+  "parent_station_group": null
+ }
+]
