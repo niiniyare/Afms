@@ -6,9 +6,9 @@
  "field_order": [
   "accountable_person_label",
   "sb_meters",
-  "record_ecash",
-  "record_evol",
-  "record_mvol",
+  "record_elec_cash",
+  "record_elec_meter",
+  "record_man_meter",
   "cb_meters",
   "sales_basis",
   "sb_dip",
@@ -20,19 +20,20 @@
   "drift_requires_reason",
   "sb_pricing",
   "price_change_mode",
-  "allow_time_estimated_segments",
+  "allow_estimated_segments",
   "sb_shift",
   "background_close_threshold",
   "cb_shift",
   "allow_backdated_shift_days",
-  "sb_media",
-  "require_meter_photo",
-  "cb_media",
+  "sb_evidence",
+  "require_meter_reading_photo",
+  "cb_evidence",
   "require_expense_receipt"
  ],
  "fields": [
   {
    "default": "Cashier",
+   "description": "Label used for the person responsible for the shift till. Set to ‘Salesperson’ if your stations use that term.",
    "fieldname": "accountable_person_label",
    "fieldtype": "Select",
    "label": "Accountable Person Label",
@@ -45,32 +46,36 @@
   },
   {
    "default": "1",
-   "fieldname": "record_ecash",
+   "description": "Record the electronic cash register (Elec Cash) reading on every nozzle row.",
+   "fieldname": "record_elec_cash",
    "fieldtype": "Check",
-   "label": "Record E-Cash"
+   "label": "Record Elec Cash"
   },
   {
    "default": "0",
-   "fieldname": "record_evol",
+   "description": "Record the electronic volume meter (Elec Meter) reading on every nozzle row.",
+   "fieldname": "record_elec_meter",
    "fieldtype": "Check",
-   "label": "Record E-Vol"
+   "label": "Record Elec Meter"
   },
   {
    "default": "0",
-   "fieldname": "record_mvol",
+   "description": "Record the mechanical (odometer-style) volume meter (Man Meter) reading on every nozzle row.",
+   "fieldname": "record_man_meter",
    "fieldtype": "Check",
-   "label": "Record M-Vol"
+   "label": "Record Man Meter"
   },
   {
    "fieldname": "cb_meters",
    "fieldtype": "Column Break"
   },
   {
-   "default": "E-cash",
+   "default": "Elec Cash",
+   "description": "The meter value used to calculate litres sold. ‘Highest’ compares Elec Cash and Elec Meter and uses the larger value.",
    "fieldname": "sales_basis",
    "fieldtype": "Select",
    "label": "Sales Basis",
-   "options": "E-cash\nE-vol\nM-vol\nHighest"
+   "options": "Elec Cash\nElec Meter\nMan Meter\nHighest"
   },
   {
    "fieldname": "sb_dip",
@@ -79,6 +84,7 @@
   },
   {
    "default": "Depth via calibration chart",
+   "description": "How tank stock is measured at shift close. ‘Depth via calibration chart’ converts a dip-stick reading; ‘Litres entered directly’ skips the chart.",
    "fieldname": "dip_entry_mode",
    "fieldtype": "Select",
    "label": "Dip Entry Mode",
@@ -87,10 +93,11 @@
   {
    "fieldname": "sb_drift",
    "fieldtype": "Section Break",
-   "label": "Drift"
+   "label": "Meter Drift"
   },
   {
    "default": "0.5",
+   "description": "Maximum allowable drift between Elec Cash and Elec Meter as a percentage of sales. Drift beyond this threshold requires a reason.",
    "fieldname": "drift_tolerance_pct",
    "fieldtype": "Percent",
    "label": "Drift Tolerance (%)"
@@ -101,12 +108,14 @@
   },
   {
    "default": "2",
+   "description": "Maximum allowable drift in litres (absolute). Both tolerances are checked; the one that allows the larger absolute drift wins.",
    "fieldname": "drift_tolerance_l",
    "fieldtype": "Float",
    "label": "Drift Tolerance (L)"
   },
   {
    "default": "1",
+   "description": "If ticked, shifts with meter drift beyond tolerance cannot close without a reason text.",
    "fieldname": "drift_requires_reason",
    "fieldtype": "Check",
    "label": "Drift Beyond Tolerance Requires Reason"
@@ -114,10 +123,11 @@
   {
    "fieldname": "sb_pricing",
    "fieldtype": "Section Break",
-   "label": "Pricing"
+   "label": "Price Change Policy"
   },
   {
    "default": "Latest price with segments",
+   "description": "'Latest price with segments' splits a shift at each price change. 'Between shifts only' uses one price per shift.",
    "fieldname": "price_change_mode",
    "fieldtype": "Select",
    "label": "Price Change Mode",
@@ -125,17 +135,19 @@
   },
   {
    "default": "0",
-   "fieldname": "allow_time_estimated_segments",
+   "description": "Allow price segment boundaries to be estimated by time when exact meter readings are unavailable. See design guide 6.5a.",
+   "fieldname": "allow_estimated_segments",
    "fieldtype": "Check",
-   "label": "Allow Time-Estimated Segments"
+   "label": "Allow Estimated Segments"
   },
   {
    "fieldname": "sb_shift",
    "fieldtype": "Section Break",
-   "label": "Shift"
+   "label": "Shift Controls"
   },
   {
    "default": "200",
+   "description": "Shifts with more than this many payment rows are closed in a background job rather than in the web request.",
    "fieldname": "background_close_threshold",
    "fieldtype": "Int",
    "label": "Background Close Threshold (payment rows)"
@@ -146,27 +158,30 @@
   },
   {
    "default": "2",
+   "description": "How many calendar days in the past a new shift may be opened. Set to 0 to allow today only.",
    "fieldname": "allow_backdated_shift_days",
    "fieldtype": "Int",
    "label": "Allow Backdated Shift (days)"
   },
   {
-   "fieldname": "sb_media",
+   "fieldname": "sb_evidence",
    "fieldtype": "Section Break",
-   "label": "Media"
+   "label": "Evidence"
   },
   {
    "default": "0",
-   "fieldname": "require_meter_photo",
+   "description": "If ticked, each nozzle row requires an uploaded photo of the meter display before the shift can close.",
+   "fieldname": "require_meter_reading_photo",
    "fieldtype": "Check",
-   "label": "Require Meter Photo"
+   "label": "Require Meter Reading Photo"
   },
   {
-   "fieldname": "cb_media",
+   "fieldname": "cb_evidence",
    "fieldtype": "Column Break"
   },
   {
    "default": "1",
+   "description": "If ticked, each expense line requires an uploaded receipt scan before the shift can close.",
    "fieldname": "require_expense_receipt",
    "fieldtype": "Check",
    "label": "Require Expense Receipt"

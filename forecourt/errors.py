@@ -99,7 +99,7 @@ FMS_C503 = "FMS-C503"  # Only latest closed shift at station can be cancelled
 
 FMS_M601 = "FMS-M601"  # Station code does not match pattern
 FMS_M602 = "FMS-M602"  # Account belongs to wrong company or wrong type
-FMS_M603 = "FMS-M603"  # Sales basis meter is not one of the recorded meters
+FMS_M603 = "FMS-M603"  # Sales basis not consistent with recorded meters
 FMS_M604 = "FMS-M604"  # Tank capacity or safe fill invalid
 FMS_M605 = "FMS-M605"  # Calibration chart depths/volumes not strictly increasing
 FMS_M606 = "FMS-M606"  # Nozzle tank belongs to another station
