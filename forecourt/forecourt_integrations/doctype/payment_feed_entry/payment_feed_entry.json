@@ -1,0 +1,165 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-10-27 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "provider",
+  "station",
+  "col_break_1",
+  "till_or_terminal",
+  "reference",
+  "col_break_2",
+  "transaction_time",
+  "amount",
+  "col_break_3",
+  "payer",
+  "cashier",
+  "col_break_4",
+  "status",
+  "forecourt_shift",
+  "inbox"
+ ],
+ "fields": [
+  {
+   "fieldname": "provider",
+   "fieldtype": "Link",
+   "label": "Provider",
+   "options": "Payment Provider",
+   "reqd": 1,
+   "search_index": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "station",
+   "fieldtype": "Link",
+   "label": "Station",
+   "options": "Station",
+   "search_index": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "col_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "till_or_terminal",
+   "fieldtype": "Data",
+   "label": "Till / Terminal",
+   "reqd": 1,
+   "search_index": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "reference",
+   "fieldtype": "Data",
+   "label": "Reference",
+   "reqd": 1,
+   "search_index": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "col_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "transaction_time",
+   "fieldtype": "Datetime",
+   "label": "Transaction Time",
+   "reqd": 1,
+   "search_index": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "col_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "payer",
+   "fieldtype": "Data",
+   "label": "Payer"
+  },
+  {
+   "fieldname": "cashier",
+   "fieldtype": "Link",
+   "label": "Cashier",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "col_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Unmatched\nMatched\nIgnored",
+   "reqd": 1,
+   "default": "Unmatched",
+   "search_index": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "forecourt_shift",
+   "fieldtype": "Link",
+   "label": "Forecourt Shift",
+   "options": "Forecourt Shift",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "inbox",
+   "fieldtype": "Link",
+   "label": "Integration Inbox",
+   "options": "Integration Inbox",
+   "read_only": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-27 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Forecourt Integrations",
+ "name": "Payment Feed Entry",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "permlevel": 0,
+   "role": "Forecourt Accountant",
+   "read": 1,
+   "write": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Station Manager",
+   "read": 1,
+   "write": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Area Manager",
+   "read": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Forecourt Administrator",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  }
+ ],
+ "sort_field": "transaction_time",
+ "sort_order": "DESC"
+}

@@ -56,6 +56,24 @@ frappe.ui.form.on("Forecourt Shift", {
 				},
 				__("Tools")
 			);
+			frm.add_custom_button(
+				__("Refresh Feeds"),
+				function () {
+					frm.call("refresh_feeds").then((r) => {
+						if (r.message) {
+							const n = r.message.created;
+							frappe.show_alert({
+								message: n
+									? __("{0} feed transaction(s) added", [n])
+									: __("No new feed transactions"),
+								indicator: n ? "green" : "blue",
+							});
+							frm.reload_doc();
+						}
+					});
+				},
+				__("Tools")
+			);
 		}
 
 		if (frm.doc.status === "Closing") {

@@ -84,6 +84,27 @@ class ForecourtShift(Document):
 			frappe.throw("<br>".join(errors), title=_("Shift Cannot Be Closed"))
 
 	# ------------------------------------------------------------------ I04
+	def after_insert(self) -> None:
+		"""Pull matching feed entries into this new shift (J04)."""
+		from forecourt.forecourt_integrations.feed_matcher import match_feeds_to_shift
+
+		created = match_feeds_to_shift(self)
+		if created:
+			self.flags.ignore_validate = True
+			self.save()
+
+	@frappe.whitelist()
+	def refresh_feeds(self) -> dict:
+		"""Pull new Unmatched feed entries into this shift on demand (J04)."""
+		from forecourt.forecourt_integrations.feed_matcher import match_feeds_to_shift
+
+		frappe.has_permission("Forecourt Shift", "write", self, throw=True)
+		created = match_feeds_to_shift(self)
+		if created:
+			self.flags.ignore_validate = True
+			self.save()
+		return {"created": created}
+
 	def on_update(self) -> None:
 		from forecourt.notifications import on_forecourt_shift_update
 
@@ -282,25 +303,25 @@ class ForecourtShift(Document):
 			)
 
 	def _gate_feed_entries(self, errors: list[str]) -> None:
-		"""FMS-S111: all payment feed entries in the window must be assigned to a cashier."""
+		"""FMS-S111: all payment feed entries in the shift window must be matched (J04)."""
 		if not frappe.db.exists("DocType", "Payment Feed Entry"):
 			return
 		if not (self.station and self.shift_start and self.shift_end):
 			return
-		unassigned_count = frappe.db.count(
+		unmatched = frappe.db.count(
 			"Payment Feed Entry",
 			{
 				"station": self.station,
-				"posting_datetime": ["between", [self.shift_start, self.shift_end]],
-				"cashier": ["is", "not set"],
-				"docstatus": 1,
+				"status": "Unmatched",
+				"transaction_time": ["between", [self.shift_start, self.shift_end]],
 			},
 		)
-		if unassigned_count:
+		if unmatched:
 			errors.append(
-				_("{0}: {1} payment feed entries in the shift window are not assigned to a cashier.").format(
-					FMS_S111, unassigned_count
-				)
+				_(
+					"{0}: {1} payment feed entries in the shift window are Unmatched. "
+					"Assign or ignore them before closing."
+				).format(FMS_S111, unmatched)
 			)
 
 	def _gate_test_volume(self, errors: list[str]) -> None:
