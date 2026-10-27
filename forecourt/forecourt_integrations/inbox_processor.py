@@ -83,4 +83,12 @@ def _noop_handler(inbox: "frappe.Document") -> None:
 	return None
 
 
-_HANDLERS: dict[str, callable] = {}
+def _lazy_mpesa_handler(inbox: "frappe.Document") -> dict | None:
+	from forecourt.forecourt_integrations.payment_adapters.mpesa import handle_c2b_confirmation
+
+	return handle_c2b_confirmation(inbox)
+
+
+_HANDLERS: dict[str, callable] = {
+	"c2b_confirmation": _lazy_mpesa_handler,
+}
