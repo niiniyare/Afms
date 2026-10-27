@@ -20,7 +20,7 @@
 | D. Calculation core | 8 | 8 |
 | E. Station movements | 10 | 10 |
 | F. Forecourt Shift (Phase 1 core) | 18 | 18 |
-| G. Shift Correction | 6 | 1 |
+| G. Shift Correction | 6 | 5 |
 | H. Reports and workspaces | 12 | 0 |
 | I. Approvals, roles and permissions | 6 | 0 |
 | J. Payment import and integrations | 8 | 0 |
@@ -28,7 +28,7 @@
 | L. CI/CD | 4 | 0 |
 | M. Deployment and operations | 8 | 0 |
 | N. Pilot and go-live | 5 | 0 |
-| **Total (Phases 0–3)** | **124** | **51** |
+| **Total (Phases 0–3)** | **124** | **55** |
 | P. Later phases (backlog) | 8 epics | — |
 
 Update the *Done* column in the same commit that ticks a task.
@@ -526,22 +526,22 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
   - **Verify (UI):** Cancelling a shift's Payment Entry directly is refused with a message pointing to Shift Correction.
   - **Commit:** `feat(shift): Shift Correction workflow`
 
-- [ ] **FMS-G02 · Writing Feature · Native document corrections** · M · G01
+- [x] **FMS-G02 · Writing Feature · Native document corrections** · M · G01
   - **Description:** `corrections/native.py`: cancel and amend one target document (Sales Invoice, Payment Entry, Journal Entry) with the new values.
   - **Verify (UI):** Correct a mobile money reference → old Payment Entry cancelled, amended one submitted, shift banner lists the correction.
   - **Commit:** `feat(shift): native document corrections`
 
-- [ ] **FMS-G03 · Writing Feature · Meter reading corrections** · L · G01
+- [x] **FMS-G03 · Writing Feature · Meter reading corrections** · L · G01
   - **Description:** `corrections/meter.py`: move litres between the shift and the next one; superseding Nozzle and Sales Ledger rows; Credit Note or additional invoice for walk-in sales; new differences go to resolution lines in the correction.
   - **Verify (UI):** Correct a closing reading by +90 L → both shifts' reports show the corrected litres; audit view shows superseded rows.
   - **Commit:** `feat(shift): meter reading corrections`
 
-- [ ] **FMS-G04 · Writing Feature · Dip, cashier and reclassification corrections** · M · G01
+- [x] **FMS-G04 · Writing Feature · Dip, cashier and reclassification corrections** · M · G01
   - **Description:** `corrections/dip.py`, `cashier.py`, `reclassify.py` per design guide 6.8. A dip correction also re-bases the next shift's opening and variance (D22).
   - **Verify (UI):** Correct a dip → new Stock Reconciliation dated at the original time; stock balance updated after reposting; the next shift's tank row and Wetstock Ledger show the corrected opening.
   - **Commit:** `feat(shift): dip, cashier and reclassification corrections`
 
-- [ ] **FMS-G05 · Writing Feature · Whole-shift cancellation (exception)** · S · G01
+- [x] **FMS-G05 · Writing Feature · Whole-shift cancellation (exception)** · S · G01
   - **Description:** Only for the latest shift, System Manager + director approval, cancels generated documents in reverse order (FMS-C503). No FMS role has Cancel on Forecourt Shift.
   - **Verify (UI):** Attempt on an older shift is refused; on the latest shift with approval it succeeds.
   - **Commit:** `feat(shift): exceptional whole-shift cancellation`
