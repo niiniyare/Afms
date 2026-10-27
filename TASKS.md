@@ -19,7 +19,7 @@
 | C. Foundation masters (Phase 0) | 14 | 13 |
 | D. Calculation core | 8 | 0 |
 | E. Station movements | 10 | 0 |
-| F. Forecourt Shift (Phase 1 core) | 18 | 15 |
+| F. Forecourt Shift (Phase 1 core) | 18 | 16 |
 | G. Shift Correction | 6 | 0 |
 | H. Reports and workspaces | 12 | 0 |
 | I. Approvals, roles and permissions | 6 | 0 |
@@ -498,7 +498,7 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
   - **Verify (CLI):** `bench --site fms.localhost mariadb -e "SHOW INDEX FROM \`tabSales Ledger Entry\`"` shows the composite indexes. **(UI)** Report view of each ledger shows the shift's rows; submitting a GRN, a spot dip and a meter change each writes its ledger row.
   - **Commit:** `feat(finance): FMS ledgers`
 
-- [ ] **FMS-F16 · Writing Feature · Background close for large shifts** · S · F13
+- [x] **FMS-F16 · Writing Feature · Background close for large shifts** · S · F13
   - **Skills:** `frappe-impl-scheduler`, `frappe-syntax-scheduler`
   - **Description:** Above `background_close_threshold` payment rows, *Close* enqueues a job (queue `long`, deduplicated by shift) that submits the shift in one transaction; status *Closing*; on failure, back to *Reconciled* with the error in a comment and an Error Log.
   - **Verify (UI):** A shift with 250 imported mobile rows closes via the job; the form refreshes to *Closed* through realtime.

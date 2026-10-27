@@ -15,6 +15,7 @@ F12: remaining before_submit gates (S101-S104, S108-S111, S115); errors collecte
 F13: on_submit posts Sales Invoices and Payment Entries via posting/sales.py and posting/payments.py.
 F14: on_submit also posts JE (expenses + differences) and Stock Reconciliation via posting/journals.py and posting/stock.py.
 F15: on_submit writes four FMS ledgers and updates Nozzle last_* readings via posting/ledgers.py.
+F16: background close via forecourt_shift/close.py; before_submit blocks accidental Submit on "Closing" shifts.
 """
 
 from __future__ import annotations
@@ -52,9 +53,13 @@ from forecourt.errors import (
 
 
 class ForecourtShift(Document):
-	# ------------------------------------------------------------------ F04 / F06 / F07 / F08 / F10 / F11 / F12 / F13
+	# ------------------------------------------------------------------ F04 / F06 / F07 / F08 / F10 / F11 / F12 / F13 / F16
 	def before_submit(self) -> None:
 		"""Collect all gate failures then throw together (FMS-S101 to S115, W103)."""
+		if self.status == "Closing" and not frappe.flags.fms_background_close:
+			frappe.throw(
+				_("[FMS-F16] Shift {0} is being closed in background. Please wait.").format(self.name)
+			)
 		errors: list[str] = []
 		self._gate_nozzle_readings(errors)
 		self._gate_reading_continuity(errors)
