@@ -100,10 +100,27 @@
  "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
-  {"create": 1, "delete": 1, "permlevel": 0, "read": 1, "role": "Station Manager", "write": 1},
-  {"create": 1, "submit": 1, "cancel": 1, "amend": 1, "permlevel": 0, "read": 1, "role": "Area Manager", "write": 1},
-  {"permlevel": 0, "read": 1, "role": "Forecourt Administrator"},
-  {"permlevel": 0, "read": 1, "role": "Business Executive"}
+  {
+   "permlevel": 0,
+   "role": "Station Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Area Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "cancel": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Forecourt Administrator",
+   "read": 1
+  }
  ],
  "search_fields": "from_tank,to_tank,station",
  "sort_field": "transferred_at",

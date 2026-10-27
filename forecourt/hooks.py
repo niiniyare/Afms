@@ -49,6 +49,7 @@ fixtures = [
 				"name",
 				"in",
 				[
+					# Operational roles
 					"Business Executive",
 					"Station Manager",
 					"Assistant Station Manager",
@@ -57,6 +58,12 @@ fixtures = [
 					"Site Cashier",
 					"Station Accountant",
 					"Integration Service Account",
+					# Management and oversight roles
+					"Area Manager",
+					"Forecourt Administrator",
+					"Forecourt Accountant",
+					"Forecourt Director",
+					"Forecourt Investor",
 				],
 			]
 		],
