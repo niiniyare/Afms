@@ -1,3 +1,16 @@
+// F11: Resolve buttons on cashier and tank-dip rows (inline form_render).
+frappe.ui.form.on("Shift Cashier", {
+	form_render(frm, cdt, cdn) {
+		_add_cashier_resolve_button(frm, cdn);
+	},
+});
+
+frappe.ui.form.on("Shift Tank Dip", {
+	form_render(frm, cdt, cdn) {
+		_add_tank_resolve_button(frm, cdn);
+	},
+});
+
 // F16: Close button and background-close realtime handling.
 frappe.ui.form.on("Forecourt Shift", {
 	onload(frm) {
@@ -82,6 +95,139 @@ frappe.ui.form.on("Forecourt Shift", {
 		}
 	},
 });
+
+function _add_cashier_resolve_button(frm, cdn) {
+	const row = locals["Shift Cashier"] && locals["Shift Cashier"][cdn];
+	if (!row || frm.doc.docstatus !== 0) return;
+	const diff = frappe.utils.flt(row.difference);
+	if (diff === 0 || row.resolved) return;
+
+	const grid = frm.fields_dict.cashiers && frm.fields_dict.cashiers.grid;
+	if (!grid || !grid.grid_form) return;
+	const $wrapper = $(grid.grid_form.wrapper);
+	if ($wrapper.find(".fms-resolve-cashier-btn").length) return;
+
+	const default_action = diff < 0 ? "Charge to cashier" : "Record excess";
+	const $section = $(`<div class="fms-resolve-section" style="padding:6px 15px 8px">
+		<button class="btn btn-sm btn-default fms-resolve-cashier-btn">
+			${__("Resolve")} (${frappe.format(Math.abs(diff), { fieldtype: "Currency" })})
+		</button>
+	</div>`);
+	$section.find(".fms-resolve-cashier-btn").on("click", function () {
+		_resolve_cashier_dialog(frm, row, default_action);
+	});
+	$wrapper.append($section);
+}
+
+function _add_tank_resolve_button(frm, cdn) {
+	const row = locals["Shift Tank Dip"] && locals["Shift Tank Dip"][cdn];
+	if (!row || frm.doc.docstatus !== 0) return;
+	if (row.within_tolerance) return;
+
+	const grid = frm.fields_dict.tank_dips && frm.fields_dict.tank_dips.grid;
+	if (!grid || !grid.grid_form) return;
+	const $wrapper = $(grid.grid_form.wrapper);
+	if ($wrapper.find(".fms-resolve-tank-btn").length) return;
+
+	const $section = $(`<div class="fms-resolve-section" style="padding:6px 15px 8px">
+		<button class="btn btn-sm btn-default fms-resolve-tank-btn">
+			${__("Resolve Variance")} (${frappe.format(row.variance_l, { fieldtype: "Float" })} L)
+		</button>
+	</div>`);
+	$section.find(".fms-resolve-tank-btn").on("click", function () {
+		_resolve_tank_dialog(frm, row);
+	});
+	$wrapper.append($section);
+}
+
+function _resolve_cashier_dialog(frm, row, default_action) {
+	const diff = frappe.utils.flt(row.difference);
+	const dialog = new frappe.ui.Dialog({
+		title: __("Resolve: {0}", [row.cashier]),
+		fields: [
+			{
+				fieldname: "action",
+				fieldtype: "Select",
+				label: __("Action"),
+				options: "Charge to cashier\nWrite off\nRecord excess",
+				default: default_action,
+				reqd: 1,
+			},
+			{
+				fieldname: "amount",
+				fieldtype: "Currency",
+				label: __("Amount"),
+				default: Math.abs(diff),
+				reqd: 1,
+			},
+			{
+				fieldname: "reason",
+				fieldtype: "Link",
+				label: __("Reason"),
+				options: "Variance Reason",
+				get_query() {
+					return { filters: { applies_to_cashier: 1, disabled: 0 } };
+				},
+				reqd: 1,
+			},
+			{ fieldname: "note", fieldtype: "Small Text", label: __("Note") },
+		],
+		primary_action_label: __("Add Resolution"),
+		primary_action(values) {
+			dialog.hide();
+			const res = frm.add_child("resolutions");
+			res.resolution_for = "Cashier";
+			res.cashier = row.cashier;
+			res.action = values.action;
+			res.amount = values.amount;
+			res.reason = values.reason;
+			res.note = values.note || "";
+			frm.refresh_field("resolutions");
+			frm.dirty();
+		},
+	});
+	dialog.show();
+}
+
+function _resolve_tank_dialog(frm, row) {
+	const dialog = new frappe.ui.Dialog({
+		title: __("Resolve Tank Variance: {0}", [row.tank]),
+		fields: [
+			{
+				fieldname: "volume_l",
+				fieldtype: "Float",
+				label: __("Volume (L)"),
+				default: row.variance_l,
+				reqd: 1,
+			},
+			{
+				fieldname: "reason",
+				fieldtype: "Link",
+				label: __("Reason"),
+				options: "Variance Reason",
+				get_query() {
+					return { filters: { applies_to_tank: 1, disabled: 0 } };
+				},
+				reqd: 1,
+			},
+			{ fieldname: "note", fieldtype: "Small Text", label: __("Note") },
+		],
+		primary_action_label: __("Add Resolution"),
+		primary_action(values) {
+			dialog.hide();
+			const res = frm.add_child("resolutions");
+			res.resolution_for = "Tank";
+			res.tank = row.tank;
+			res.action = "Accept variance";
+			res.volume_l = values.volume_l;
+			res.reason = values.reason;
+			res.note = values.note || "";
+			frm.refresh_field("resolutions");
+			frm.dirty();
+		},
+	});
+	dialog.show();
+}
 
 function _import_transactions_dialog(frm) {
 	const dialog = new frappe.ui.Dialog({

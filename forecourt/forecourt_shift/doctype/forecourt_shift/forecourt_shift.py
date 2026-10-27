@@ -629,7 +629,7 @@ class ForecourtShift(Document):
 
 	def _compute_resolution_approval(self) -> None:
 		"""Set needs_approval on resolution rows based on write-off and variance thresholds."""
-		settings = frappe.get_cached_doc("Forecourt Settings")
+		settings = frappe.get_cached_doc("Forecourt Company Settings", self.company)
 		small_pct = flt(getattr(settings, "small_difference_pct", 0.1) or 0.1) / 100.0
 		small_amt = flt(getattr(settings, "small_difference_amount", 0.0) or 0.0)
 		tol_pct = flt(getattr(settings, "tank_tolerance_pct", 0.5) or 0.5) / 100.0
