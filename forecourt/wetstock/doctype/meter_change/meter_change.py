@@ -10,7 +10,9 @@ from frappe.utils import flt
 
 class MeterChange(Document):
 	def on_submit(self) -> None:
-		"""Snapshot old nozzle readings then update to new start values."""
+		"""Snapshot old nozzle readings, update to new start values, write NLE."""
+		from forecourt.posting import ledgers as posting_ledgers
+
 		nozzle = frappe.get_doc("Nozzle", self.nozzle)
 		self.db_set("old_final_ecash", flt(nozzle.last_ecash), update_modified=False)
 		self.db_set("old_final_evol", flt(nozzle.last_evol), update_modified=False)
@@ -29,6 +31,8 @@ class MeterChange(Document):
 			)
 		finally:
 			frappe.flags.fms_meter_change = False
+
+		posting_ledgers.write_meter_change_nozzle_ledger(self)
 
 	def on_cancel(self) -> None:
 		"""Restore nozzle last readings to old final values."""

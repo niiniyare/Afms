@@ -19,7 +19,7 @@
 | C. Foundation masters (Phase 0) | 14 | 13 |
 | D. Calculation core | 8 | 0 |
 | E. Station movements | 10 | 0 |
-| F. Forecourt Shift (Phase 1 core) | 18 | 0 |
+| F. Forecourt Shift (Phase 1 core) | 18 | 15 |
 | G. Shift Correction | 6 | 0 |
 | H. Reports and workspaces | 12 | 0 |
 | I. Approvals, roles and permissions | 6 | 0 |
@@ -487,12 +487,12 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
   - **Verify (UI):** Shift Connections tab lists the invoices and payment entries; Accounts Receivable shows walk-in at zero.
   - **Commit:** `feat(shift): post sales and payments`
 
-- [ ] **FMS-F14 · Writing Feature · Posting: journals and stock** · M · F13
+- [x] **FMS-F14 · Writing Feature · Posting: journals and stock** · M · F13
   - **Description:** `posting/journals.py`: expenses and resolutions; `posting/stock.py`: Stock Reconciliation per tank (according to the company setting), drops as internal transfers, and the float transfer to the safe when the company returns floats (D27).
   - **Verify (UI):** General Ledger filtered by the shift's vouchers: till balance equals counted cash; Fuel Stock Variance shows the tank variance value.
   - **Commit:** `feat(shift): post journals and stock reconciliation`
 
-- [ ] **FMS-F15 · Writing Feature · Ledgers** · M · F13, D07
+- [x] **FMS-F15 · Writing Feature · Ledgers** · M · F13, D07
   - **Skills:** `frappe-syntax-doctypes`, `frappe-core-database`
   - **Description:** The four ledger DocTypes (catalogue 10.1–10.4, without `superseded_by` and `correction`, added in G01) with composite indexes in `on_doctype_update`; `posting/ledgers.py` writes them on submit; Nozzle `last_*` updated. Also wire the ledger rows of E03 (*Delivery*), E06 (*Spot Dip*) and E08 (*Meter Change*) through `posting/ledgers.py`.
   - **Verify (CLI):** `bench --site fms.localhost mariadb -e "SHOW INDEX FROM \`tabSales Ledger Entry\`"` shows the composite indexes. **(UI)** Report view of each ledger shows the shift's rows; submitting a GRN, a spot dip and a meter change each writes its ledger row.

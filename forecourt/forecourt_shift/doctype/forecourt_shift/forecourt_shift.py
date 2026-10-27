@@ -14,6 +14,7 @@ F11: resolution lines; FMS-S105 (cashier resolved) and FMS-S106 (tank variance a
 F12: remaining before_submit gates (S101-S104, S108-S111, S115); errors collected and thrown together.
 F13: on_submit posts Sales Invoices and Payment Entries via posting/sales.py and posting/payments.py.
 F14: on_submit also posts JE (expenses + differences) and Stock Reconciliation via posting/journals.py and posting/stock.py.
+F15: on_submit writes four FMS ledgers and updates Nozzle last_* readings via posting/ledgers.py.
 """
 
 from __future__ import annotations
@@ -76,8 +77,9 @@ class ForecourtShift(Document):
 
 	# ------------------------------------------------------------------ F13 / F14
 	def on_submit(self) -> None:
-		"""Post all shift documents: invoices, payments, journals and stock."""
+		"""Post all shift documents: invoices, payments, journals, stock and ledgers."""
 		from forecourt.posting import journals as posting_journals
+		from forecourt.posting import ledgers as posting_ledgers
 		from forecourt.posting import payments as posting_payments
 		from forecourt.posting import sales as posting_sales
 		from forecourt.posting import stock as posting_stock
@@ -92,6 +94,13 @@ class ForecourtShift(Document):
 		posting_stock.post_stock_reconciliations(self)
 		posting_stock.post_drop_entries(self)
 		posting_stock.post_float_returns(self)
+
+		# F15: FMS ledgers and nozzle last readings
+		posting_ledgers.write_shift_wetstock_ledger(self)
+		posting_ledgers.write_shift_nozzle_ledger(self)
+		posting_ledgers.write_shift_sales_ledger(self)
+		posting_ledgers.write_shift_cashier_ledger(self)
+		posting_ledgers.update_nozzle_last_readings(self)
 
 	# ------------------------------------------------------------------ F12 new gates
 

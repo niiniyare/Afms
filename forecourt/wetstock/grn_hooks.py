@@ -116,8 +116,10 @@ def _check_tolerance(row) -> None:
 
 
 def on_submit_purchase_receipt(doc, method=None) -> None:
-	"""Placeholder: Wetstock Ledger Entry (Delivery) wired in FMS-F15."""
-	pass
+	"""Write Wetstock Ledger Entry (Delivery) for each delivery dip row."""
+	from forecourt.posting import ledgers as posting_ledgers
+
+	posting_ledgers.write_delivery_wetstock_ledger(doc)
 
 
 def on_cancel_purchase_receipt(doc, method=None) -> None:

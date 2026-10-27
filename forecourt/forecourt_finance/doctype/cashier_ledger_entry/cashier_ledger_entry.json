@@ -1,0 +1,240 @@
+{
+ "name": "Cashier Ledger Entry",
+ "module": "Forecourt Finance",
+ "autoname": "hash",
+ "track_changes": 0,
+ "is_submittable": 0,
+ "fields": [
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "search_index": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "station",
+   "fieldtype": "Link",
+   "label": "Station",
+   "options": "Station",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "label": "Posting Date",
+   "reqd": 1,
+   "search_index": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "forecourt_shift",
+   "fieldtype": "Link",
+   "label": "Forecourt Shift",
+   "options": "Forecourt Shift",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "col_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "voucher_type",
+   "fieldtype": "Data",
+   "label": "Voucher Type"
+  },
+  {
+   "fieldname": "voucher_no",
+   "fieldtype": "Data",
+   "label": "Voucher No",
+   "search_index": 1
+  },
+  {
+   "fieldname": "is_cancelled",
+   "fieldtype": "Check",
+   "label": "Is Cancelled"
+  },
+  {
+   "fieldname": "cashier",
+   "fieldtype": "Link",
+   "label": "Cashier",
+   "options": "Employee",
+   "reqd": 1,
+   "search_index": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "section_sales",
+   "fieldtype": "Section Break",
+   "label": "Sales"
+  },
+  {
+   "fieldname": "fuel_l",
+   "fieldtype": "Float",
+   "label": "Fuel L",
+   "precision": 3
+  },
+  {
+   "fieldname": "fuel_amount",
+   "fieldtype": "Currency",
+   "label": "Fuel Amount"
+  },
+  {
+   "fieldname": "item_amount",
+   "fieldtype": "Currency",
+   "label": "Item Amount"
+  },
+  {
+   "fieldname": "debt_receipts",
+   "fieldtype": "Currency",
+   "label": "Debt Receipts"
+  },
+  {
+   "fieldname": "float_amount",
+   "fieldtype": "Currency",
+   "label": "Float Amount"
+  },
+  {
+   "fieldname": "col_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cash",
+   "fieldtype": "Currency",
+   "label": "Cash"
+  },
+  {
+   "fieldname": "mobile",
+   "fieldtype": "Currency",
+   "label": "Mobile"
+  },
+  {
+   "fieldname": "card",
+   "fieldtype": "Currency",
+   "label": "Card"
+  },
+  {
+   "fieldname": "credit",
+   "fieldtype": "Currency",
+   "label": "Credit"
+  },
+  {
+   "fieldname": "voucher",
+   "fieldtype": "Currency",
+   "label": "Voucher"
+  },
+  {
+   "fieldname": "expenses",
+   "fieldtype": "Currency",
+   "label": "Expenses"
+  },
+  {
+   "fieldname": "drops",
+   "fieldtype": "Currency",
+   "label": "Drops"
+  },
+  {
+   "fieldname": "section_balance",
+   "fieldtype": "Section Break",
+   "label": "Balance"
+  },
+  {
+   "fieldname": "expected",
+   "fieldtype": "Currency",
+   "label": "Expected",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "accounted",
+   "fieldtype": "Currency",
+   "label": "Accounted"
+  },
+  {
+   "fieldname": "difference",
+   "fieldtype": "Currency",
+   "label": "Difference",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "col_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "resolution_action",
+   "fieldtype": "Data",
+   "label": "Resolution Action"
+  },
+  {
+   "fieldname": "resolution_amount",
+   "fieldtype": "Currency",
+   "label": "Resolution Amount"
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Data",
+   "label": "Reason"
+  }
+ ],
+ "permissions": [
+  {
+   "permlevel": 0,
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "role": "Business Executive"
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "role": "Station Manager"
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "role": "Assistant Station Manager"
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "role": "Forecourt Supervisor"
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "role": "Forecourt Sales Operator"
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "role": "Site Cashier"
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "role": "Station Accountant"
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "role": "Integration Service Account"
+  }
+ ]
+}

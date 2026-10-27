@@ -1,0 +1,304 @@
+{
+ "name": "Wetstock Ledger Entry",
+ "module": "Wetstock",
+ "autoname": "hash",
+ "track_changes": 0,
+ "is_submittable": 0,
+ "fields": [
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "search_index": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "station",
+   "fieldtype": "Link",
+   "label": "Station",
+   "options": "Station",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "label": "Posting Date",
+   "reqd": 1,
+   "search_index": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "forecourt_shift",
+   "fieldtype": "Link",
+   "label": "Forecourt Shift",
+   "options": "Forecourt Shift",
+   "search_index": 1
+  },
+  {
+   "fieldname": "col_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "voucher_type",
+   "fieldtype": "Data",
+   "label": "Voucher Type"
+  },
+  {
+   "fieldname": "voucher_no",
+   "fieldtype": "Data",
+   "label": "Voucher No",
+   "search_index": 1
+  },
+  {
+   "fieldname": "is_cancelled",
+   "fieldtype": "Check",
+   "label": "Is Cancelled"
+  },
+  {
+   "fieldname": "section_wetstock",
+   "fieldtype": "Section Break",
+   "label": "Stock"
+  },
+  {
+   "fieldname": "tank",
+   "fieldtype": "Link",
+   "label": "Tank",
+   "options": "Fuel Tank",
+   "reqd": 1,
+   "search_index": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "label": "Item",
+   "options": "Item"
+  },
+  {
+   "fieldname": "entry_type",
+   "fieldtype": "Select",
+   "label": "Entry Type",
+   "options": "Shift\nDelivery\nSpot Dip\nTransfer\nMeter Change\nAdjustment",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "col_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "shift_start",
+   "fieldtype": "Datetime",
+   "label": "Shift Start"
+  },
+  {
+   "fieldname": "shift_end",
+   "fieldtype": "Datetime",
+   "label": "Shift End"
+  },
+  {
+   "fieldname": "dip_entry_mode",
+   "fieldtype": "Select",
+   "label": "Dip Entry Mode",
+   "options": "Litres\nMillimetres"
+  },
+  {
+   "fieldname": "source",
+   "fieldtype": "Select",
+   "label": "Source",
+   "options": "Manual\nATG\nImport"
+  },
+  {
+   "fieldname": "section_volumes",
+   "fieldtype": "Section Break",
+   "label": "Volumes (L)"
+  },
+  {
+   "fieldname": "opening_l",
+   "fieldtype": "Float",
+   "label": "Opening L",
+   "precision": 3
+  },
+  {
+   "fieldname": "receipt_l",
+   "fieldtype": "Float",
+   "label": "Receipts L",
+   "precision": 3
+  },
+  {
+   "fieldname": "sales_l",
+   "fieldtype": "Float",
+   "label": "Sales L",
+   "precision": 3
+  },
+  {
+   "fieldname": "test_l",
+   "fieldtype": "Float",
+   "label": "Test L",
+   "precision": 3
+  },
+  {
+   "fieldname": "own_use_l",
+   "fieldtype": "Float",
+   "label": "Own Use L",
+   "precision": 3
+  },
+  {
+   "fieldname": "transfer_l",
+   "fieldtype": "Float",
+   "label": "Transfer L",
+   "precision": 3
+  },
+  {
+   "fieldname": "expected_l",
+   "fieldtype": "Float",
+   "label": "Expected L",
+   "precision": 3
+  },
+  {
+   "fieldname": "col_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "dip_l",
+   "fieldtype": "Float",
+   "label": "Dip L",
+   "precision": 3
+  },
+  {
+   "fieldname": "variance_l",
+   "fieldtype": "Float",
+   "label": "Variance L",
+   "precision": 3
+  },
+  {
+   "fieldname": "variance_pct",
+   "fieldtype": "Percent",
+   "label": "Variance %"
+  },
+  {
+   "fieldname": "invoiced_l",
+   "fieldtype": "Float",
+   "label": "Invoiced L",
+   "precision": 3
+  },
+  {
+   "fieldname": "delivery_variance_l",
+   "fieldtype": "Float",
+   "label": "Delivery Variance L",
+   "precision": 3
+  },
+  {
+   "fieldname": "valuation_rate",
+   "fieldtype": "Currency",
+   "label": "Valuation Rate"
+  },
+  {
+   "fieldname": "variance_value",
+   "fieldtype": "Currency",
+   "label": "Variance Value"
+  },
+  {
+   "fieldname": "section_delivery",
+   "fieldtype": "Section Break",
+   "label": "Delivery"
+  },
+  {
+   "fieldname": "supplier",
+   "fieldtype": "Link",
+   "label": "Supplier",
+   "options": "Supplier"
+  },
+  {
+   "fieldname": "transporter",
+   "fieldtype": "Link",
+   "label": "Transporter",
+   "options": "Supplier"
+  },
+  {
+   "fieldname": "driver",
+   "fieldtype": "Data",
+   "label": "Driver"
+  },
+  {
+   "fieldname": "cashiers",
+   "fieldtype": "Data",
+   "label": "Cashiers"
+  },
+  {
+   "fieldname": "col_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Data",
+   "label": "Reason"
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved By",
+   "options": "User"
+  }
+ ],
+ "permissions": [
+  {
+   "permlevel": 0,
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "role": "Business Executive"
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "role": "Station Manager"
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "role": "Assistant Station Manager"
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "role": "Forecourt Supervisor"
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "role": "Forecourt Sales Operator"
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "role": "Site Cashier"
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "role": "Station Accountant"
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "role": "Integration Service Account"
+  }
+ ]
+}
