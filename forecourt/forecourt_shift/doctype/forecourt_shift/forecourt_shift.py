@@ -16,6 +16,7 @@ F13: on_submit posts Sales Invoices and Payment Entries via posting/sales.py and
 F14: on_submit also posts JE (expenses + differences) and Stock Reconciliation via posting/journals.py and posting/stock.py.
 F15: on_submit writes four FMS ledgers and updates Nozzle last_* readings via posting/ledgers.py.
 F16: background close via forecourt_shift/close.py; before_submit blocks accidental Submit on "Closing" shifts.
+F17: validate builds posting_summary HTML (Review tab); Shift Report print format at print_format/shift_report/.
 """
 
 from __future__ import annotations
@@ -576,7 +577,7 @@ class ForecourtShift(Document):
 						},
 					)
 
-	# ------------------------------------------------------------------ F03 / F05 / F06 / F08 / F09 / F10 / F11
+	# ------------------------------------------------------------------ F03 / F05 / F06 / F08 / F09 / F10 / F11 / F17
 	def validate(self) -> None:
 		self._compute_item_sale_amounts()
 		self._pull_own_use_for_nozzles()  # F06
@@ -592,6 +593,7 @@ class ForecourtShift(Document):
 		self._compute_resolution_approval()  # F11
 		self._update_cashier_resolved()  # F11
 		self._compute_parent_totals()
+		self._build_posting_summary()  # F17
 
 	# ------------------------------------------------------------------ F11 helpers
 
@@ -634,6 +636,93 @@ class ForecourtShift(Document):
 				row.resolved = 1
 			else:
 				row.resolved = 0
+
+	# ------------------------------------------------------------------ F17
+
+	def _build_posting_summary(self) -> None:
+		"""Generate HTML for the posting_summary field on the Review tab."""
+		from frappe.utils import fmt_money
+
+		currency = frappe.db.get_value("Company", self.company, "default_currency") if self.company else ""
+
+		def money(v: float) -> str:
+			return fmt_money(v or 0, currency=currency)
+
+		def vol(v: float, p: int = 3) -> str:
+			return f"{flt(v or 0, p):,.{p}f}"
+
+		parts: list[str] = []
+
+		# Cashier balances
+		parts.append(
+			'<h6 style="margin:4px 0 2px;font-weight:bold">Cashier Balances</h6>'
+			'<table class="table table-condensed" style="font-size:0.82em;margin:0 0 6px">'
+			"<thead><tr><th>Cashier</th>"
+			'<th class="text-right">Expected</th>'
+			'<th class="text-right">Accounted</th>'
+			'<th class="text-right">Difference</th></tr></thead><tbody>'
+		)
+		for c in self.cashiers:
+			diff = flt(c.difference, 2)
+			if diff < 0:
+				dcell = f'<b style="color:#c00">{money(diff)}</b>'
+			elif diff > 0:
+				dcell = f'<b style="color:#c47800">{money(diff)}</b>'
+			else:
+				dcell = money(diff)
+			parts.append(
+				f"<tr><td>{frappe.utils.escape_html(c.cashier or '')}</td>"
+				f'<td class="text-right">{money(c.expected)}</td>'
+				f'<td class="text-right">{money(c.accounted)}</td>'
+				f'<td class="text-right">{dcell}</td></tr>'
+			)
+		parts.append("</tbody></table>")
+
+		# Tank reconciliation
+		parts.append(
+			'<h6 style="margin:4px 0 2px;font-weight:bold">Tank Reconciliation</h6>'
+			'<table class="table table-condensed" style="font-size:0.82em;margin:0 0 6px">'
+			"<thead><tr><th>Tank</th>"
+			'<th class="text-right">Expected L</th>'
+			'<th class="text-right">Dip L</th>'
+			'<th class="text-right">Var L</th>'
+			'<th class="text-right">Var%</th>'
+			"<th>Status</th></tr></thead><tbody>"
+		)
+		for t in self.tank_dips:
+			if t.within_tolerance:
+				badge = (
+					'<span style="background:#5cb85c;color:#fff;padding:1px 5px;border-radius:3px">OK</span>'
+				)
+			elif t.reason:
+				badge = '<span style="background:#f0ad4e;color:#fff;padding:1px 5px;border-radius:3px">Explained</span>'
+			else:
+				badge = '<span style="background:#d9534f;color:#fff;padding:1px 5px;border-radius:3px">Review</span>'
+			parts.append(
+				f"<tr><td>{frappe.utils.escape_html(t.tank or '')}</td>"
+				f'<td class="text-right">{vol(t.expected_l)}</td>'
+				f'<td class="text-right">{vol(t.dip_l)}</td>'
+				f'<td class="text-right">{vol(t.variance_l)}</td>'
+				f'<td class="text-right">{flt(t.variance_pct, 2):.2f}%</td>'
+				f"<td>{badge}</td></tr>"
+			)
+		parts.append("</tbody></table>")
+
+		# Grand totals line
+		parts.append(
+			f'<p style="font-size:0.82em;margin:4px 0;line-height:1.8">'
+			f"<b>Fuel:</b> {vol(self.total_fuel_volume)} L / {money(self.total_fuel_amount)}&emsp;"
+			f"<b>Items:</b> {money(self.total_item_amount)}&emsp;"
+			f"<b>Credit:</b> {money(self.total_credit)}&emsp;"
+			f"<b>Mobile:</b> {money(self.total_mobile)}&emsp;"
+			f"<b>Card:</b> {money(self.total_card)}&emsp;"
+			f"<b>Cash:</b> {money(self.total_cash)}&emsp;"
+			f"<b>Expenses:</b> {money(self.total_expenses)}&emsp;"
+			f"<b>Total Difference:</b> {money(self.total_difference)}"
+			f"</p>"
+		)
+
+		self.posting_summary = "\n".join(parts)
 
 	# ------------------------------------------------------------------ F02
 	def before_insert(self) -> None:

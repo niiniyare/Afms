@@ -19,7 +19,7 @@
 | C. Foundation masters (Phase 0) | 14 | 13 |
 | D. Calculation core | 8 | 0 |
 | E. Station movements | 10 | 0 |
-| F. Forecourt Shift (Phase 1 core) | 18 | 16 |
+| F. Forecourt Shift (Phase 1 core) | 18 | 17 |
 | G. Shift Correction | 6 | 0 |
 | H. Reports and workspaces | 12 | 0 |
 | I. Approvals, roles and permissions | 6 | 0 |
@@ -28,7 +28,7 @@
 | L. CI/CD | 4 | 0 |
 | M. Deployment and operations | 8 | 0 |
 | N. Pilot and go-live | 5 | 0 |
-| **Total (Phases 0–3)** | **124** | **30** |
+| **Total (Phases 0–3)** | **124** | **31** |
 | P. Later phases (backlog) | 8 epics | — |
 
 Update the *Done* column in the same commit that ticks a task.
@@ -504,7 +504,7 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
   - **Verify (UI):** A shift with 250 imported mobile rows closes via the job; the form refreshes to *Closed* through realtime.
   - **Commit:** `feat(shift): background close`
 
-- [ ] **FMS-F17 · Writing Feature · Shift form layout and print format** · M · F12
+- [x] **FMS-F17 · Writing Feature · Shift form layout and print format** · M · F12
   - **Skills:** `frappe-impl-jinja`, `frappe-syntax-print`
   - **Description:** Final form layout (catalogue 9.1 tabs, reconciliation summary HTML on Review); *Shift Report* print format (one page).
   - **Verify (UI):** Print preview fits one A4 page for the test station.
