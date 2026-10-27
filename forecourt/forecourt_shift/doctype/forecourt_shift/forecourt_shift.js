@@ -48,9 +48,68 @@ frappe.ui.form.on("Forecourt Shift", {
 			}).addClass("btn-primary");
 		}
 
+		if (frm.doc.docstatus === 0 && ["Open", "Reconciling"].includes(frm.doc.status)) {
+			frm.add_custom_button(
+				__("Import Transactions"),
+				function () {
+					_import_transactions_dialog(frm);
+				},
+				__("Tools")
+			);
+		}
+
 		if (frm.doc.status === "Closing") {
 			frm.disable_save();
 			frm.set_intro(__("Closing in background…"), "blue");
 		}
 	},
 });
+
+function _import_transactions_dialog(frm) {
+	const dialog = new frappe.ui.Dialog({
+		title: __("Import Transactions"),
+		fields: [
+			{
+				fieldname: "provider",
+				fieldtype: "Link",
+				label: __("Payment Provider"),
+				options: "Payment Provider",
+				reqd: 1,
+			},
+			{
+				fieldname: "file",
+				fieldtype: "Attach",
+				label: __("Statement File"),
+				reqd: 1,
+			},
+		],
+		primary_action_label: __("Import"),
+		primary_action(values) {
+			dialog.hide();
+			frappe.show_alert({ message: __("Importing…"), indicator: "blue" });
+			frappe.call({
+				method: "forecourt.forecourt_integrations.statement_import.run_for_shift",
+				args: {
+					shift: frm.docname,
+					provider: values.provider,
+					file_url: values.file,
+				},
+				callback(r) {
+					if (!r.exc && r.message) {
+						const m = r.message;
+						frappe.msgprint({
+							title: __("Import Complete"),
+							message: __(
+								"Read: {0} · Created: {1} · Duplicate: {2} · Rejected: {3}",
+								[m.rows_read, m.rows_created, m.rows_duplicate, m.rows_rejected]
+							),
+							indicator: m.rows_rejected ? "orange" : "green",
+						});
+						frm.reload_doc();
+					}
+				},
+			});
+		},
+	});
+	dialog.show();
+}
