@@ -52,5 +52,186 @@
   "fieldtype": "Link",
   "options": "Station",
   "insert_after": "fms_is_walk_in"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Purchase Receipt-fms_station_section",
+  "dt": "Purchase Receipt",
+  "module": "Wetstock",
+  "fieldname": "fms_station_section",
+  "label": "FMS Delivery",
+  "fieldtype": "Section Break",
+  "insert_after": "remarks",
+  "collapsible": 0
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Purchase Receipt-fms_delivery_note_no",
+  "dt": "Purchase Receipt",
+  "module": "Wetstock",
+  "fieldname": "fms_delivery_note_no",
+  "label": "Delivery Note No.",
+  "fieldtype": "Data",
+  "insert_after": "fms_station_section"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Purchase Receipt-fms_truck",
+  "dt": "Purchase Receipt",
+  "module": "Wetstock",
+  "fieldname": "fms_truck",
+  "label": "Truck",
+  "fieldtype": "Data",
+  "insert_after": "fms_delivery_note_no"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Purchase Receipt-fms_driver",
+  "dt": "Purchase Receipt",
+  "module": "Wetstock",
+  "fieldname": "fms_driver",
+  "label": "Driver",
+  "fieldtype": "Data",
+  "insert_after": "fms_truck"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Purchase Receipt-fms_transporter",
+  "dt": "Purchase Receipt",
+  "module": "Wetstock",
+  "fieldname": "fms_transporter",
+  "label": "Transporter",
+  "fieldtype": "Link",
+  "options": "Supplier",
+  "insert_after": "fms_driver"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Purchase Receipt-fms_col_break_1",
+  "dt": "Purchase Receipt",
+  "module": "Wetstock",
+  "fieldname": "fms_col_break_1",
+  "fieldtype": "Column Break",
+  "insert_after": "fms_transporter"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Purchase Receipt-fms_seals",
+  "dt": "Purchase Receipt",
+  "module": "Wetstock",
+  "fieldname": "fms_seals",
+  "label": "Seals",
+  "fieldtype": "Data",
+  "insert_after": "fms_col_break_1"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Purchase Receipt-fms_witness",
+  "dt": "Purchase Receipt",
+  "module": "Wetstock",
+  "fieldname": "fms_witness",
+  "label": "Witness",
+  "fieldtype": "Link",
+  "options": "Employee",
+  "insert_after": "fms_seals"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Purchase Receipt-fms_delivery_dips",
+  "dt": "Purchase Receipt",
+  "module": "Wetstock",
+  "fieldname": "fms_delivery_dips",
+  "label": "Delivery Dips",
+  "fieldtype": "Table",
+  "options": "GRN Delivery Dip",
+  "insert_after": "fms_witness"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Purchase Receipt-fms_forecourt_shift",
+  "dt": "Purchase Receipt",
+  "module": "Forecourt Shift",
+  "fieldname": "fms_forecourt_shift",
+  "label": "Forecourt Shift",
+  "fieldtype": "Link",
+  "options": "Forecourt Shift",
+  "read_only": 1,
+  "search_index": 1,
+  "insert_after": "fms_delivery_dips"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Stock Entry-fms_own_use_section",
+  "dt": "Stock Entry",
+  "module": "Wetstock",
+  "fieldname": "fms_own_use_section",
+  "label": "Fuel Own Use",
+  "fieldtype": "Section Break",
+  "insert_after": "remarks",
+  "collapsible": 0
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Stock Entry-fms_nozzle",
+  "dt": "Stock Entry",
+  "module": "Wetstock",
+  "fieldname": "fms_nozzle",
+  "label": "Nozzle",
+  "fieldtype": "Link",
+  "options": "Nozzle",
+  "insert_after": "fms_own_use_section"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Stock Entry-fms_attendant",
+  "dt": "Stock Entry",
+  "module": "Wetstock",
+  "fieldname": "fms_attendant",
+  "label": "Attendant",
+  "fieldtype": "Link",
+  "options": "Employee",
+  "insert_after": "fms_nozzle"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Stock Entry-fms_col_break_1",
+  "dt": "Stock Entry",
+  "module": "Wetstock",
+  "fieldname": "fms_col_break_1",
+  "fieldtype": "Column Break",
+  "insert_after": "fms_attendant"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Stock Entry-fms_use_purpose",
+  "dt": "Stock Entry",
+  "module": "Wetstock",
+  "fieldname": "fms_use_purpose",
+  "label": "Own Use Purpose",
+  "fieldtype": "Link",
+  "options": "Own Use Purpose",
+  "insert_after": "fms_col_break_1"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Stock Entry-fms_vehicle_or_asset",
+  "dt": "Stock Entry",
+  "module": "Wetstock",
+  "fieldname": "fms_vehicle_or_asset",
+  "label": "Vehicle / Asset",
+  "fieldtype": "Data",
+  "insert_after": "fms_use_purpose"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Stock Entry-fms_purchase_receipt",
+  "dt": "Stock Entry",
+  "module": "Wetstock",
+  "fieldname": "fms_purchase_receipt",
+  "label": "Purchase Receipt",
+  "fieldtype": "Link",
+  "options": "Purchase Receipt",
+  "read_only": 1,
+  "insert_after": "fms_vehicle_or_asset"
  }
 ]

@@ -1,0 +1,146 @@
+{
+ "actions": [],
+ "autoname": "format:{station}-{template_name}",
+ "creation": "2026-10-27 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "station", "company", "col_break_1",
+  "template_name", "sequence",
+  "section_times",
+  "start_time", "end_time",
+  "col_break_2",
+  "dips_required", "active",
+  "section_cashiers", "cashiers",
+  "section_nozzles", "nozzle_assignments"
+ ],
+ "fields": [
+  {
+   "fieldname": "station",
+   "fieldtype": "Link",
+   "label": "Station",
+   "options": "Station",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "fetch_from": "station.company",
+   "fetch_if_empty": 0,
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "template_name",
+   "fieldtype": "Data",
+   "label": "Template Name",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "sequence",
+   "fieldtype": "Int",
+   "label": "Sequence"
+  },
+  {
+   "fieldname": "section_times",
+   "fieldtype": "Section Break",
+   "label": "Shift Window"
+  },
+  {
+   "fieldname": "start_time",
+   "fieldtype": "Time",
+   "label": "Start Time",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "end_time",
+   "fieldtype": "Time",
+   "label": "End Time",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "col_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "dips_required",
+   "fieldtype": "Check",
+   "label": "Dips Required",
+   "default": "1"
+  },
+  {
+   "fieldname": "active",
+   "fieldtype": "Check",
+   "label": "Active",
+   "default": "1",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "section_cashiers",
+   "fieldtype": "Section Break",
+   "label": "Default Roster"
+  },
+  {
+   "fieldname": "cashiers",
+   "fieldtype": "Table",
+   "label": "Cashiers",
+   "options": "Shift Template Cashier"
+  },
+  {
+   "fieldname": "section_nozzles",
+   "fieldtype": "Section Break",
+   "label": "Nozzle Assignments"
+  },
+  {
+   "fieldname": "nozzle_assignments",
+   "fieldtype": "Table",
+   "label": "Nozzle Assignments",
+   "options": "Shift Template Nozzle"
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-27 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Forecourt Shift",
+ "name": "Forecourt Shift Template",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "permlevel": 0,
+   "read": 1,
+   "role": "Forecourt Administrator",
+   "write": 1
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "write": 1,
+   "role": "Station Manager"
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "role": "Area Manager"
+  }
+ ],
+ "search_fields": "station,template_name",
+ "sort_field": "station",
+ "sort_order": "ASC",
+ "title_field": "template_name",
+ "track_changes": 1
+}

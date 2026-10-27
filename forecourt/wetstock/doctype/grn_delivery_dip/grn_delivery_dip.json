@@ -1,0 +1,170 @@
+{
+ "actions": [],
+ "creation": "2026-10-27 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "tank", "item", "col_break_1", "dip_entry_mode",
+  "section_chart", "dip_before_mm", "dip_after_mm",
+  "section_volumes", "volume_before_l", "col_break_2", "volume_after_l",
+  "section_calc", "sales_during_drop_l", "col_break_3", "received_l",
+  "section_results", "invoiced_l", "variance_l", "col_break_4", "variance_pct",
+  "reason",
+  "section_optional", "temperature_c", "density",
+  "shortage_stock_entry"
+ ],
+ "fields": [
+  {
+   "fieldname": "tank",
+   "fieldtype": "Link",
+   "label": "Tank",
+   "options": "Fuel Tank",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "label": "Item",
+   "options": "Item",
+   "fetch_from": "tank.item",
+   "fetch_if_empty": 0,
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "col_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "dip_entry_mode",
+   "fieldtype": "Data",
+   "label": "Dip Entry Mode",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_chart",
+   "fieldtype": "Section Break",
+   "label": "Chart Mode Dips"
+  },
+  {
+   "fieldname": "dip_before_mm",
+   "fieldtype": "Float",
+   "label": "Dip Before (mm)",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "dip_after_mm",
+   "fieldtype": "Float",
+   "label": "Dip After (mm)",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "section_volumes",
+   "fieldtype": "Section Break",
+   "label": "Volumes"
+  },
+  {
+   "fieldname": "volume_before_l",
+   "fieldtype": "Float",
+   "label": "Volume Before (L)"
+  },
+  {
+   "fieldname": "col_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "volume_after_l",
+   "fieldtype": "Float",
+   "label": "Volume After (L)"
+  },
+  {
+   "fieldname": "section_calc",
+   "fieldtype": "Section Break",
+   "label": "Delivery"
+  },
+  {
+   "fieldname": "sales_during_drop_l",
+   "fieldtype": "Float",
+   "label": "Sales During Drop (L)"
+  },
+  {
+   "fieldname": "col_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "received_l",
+   "fieldtype": "Float",
+   "label": "Received (L)",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "section_results",
+   "fieldtype": "Section Break",
+   "label": "Variance"
+  },
+  {
+   "fieldname": "invoiced_l",
+   "fieldtype": "Float",
+   "label": "Invoiced (L)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "variance_l",
+   "fieldtype": "Float",
+   "label": "Variance (L)",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "col_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "variance_pct",
+   "fieldtype": "Percent",
+   "label": "Variance %",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Link",
+   "label": "Variance Reason",
+   "options": "Variance Reason"
+  },
+  {
+   "fieldname": "section_optional",
+   "fieldtype": "Section Break",
+   "label": "Optional",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "temperature_c",
+   "fieldtype": "Float",
+   "label": "Temperature (°C)"
+  },
+  {
+   "fieldname": "density",
+   "fieldtype": "Float",
+   "label": "Density"
+  },
+  {
+   "fieldname": "shortage_stock_entry",
+   "fieldtype": "Link",
+   "label": "Shortage Stock Entry",
+   "options": "Stock Entry",
+   "read_only": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-27 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Wetstock",
+ "name": "GRN Delivery Dip",
+ "owner": "Administrator",
+ "permissions": []
+}

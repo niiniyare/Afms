@@ -12,8 +12,8 @@ _CODE_RE = re.compile(r"^[A-Z]{2}-[A-Z0-9]{2,5}-[A-Z0-9]{2,6}$")
 
 _BASIS_TO_METER: dict[str, str] = {
 	"Elec Cash": "record_elec_cash",
-	"Elec Meter": "record_elec_meter",
-	"Man Meter": "record_man_meter",
+	"Elec Mtr": "record_elec_meter",
+	"Man Mtr": "record_man_meter",
 }
 
 

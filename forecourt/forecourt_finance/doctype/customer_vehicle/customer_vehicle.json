@@ -1,0 +1,126 @@
+{
+ "actions": [],
+ "autoname": "format:{customer}-{plate_no}",
+ "creation": "2026-10-27 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "customer",
+  "plate_no",
+  "description",
+  "col_break_1",
+  "active",
+  "section_limits",
+  "monthly_limit_l",
+  "allowed_items",
+  "section_drivers",
+  "drivers"
+ ],
+ "fields": [
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer",
+   "reqd": 1,
+   "in_global_search": 1,
+   "in_list_view": 1,
+   "bold": 1
+  },
+  {
+   "fieldname": "plate_no",
+   "fieldtype": "Data",
+   "label": "Plate No",
+   "reqd": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Data",
+   "label": "Description"
+  },
+  {
+   "fieldname": "col_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "active",
+   "fieldtype": "Check",
+   "label": "Active",
+   "default": "1",
+   "in_list_view": 1,
+   "bold": 1
+  },
+  {
+   "fieldname": "section_limits",
+   "fieldtype": "Section Break",
+   "label": "Limits"
+  },
+  {
+   "fieldname": "monthly_limit_l",
+   "fieldtype": "Float",
+   "label": "Monthly Limit (L)"
+  },
+  {
+   "fieldname": "allowed_items",
+   "fieldtype": "Table MultiSelect",
+   "label": "Allowed Items",
+   "options": "Customer Vehicle Item"
+  },
+  {
+   "fieldname": "section_drivers",
+   "fieldtype": "Section Break",
+   "label": "Drivers"
+  },
+  {
+   "fieldname": "drivers",
+   "fieldtype": "Table",
+   "label": "Drivers",
+   "options": "Customer Vehicle Driver"
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-27 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Forecourt Finance",
+ "name": "Customer Vehicle",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "permlevel": 0,
+   "read": 1,
+   "role": "Forecourt Administrator",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "permlevel": 0,
+   "read": 1,
+   "role": "Station Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "permlevel": 0,
+   "read": 1,
+   "role": "Station Accountant",
+   "write": 1
+  },
+  {
+   "permlevel": 0,
+   "read": 1,
+   "role": "Business Executive"
+  }
+ ],
+ "quick_entry": 1,
+ "search_fields": "customer,plate_no",
+ "show_title_field_in_link": 1,
+ "sort_field": "plate_no",
+ "sort_order": "ASC",
+ "title_field": "plate_no",
+ "track_changes": 1
+}
