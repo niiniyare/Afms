@@ -13,6 +13,7 @@ F10: collection reference uniqueness, expense limits, FMS-S114 gate.
 F11: resolution lines; FMS-S105 (cashier resolved) and FMS-S106 (tank variance approved) gates.
 F12: remaining before_submit gates (S101-S104, S108-S111, S115); errors collected and thrown together.
 F13: on_submit posts Sales Invoices and Payment Entries via posting/sales.py and posting/payments.py.
+F14: on_submit also posts JE (expenses + differences) and Stock Reconciliation via posting/journals.py and posting/stock.py.
 """
 
 from __future__ import annotations
@@ -73,15 +74,24 @@ class ForecourtShift(Document):
 		if errors:
 			frappe.throw("<br>".join(errors), title=_("Shift Cannot Be Closed"))
 
-	# ------------------------------------------------------------------ F13
+	# ------------------------------------------------------------------ F13 / F14
 	def on_submit(self) -> None:
-		"""Post sales invoices and payment entries after all gates pass."""
+		"""Post all shift documents: invoices, payments, journals and stock."""
+		from forecourt.posting import journals as posting_journals
 		from forecourt.posting import payments as posting_payments
 		from forecourt.posting import sales as posting_sales
+		from forecourt.posting import stock as posting_stock
 
+		# F13: invoices first (stock consumption before tank adjustment)
 		credit_invoices = posting_sales.post_credit_invoices(self)
 		walkin_invoice = posting_sales.post_walkin_invoice(self)
 		posting_payments.post_payment_entries(self, walkin_invoice, credit_invoices)
+
+		# F14: JE for expenses + differences, then stock
+		posting_journals.post_expense_and_difference_je(self)
+		posting_stock.post_stock_reconciliations(self)
+		posting_stock.post_drop_entries(self)
+		posting_stock.post_float_returns(self)
 
 	# ------------------------------------------------------------------ F12 new gates
 

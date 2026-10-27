@@ -40,12 +40,9 @@ def post_payment_entries(shift, walkin_invoice: str, credit_invoices: list[str])
 			posted.append(pe_name)
 			frappe.db.set_value("Shift Collection", row.name, "payment_entry", pe_name, update_modified=False)
 
-	# One cash PE per cashier
+	# One cash PE per cashier (expected cash component, not actual counted)
 	if walkin_invoice:
 		for cashier_row in shift.cashiers:
-			cash_amount = flt(cashier_row.cash_counted, 2)
-			if cash_amount <= 0:
-				continue
 			pe_name = _make_cash_pe(shift, cashier_row, walkin_invoice, station, posting_date, till_account)
 			if pe_name:
 				posted.append(pe_name)
@@ -216,10 +213,23 @@ def _make_debt_receipt_pe(shift, row, station, posting_date: str, till_account: 
 def _make_cash_pe(
 	shift, cashier_row, walkin_invoice: str, station, posting_date: str, till_account: str | None
 ) -> str:
-	"""One cash PE per cashier — cash_counted into the till account."""
+	"""One cash PE per cashier — expected cash portion of the walk-in invoice.
+
+	Amount = expected total - debt_receipts - mobile - card - credit - voucher.
+	This is the balancing entry for the walk-in invoice; the JE (F14) then
+	corrects for expenses and the actual difference vs cash_counted.
+	"""
 	if not till_account:
 		return ""
-	cash_amount = flt(cashier_row.cash_counted, 2)
+	cash_amount = flt(
+		flt(cashier_row.expected, 2)
+		- flt(cashier_row.debt_receipts, 2)
+		- flt(cashier_row.mobile, 2)
+		- flt(cashier_row.card, 2)
+		- flt(cashier_row.credit, 2)
+		- flt(cashier_row.voucher, 2),
+		2,
+	)
 	if cash_amount <= 0:
 		return ""
 
