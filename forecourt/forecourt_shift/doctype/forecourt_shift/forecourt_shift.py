@@ -12,6 +12,7 @@ F09: POS pull-in into item_sales.
 F10: collection reference uniqueness, expense limits, FMS-S114 gate.
 F11: resolution lines; FMS-S105 (cashier resolved) and FMS-S106 (tank variance approved) gates.
 F12: remaining before_submit gates (S101-S104, S108-S111, S115); errors collected and thrown together.
+F13: on_submit posts Sales Invoices and Payment Entries via posting/sales.py and posting/payments.py.
 """
 
 from __future__ import annotations
@@ -49,7 +50,7 @@ from forecourt.errors import (
 
 
 class ForecourtShift(Document):
-	# ------------------------------------------------------------------ F04 / F06 / F07 / F08 / F10 / F11 / F12
+	# ------------------------------------------------------------------ F04 / F06 / F07 / F08 / F10 / F11 / F12 / F13
 	def before_submit(self) -> None:
 		"""Collect all gate failures then throw together (FMS-S101 to S115, W103)."""
 		errors: list[str] = []
@@ -71,6 +72,16 @@ class ForecourtShift(Document):
 		self._gate_test_volume(errors)
 		if errors:
 			frappe.throw("<br>".join(errors), title=_("Shift Cannot Be Closed"))
+
+	# ------------------------------------------------------------------ F13
+	def on_submit(self) -> None:
+		"""Post sales invoices and payment entries after all gates pass."""
+		from forecourt.posting import payments as posting_payments
+		from forecourt.posting import sales as posting_sales
+
+		credit_invoices = posting_sales.post_credit_invoices(self)
+		walkin_invoice = posting_sales.post_walkin_invoice(self)
+		posting_payments.post_payment_entries(self, walkin_invoice, credit_invoices)
 
 	# ------------------------------------------------------------------ F12 new gates
 

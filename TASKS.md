@@ -480,7 +480,7 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
   - **Verify (UI):** A shift with three problems shows all three codes in one message.
   - **Commit:** `feat(shift): close gates`
 
-- [ ] **FMS-F13 · Writing Feature · Posting: sales and payments** · L · F12
+- [x] **FMS-F13 · Writing Feature · Posting: sales and payments** · L · F12
   - **Skills:** `frappe-impl-controllers`, `frappe-core-database`
   - **Description:** `posting/sales.py`: credit Sales Invoices per customer (or Delivery Notes when the company invoices monthly, D26); walk-in Sales Invoice (update_stock from tank warehouses). `posting/payments.py`: one Payment Entry per mobile money and card collection (reference_no = provider reference), one cash Payment Entry per cashier, voucher and debt receipt entries (cash into the till, non-cash into the clearing account). All carry `fms_forecourt_shift`, `fms_cashier` and the station dimension, and use the posting times of design guide 6.7 (D35).
   - **Expectation:** After submit, the walk-in invoice is fully paid and every mobile money transaction has its own Payment Entry.

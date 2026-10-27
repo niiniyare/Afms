@@ -261,6 +261,7 @@ doc_events = {
 	},
 	"Sales Invoice": {
 		"validate": "forecourt.forecourt_shift.price_hooks.set_fuel_price_on_invoice",
+		"on_cancel": "forecourt.forecourt_shift.cancel_guards.on_cancel_native",
 	},
 	"POS Invoice": {
 		"validate": "forecourt.forecourt_shift.price_hooks.set_fuel_price_on_invoice",
