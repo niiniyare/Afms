@@ -1,0 +1,102 @@
+[
+  {
+    "doctype": "Number Card",
+    "name": "FMS - Open Shifts",
+    "label": "Open Shifts",
+    "document_type": "Forecourt Shift",
+    "function": "Count",
+    "filters_json": "[{\"fieldname\":\"docstatus\",\"label\":\"Is Saved\",\"fieldtype\":\"Check\",\"value\":0,\"operator\":\"=\"}]",
+    "is_public": 1,
+    "is_standard": 1,
+    "module": "Forecourt Shift"
+  },
+  {
+    "doctype": "Number Card",
+    "name": "FMS - Shifts Awaiting Approval",
+    "label": "Shifts Awaiting Approval",
+    "document_type": "Forecourt Shift",
+    "function": "Count",
+    "filters_json": "[{\"fieldname\":\"approval_state\",\"label\":\"Approval State\",\"fieldtype\":\"Select\",\"value\":\"Pending Approval\",\"operator\":\"=\"}]",
+    "is_public": 1,
+    "is_standard": 1,
+    "module": "Forecourt Shift"
+  },
+  {
+    "doctype": "Number Card",
+    "name": "FMS - Litres Sold Today",
+    "label": "Litres Sold Today",
+    "document_type": "Nozzle Ledger Entry",
+    "function": "Sum",
+    "aggregate_function_based_on": "net_l",
+    "filters_json": "[{\"fieldname\":\"posting_date\",\"label\":\"Date\",\"fieldtype\":\"Date\",\"value\":\"Today\",\"operator\":\"=\"},{\"fieldname\":\"is_cancelled\",\"label\":\"Is Cancelled\",\"fieldtype\":\"Check\",\"value\":0,\"operator\":\"=\"}]",
+    "is_public": 1,
+    "is_standard": 1,
+    "module": "Forecourt Shift"
+  },
+  {
+    "doctype": "Number Card",
+    "name": "FMS - Fuel Sales Today",
+    "label": "Fuel Sales Today",
+    "document_type": "Sales Ledger Entry",
+    "function": "Sum",
+    "aggregate_function_based_on": "amount",
+    "filters_json": "[{\"fieldname\":\"posting_date\",\"label\":\"Date\",\"fieldtype\":\"Date\",\"value\":\"Today\",\"operator\":\"=\"},{\"fieldname\":\"is_cancelled\",\"label\":\"Is Cancelled\",\"fieldtype\":\"Check\",\"value\":0,\"operator\":\"=\"}]",
+    "is_public": 1,
+    "is_standard": 1,
+    "module": "Forecourt Finance"
+  },
+  {
+    "doctype": "Number Card",
+    "name": "FMS - Tank Variance This Month",
+    "label": "Tank Variance This Month (L)",
+    "document_type": "Wetstock Ledger Entry",
+    "function": "Sum",
+    "aggregate_function_based_on": "variance_l",
+    "filters_json": "[{\"fieldname\":\"entry_type\",\"label\":\"Entry Type\",\"fieldtype\":\"Select\",\"value\":\"Shift\",\"operator\":\"=\"},{\"fieldname\":\"posting_date\",\"label\":\"Date\",\"fieldtype\":\"Date\",\"value\":\"this month\",\"operator\":\"Timespan\"},{\"fieldname\":\"is_cancelled\",\"label\":\"Is Cancelled\",\"fieldtype\":\"Check\",\"value\":0,\"operator\":\"=\"}]",
+    "is_public": 1,
+    "is_standard": 1,
+    "module": "Wetstock"
+  },
+  {
+    "doctype": "Number Card",
+    "name": "FMS - Unmatched Payments",
+    "label": "Unmatched Payments",
+    "document_type": "Payment Feed Entry",
+    "function": "Count",
+    "filters_json": "[{\"fieldname\":\"status\",\"label\":\"Status\",\"fieldtype\":\"Select\",\"value\":\"Unmatched\",\"operator\":\"=\"}]",
+    "is_public": 1,
+    "is_standard": 1,
+    "module": "Forecourt Finance"
+  },
+  {
+    "doctype": "Number Card",
+    "name": "FMS - Corrections Pending",
+    "label": "Corrections Pending",
+    "document_type": "Shift Correction",
+    "function": "Count",
+    "filters_json": "[{\"fieldname\":\"workflow_state\",\"label\":\"Workflow State\",\"fieldtype\":\"Data\",\"value\":\"Pending Director Approval\",\"operator\":\"=\"},{\"fieldname\":\"docstatus\",\"label\":\"Is Saved\",\"fieldtype\":\"Check\",\"value\":0,\"operator\":\"=\"}]",
+    "is_public": 1,
+    "is_standard": 1,
+    "module": "Forecourt Shift"
+  },
+  {
+    "doctype": "Number Card",
+    "name": "FMS - Cash Short This Month",
+    "label": "Cash Short This Month",
+    "type": "Custom",
+    "method": "forecourt.api.number_cards.cash_short_this_month",
+    "is_public": 1,
+    "is_standard": 1,
+    "module": "Forecourt Finance"
+  },
+  {
+    "doctype": "Number Card",
+    "name": "FMS - Tanks Below Reorder",
+    "label": "Tanks Below Reorder",
+    "type": "Custom",
+    "method": "forecourt.api.number_cards.tanks_below_reorder",
+    "is_public": 1,
+    "is_standard": 1,
+    "module": "Wetstock"
+  }
+]

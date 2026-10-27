@@ -21,14 +21,14 @@
 | E. Station movements | 10 | 10 |
 | F. Forecourt Shift (Phase 1 core) | 18 | 18 |
 | G. Shift Correction | 6 | 5 |
-| H. Reports and workspaces | 12 | 6 |
+| H. Reports and workspaces | 12 | 8 |
 | I. Approvals, roles and permissions | 6 | 0 |
 | J. Payment import and integrations | 8 | 0 |
 | K. Quality, scenarios and UAT | 7 | 0 |
 | L. CI/CD | 4 | 0 |
 | M. Deployment and operations | 8 | 0 |
 | N. Pilot and go-live | 5 | 0 |
-| **Total (Phases 0–3)** | **124** | **61** |
+| **Total (Phases 0–3)** | **124** | **63** |
 | P. Later phases (backlog) | 8 epics | — |
 
 Update the *Done* column in the same commit that ticks a task.
@@ -584,13 +584,13 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
   - **Verify (UI):** A shift with a write-off and a correction appears in the Exception Register.
   - **Commit:** `feat(reports): exceptions, open items, station comparison`
 
-- [ ] **FMS-H07 · Writing Feature · Number cards and charts** · M · H01–H06
+- [x] **FMS-H07 · Writing Feature · Number cards and charts** · M · H01–H06
   - **Skills:** `frappe-impl-reports`, `frappe-impl-workspace`
   - **Description:** Catalogue 13.2 and 13.3, shipped as fixtures.
   - **Verify (UI):** Cards show values for the test station; a station manager sees only their station.
   - **Commit:** `feat(reports): number cards and charts`
 
-- [ ] **FMS-H08 · Writing Feature · Workspaces and sidebar** · M · H07
+- [x] **FMS-H08 · Writing Feature · Workspaces and sidebar** · M · H07
   - **Skills:** `frappe-impl-workspace`
   - **Description:** The seven workspaces in catalogue 14 with `app`, `module`, `roles`, `parent_page`, `sequence_id`; exported to the app.
   - **Verify (UI):** Log in as each role → only the right workspaces appear in the sidebar; shortcuts open the right forms.

@@ -1,0 +1,55 @@
+{
+  "app": "forecourt",
+  "charts": [
+    {"chart_name": "FMS - Payment Mix", "label": "Payment Mix (30 days)"},
+    {"chart_name": "FMS - Cashier Differences", "label": "Cashier Differences"}
+  ],
+  "content": "[{\"id\":\"nc1\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"FMS - Unmatched Payments\",\"col\":6}},{\"id\":\"nc2\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"FMS - Cash Short This Month\",\"col\":6}},{\"id\":\"ch1\",\"type\":\"chart\",\"data\":{\"chart_name\":\"FMS - Payment Mix\",\"col\":6}},{\"id\":\"ch2\",\"type\":\"chart\",\"data\":{\"chart_name\":\"FMS - Cashier Differences\",\"col\":6}}]",
+  "doctype": "Workspace",
+  "icon": "accounts",
+  "is_hidden": 0,
+  "label": "Forecourt Finance",
+  "links": [
+    {"type": "Card Break", "label": "Payments", "hidden": 0, "is_query_report": 0, "link_count": 4, "onboard": 0},
+    {"type": "Link", "label": "Payment Feed Entry", "link_to": "Payment Feed Entry", "link_type": "DocType", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Payment Import Batch", "link_to": "Payment Import Batch", "link_type": "DocType", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Payment Entry", "link_to": "Payment Entry", "link_type": "DocType", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Bank Reconciliation Tool", "link_to": "Bank Reconciliation Tool", "link_type": "DocType", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Card Break", "label": "Credit", "hidden": 0, "is_query_report": 0, "link_count": 3, "onboard": 0},
+    {"type": "Link", "label": "Customer", "link_to": "Customer", "link_type": "DocType", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Customer Vehicle", "link_to": "Customer Vehicle", "link_type": "DocType", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Process Statement of Accounts", "link_to": "Process Statement of Accounts", "link_type": "DocType", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Card Break", "label": "Reports", "hidden": 0, "is_query_report": 0, "link_count": 7, "onboard": 0},
+    {"type": "Link", "label": "Sales by Product", "link_to": "Sales by Product", "link_type": "Report", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Payment Mix Matrix", "link_to": "Payment Mix Matrix", "link_type": "Report", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Cashier Statement", "link_to": "Cashier Statement", "link_type": "Report", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Clearing Account Ageing", "link_to": "Clearing Account Ageing", "link_type": "Report", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Cash Position by Station", "link_to": "Cash Position by Station", "link_type": "Report", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Credit Slips Register", "link_to": "Credit Slips Register", "link_type": "Report", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Accounts Receivable", "link_to": "Accounts Receivable", "link_type": "Report", "hidden": 0, "is_query_report": 1, "onboard": 0, "link_count": 0}
+  ],
+  "module": "Forecourt Finance",
+  "name": "Forecourt Finance",
+  "number_cards": [
+    {"number_card_name": "FMS - Unmatched Payments", "label": "Unmatched Payments"},
+    {"number_card_name": "FMS - Cash Short This Month", "label": "Cash Short This Month"}
+  ],
+  "parent_page": "Forecourt",
+  "public": 1,
+  "quick_lists": [],
+  "roles": [
+    {"role": "Forecourt Accountant"},
+    {"role": "Area Manager"},
+    {"role": "Station Manager"}
+  ],
+  "sequence_id": 4.0,
+  "shortcuts": [
+    {"type": "DocType", "label": "Payment Feed Entry", "link_to": "Payment Feed Entry", "doc_view": "list"},
+    {"type": "DocType", "label": "Payment Import Batch", "link_to": "Payment Import Batch", "doc_view": "new"},
+    {"type": "Report", "label": "Sales by Product", "link_to": "Sales by Product", "is_query_report": 0},
+    {"type": "Report", "label": "Cash Position", "link_to": "Cash Position by Station", "is_query_report": 0}
+  ],
+  "standard": "Yes",
+  "title": "Forecourt Finance",
+  "type": "Dashboard"
+}

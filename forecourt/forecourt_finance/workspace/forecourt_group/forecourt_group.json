@@ -1,0 +1,46 @@
+{
+  "app": "forecourt",
+  "charts": [
+    {"chart_name": "FMS - Station Comparison Litres", "label": "Station Comparison"},
+    {"chart_name": "FMS - Litres per Day by Product", "label": "Litres per Day by Product"},
+    {"chart_name": "FMS - Payment Mix", "label": "Payment Mix"}
+  ],
+  "content": "[{\"id\":\"nc1\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"FMS - Fuel Sales Today\",\"col\":6}},{\"id\":\"nc2\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"FMS - Litres Sold Today\",\"col\":6}},{\"id\":\"ch1\",\"type\":\"chart\",\"data\":{\"chart_name\":\"FMS - Station Comparison Litres\",\"col\":12}},{\"id\":\"ch2\",\"type\":\"chart\",\"data\":{\"chart_name\":\"FMS - Litres per Day by Product\",\"col\":6}},{\"id\":\"ch3\",\"type\":\"chart\",\"data\":{\"chart_name\":\"FMS - Payment Mix\",\"col\":6}}]",
+  "doctype": "Workspace",
+  "icon": "bar-chart",
+  "is_hidden": 0,
+  "label": "Forecourt Group",
+  "links": [
+    {"type": "Card Break", "label": "Financials", "hidden": 0, "is_query_report": 0, "link_count": 4, "onboard": 0},
+    {"type": "Link", "label": "Profit and Loss Statement", "link_to": "Profit and Loss Statement", "link_type": "Report", "hidden": 0, "is_query_report": 1, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Balance Sheet", "link_to": "Balance Sheet", "link_type": "Report", "hidden": 0, "is_query_report": 1, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Consolidated Trial Balance", "link_to": "Consolidated Trial Balance", "link_type": "Report", "hidden": 0, "is_query_report": 1, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Accounts Receivable", "link_to": "Accounts Receivable", "link_type": "Report", "hidden": 0, "is_query_report": 1, "onboard": 0, "link_count": 0},
+    {"type": "Card Break", "label": "FMS", "hidden": 0, "is_query_report": 0, "link_count": 3, "onboard": 0},
+    {"type": "Link", "label": "Station Comparison", "link_to": "Station Comparison", "link_type": "Report", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Daily Station Report", "link_to": "Daily Station Report", "link_type": "Report", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Wetstock Variance", "link_to": "Wetstock Variance", "link_type": "Report", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0}
+  ],
+  "module": "Forecourt Finance",
+  "name": "Forecourt Group",
+  "number_cards": [
+    {"number_card_name": "FMS - Fuel Sales Today", "label": "Fuel Sales Today"},
+    {"number_card_name": "FMS - Litres Sold Today", "label": "Litres Sold Today"}
+  ],
+  "parent_page": "Forecourt",
+  "public": 1,
+  "quick_lists": [],
+  "roles": [
+    {"role": "Forecourt Director"},
+    {"role": "Forecourt Investor"}
+  ],
+  "sequence_id": 6.0,
+  "shortcuts": [
+    {"type": "Report", "label": "Station Comparison", "link_to": "Station Comparison", "is_query_report": 0},
+    {"type": "Report", "label": "Daily Station Report", "link_to": "Daily Station Report", "is_query_report": 0},
+    {"type": "Report", "label": "P&L Statement", "link_to": "Profit and Loss Statement", "is_query_report": 1}
+  ],
+  "standard": "Yes",
+  "title": "Forecourt Group",
+  "type": "Dashboard"
+}

@@ -1,0 +1,45 @@
+{
+  "app": "forecourt",
+  "charts": [],
+  "content": "[]",
+  "doctype": "Workspace",
+  "icon": "settings",
+  "is_hidden": 0,
+  "label": "Forecourt Setup",
+  "links": [
+    {"type": "Card Break", "label": "Settings", "hidden": 0, "is_query_report": 0, "link_count": 2, "onboard": 0},
+    {"type": "Link", "label": "Forecourt Settings", "link_to": "Forecourt Settings", "link_type": "DocType", "hidden": 0, "is_query_report": 0, "onboard": 1, "link_count": 0},
+    {"type": "Link", "label": "Forecourt Company Settings", "link_to": "Forecourt Company Settings", "link_type": "DocType", "hidden": 0, "is_query_report": 0, "onboard": 1, "link_count": 0},
+    {"type": "Card Break", "label": "Network", "hidden": 0, "is_query_report": 0, "link_count": 2, "onboard": 0},
+    {"type": "Link", "label": "Station Group", "link_to": "Station Group", "link_type": "DocType", "hidden": 0, "is_query_report": 0, "onboard": 1, "link_count": 0},
+    {"type": "Link", "label": "Station", "link_to": "Station", "link_type": "DocType", "hidden": 0, "is_query_report": 0, "onboard": 1, "link_count": 0},
+    {"type": "Card Break", "label": "Masters", "hidden": 0, "is_query_report": 0, "link_count": 4, "onboard": 0},
+    {"type": "Link", "label": "Variance Reason", "link_to": "Variance Reason", "link_type": "DocType", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Expense Type", "link_to": "Expense Type", "link_type": "DocType", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Own Use Purpose", "link_to": "Own Use Purpose", "link_type": "DocType", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Payment Provider", "link_to": "Payment Provider", "link_type": "DocType", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Card Break", "label": "Integrations", "hidden": 0, "is_query_report": 0, "link_count": 1, "onboard": 0},
+    {"type": "Link", "label": "Integration Inbox", "link_to": "Integration Inbox", "link_type": "DocType", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Card Break", "label": "Health", "hidden": 0, "is_query_report": 0, "link_count": 1, "onboard": 0},
+    {"type": "Link", "label": "FMS Health", "link_to": "FMS Health", "link_type": "Report", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0}
+  ],
+  "module": "Forecourt Setup",
+  "name": "Forecourt Setup",
+  "number_cards": [],
+  "parent_page": "Forecourt",
+  "public": 1,
+  "quick_lists": [],
+  "roles": [
+    {"role": "Forecourt Administrator"},
+    {"role": "System Manager"}
+  ],
+  "sequence_id": 7.0,
+  "shortcuts": [
+    {"type": "DocType", "label": "Forecourt Settings", "link_to": "Forecourt Settings", "doc_view": ""},
+    {"type": "DocType", "label": "New Station", "link_to": "Station", "doc_view": "new"},
+    {"type": "DocType", "label": "Station Groups", "link_to": "Station Group", "doc_view": "list"}
+  ],
+  "standard": "Yes",
+  "title": "Forecourt Setup",
+  "type": "Dashboard"
+}

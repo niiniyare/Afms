@@ -1,0 +1,40 @@
+{
+  "app": "forecourt",
+  "charts": [],
+  "content": "[]",
+  "doctype": "Workspace",
+  "icon": "timesheet",
+  "is_hidden": 0,
+  "label": "Shifts",
+  "links": [
+    {"type": "Card Break", "label": "Shift", "hidden": 0, "is_query_report": 0, "link_count": 4, "onboard": 0},
+    {"type": "Link", "label": "Forecourt Shift", "link_to": "Forecourt Shift", "link_type": "DocType", "hidden": 0, "is_query_report": 0, "onboard": 1, "link_count": 0},
+    {"type": "Link", "label": "Forecourt Shift Template", "link_to": "Forecourt Shift Template", "link_type": "DocType", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Fuel Price Change", "link_to": "Fuel Price Change", "link_type": "DocType", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Shift Correction", "link_to": "Shift Correction", "link_type": "DocType", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Card Break", "label": "Reports", "hidden": 0, "is_query_report": 0, "link_count": 3, "onboard": 0},
+    {"type": "Link", "label": "Sales by Shift", "link_to": "Sales by Shift", "link_type": "Report", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Sales by Cashier", "link_to": "Sales by Cashier", "link_type": "Report", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Exception Register", "link_to": "Exception Register", "link_type": "Report", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0}
+  ],
+  "module": "Forecourt Shift",
+  "name": "Shifts",
+  "number_cards": [],
+  "parent_page": "Forecourt",
+  "public": 1,
+  "quick_lists": [],
+  "roles": [
+    {"role": "Station Manager"},
+    {"role": "Area Manager"}
+  ],
+  "sequence_id": 2.0,
+  "shortcuts": [
+    {"type": "DocType", "label": "New Shift", "link_to": "Forecourt Shift", "doc_view": "new"},
+    {"type": "DocType", "label": "Shifts Awaiting Approval", "link_to": "Forecourt Shift", "doc_view": "list"},
+    {"type": "DocType", "label": "Fuel Price Change", "link_to": "Fuel Price Change", "doc_view": "new"},
+    {"type": "DocType", "label": "Shift Correction", "link_to": "Shift Correction", "doc_view": "new"}
+  ],
+  "standard": "Yes",
+  "title": "Shifts",
+  "type": "Dashboard"
+}
