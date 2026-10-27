@@ -284,10 +284,46 @@ app_include_js = "/assets/forecourt/js/station_default.js"
 
 permission_query_conditions = {
 	"Station Group": "forecourt.forecourt_setup.doctype.station_group.station_group.permission_query_conditions",
+	# Station-level row filtering (design guide 14.2)
+	"Station": "forecourt.permissions.station_query",
+	"Fuel Tank": "forecourt.permissions.fuel_tank_query",
+	"Pump": "forecourt.permissions.pump_query",
+	"Island": "forecourt.permissions.island_query",
+	"Nozzle": "forecourt.permissions.nozzle_query",
+	"Tank Calibration Chart": "forecourt.permissions.tank_calibration_chart_query",
+	"Meter Change": "forecourt.permissions.meter_change_query",
+	"Tank Dip": "forecourt.permissions.tank_dip_query",
+	"Tank Transfer": "forecourt.permissions.tank_transfer_query",
+	"Forecourt Shift Template": "forecourt.permissions.forecourt_shift_template_query",
+	"Fuel Price Change": "forecourt.permissions.fuel_price_change_query",
+	"Forecourt Shift": "forecourt.permissions.forecourt_shift_query",
+	"Shift Correction": "forecourt.permissions.shift_correction_query",
+	"Wetstock Ledger Entry": "forecourt.permissions.wetstock_ledger_entry_query",
+	"Nozzle Ledger Entry": "forecourt.permissions.nozzle_ledger_entry_query",
+	"Sales Ledger Entry": "forecourt.permissions.sales_ledger_entry_query",
+	"Cashier Ledger Entry": "forecourt.permissions.cashier_ledger_entry_query",
 }
 
 has_permission = {
 	"Station Group": "forecourt.forecourt_setup.doctype.station_group.station_group.has_permission",
+	# Single generic handler for all station-carrying FMS DocTypes (design guide 14.2)
+	"Station": "forecourt.permissions.has_station_permission",
+	"Fuel Tank": "forecourt.permissions.has_station_permission",
+	"Pump": "forecourt.permissions.has_station_permission",
+	"Island": "forecourt.permissions.has_station_permission",
+	"Nozzle": "forecourt.permissions.has_station_permission",
+	"Tank Calibration Chart": "forecourt.permissions.has_station_permission",
+	"Meter Change": "forecourt.permissions.has_station_permission",
+	"Tank Dip": "forecourt.permissions.has_station_permission",
+	"Tank Transfer": "forecourt.permissions.has_station_permission",
+	"Forecourt Shift Template": "forecourt.permissions.has_station_permission",
+	"Fuel Price Change": "forecourt.permissions.has_station_permission",
+	"Forecourt Shift": "forecourt.permissions.has_station_permission",
+	"Shift Correction": "forecourt.permissions.has_station_permission",
+	"Wetstock Ledger Entry": "forecourt.permissions.has_station_permission",
+	"Nozzle Ledger Entry": "forecourt.permissions.has_station_permission",
+	"Sales Ledger Entry": "forecourt.permissions.has_station_permission",
+	"Cashier Ledger Entry": "forecourt.permissions.has_station_permission",
 }
 
 # Document Events
