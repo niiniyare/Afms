@@ -11,7 +11,7 @@ def cash_short_this_month(**kwargs) -> dict:
 	"""Sum of negative cashier differences for the current month."""
 	month_start = get_first_day(today())
 	month_end = get_last_day(today())
-	rows = frappe.get_all(
+	rows = frappe.get_list(
 		"Cashier Ledger Entry",
 		filters={
 			"posting_date": ["between", [month_start, month_end]],
@@ -44,7 +44,7 @@ def cumulative_tank_variance_chart(**kwargs) -> dict:
 	end = today()
 	start = add_days(end, -days)
 
-	rows = frappe.get_all(
+	rows = frappe.get_list(
 		"Wetstock Ledger Entry",
 		filters={
 			"entry_type": "Shift",
