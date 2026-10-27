@@ -13,6 +13,11 @@ class FuelPriceChange(Document):
 		self._validate_effective_at()
 		self._fill_old_prices()
 
+	def on_update(self) -> None:
+		from forecourt.notifications import on_fuel_price_change_update
+
+		on_fuel_price_change_update(self)
+
 	def before_submit(self) -> None:
 		self._validate_effective_at()
 		if self.approval_state != "Approved":

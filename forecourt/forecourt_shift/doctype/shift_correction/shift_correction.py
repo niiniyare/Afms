@@ -50,6 +50,11 @@ class ShiftCorrection(Document):
 		self._validate_shift_is_closed()
 		self._validate_items_not_empty()
 
+	def on_update(self) -> None:
+		from forecourt.notifications import on_shift_correction_update
+
+		on_shift_correction_update(self)
+
 	def before_submit(self) -> None:
 		if frappe.session.user == frappe.db.get_value("Forecourt Shift", self.forecourt_shift, "owner"):
 			raise FMSValidationError(

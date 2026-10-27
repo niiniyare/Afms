@@ -83,6 +83,12 @@ class ForecourtShift(Document):
 		if errors:
 			frappe.throw("<br>".join(errors), title=_("Shift Cannot Be Closed"))
 
+	# ------------------------------------------------------------------ I04
+	def on_update(self) -> None:
+		from forecourt.notifications import on_forecourt_shift_update
+
+		on_forecourt_shift_update(self)
+
 	# ------------------------------------------------------------------ F13 / F14
 	def on_submit(self) -> None:
 		"""Post all shift documents: invoices, payments, journals, stock and ledgers."""
