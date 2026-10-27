@@ -7,15 +7,41 @@ on:
   pull_request:
 
 concurrency:
-  group: main-forecourt-${{ github.event.number }}
+  group: ci-forecourt-${{ github.event.number }}
   cancel-in-progress: true
 
 jobs:
-  tests:
+  # ------------------------------------------------------------------
+  # Pure-Python calc unit tests — no bench, no DB, fast feedback
+  # ------------------------------------------------------------------
+  unit:
+    runs-on: ubuntu-latest
+    name: Calc Unit Tests
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+
+      - name: Run calc unit tests
+        run: |
+          python -m pytest forecourt/calc/ forecourt/tests/test_calc_properties.py \
+            forecourt/tests/test_calibration.py \
+            forecourt/tests/test_drift.py \
+            forecourt/tests/test_meters.py \
+            forecourt/tests/test_reconciliation.py \
+            -v --tb=short
+
+  # ------------------------------------------------------------------
+  # Full integration tests — bench + MariaDB + Redis
+  # ------------------------------------------------------------------
+  integration:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-    name: Server
+    name: Integration Tests
 
     services:
       redis-cache:
@@ -37,11 +63,6 @@ jobs:
     steps:
       - name: Clone
         uses: actions/checkout@v4
-
-      - name: Find tests
-        run: |
-          echo "Finding tests"
-          grep -rn "def test" > /dev/null
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -80,30 +101,30 @@ jobs:
           sudo apt update
           sudo apt-get install mariadb-client
 
-      - name: Setup
+      - name: Initialise bench
         run: |
           pip install frappe-bench
           bench init --skip-redis-config-generation --skip-assets --python "$(which python)" --frappe-branch version-16 ~/frappe-bench
 
-      - name: Install
+      - name: Install apps
         working-directory: /home/runner/frappe-bench
         run: |
           bench get-app --branch version-16 payments
           bench get-app --branch version-16 erpnext
           bench get-app forecourt $GITHUB_WORKSPACE
           bench setup requirements --dev
-          bench new-site --db-root-password root --admin-password admin test_site
-          bench --site test_site install-app payments
-          bench --site test_site install-app erpnext
-          bench --site test_site install-app forecourt
+          bench new-site --db-root-password root --admin-password admin test_fms
+          bench --site test_fms install-app payments
+          bench --site test_fms install-app erpnext
+          bench --site test_fms install-app forecourt
           bench build
         env:
           CI: 'Yes'
 
-      - name: Run Tests
+      - name: Run integration tests
         working-directory: /home/runner/frappe-bench
         run: |
-          bench --site test_site set-config allow_tests true
-          bench --site test_site run-tests --app forecourt
+          bench --site test_fms set-config allow_tests true
+          bench --site test_fms run-tests --app forecourt --failfast
         env:
           TYPE: server
