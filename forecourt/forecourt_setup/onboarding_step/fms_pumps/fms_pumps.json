@@ -1,0 +1,16 @@
+{
+ "action": "Create Entry",
+ "action_label": "Add a Pump",
+ "description": "A Pump (dispenser) sits on an Island. Each pump has one or more nozzles.",
+ "doctype": "Onboarding Step",
+ "is_complete": 0,
+ "is_optional": 0,
+ "is_single": 0,
+ "is_skipped": 0,
+ "name": "FMS Pumps",
+ "reference_document": "Pump",
+ "show_form_tour": 0,
+ "show_full_form": 1,
+ "title": "Add pumps",
+ "validate_action": 1
+}

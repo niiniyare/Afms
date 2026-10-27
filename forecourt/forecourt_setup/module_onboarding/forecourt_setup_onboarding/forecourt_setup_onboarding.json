@@ -1,0 +1,23 @@
+{
+ "allow_roles": [
+  {"role": "Forecourt Administrator"},
+  {"role": "System Manager"}
+ ],
+ "doctype": "Module Onboarding",
+ "is_complete": 0,
+ "module": "Forecourt Setup",
+ "name": "Forecourt Setup Onboarding",
+ "steps": [
+  {"is_optional": 0, "step": "FMS Company Settings"},
+  {"is_optional": 0, "step": "FMS Station"},
+  {"is_optional": 0, "step": "FMS Fuel Tanks"},
+  {"is_optional": 1, "step": "FMS Calibration Charts"},
+  {"is_optional": 0, "step": "FMS Islands"},
+  {"is_optional": 0, "step": "FMS Pumps"},
+  {"is_optional": 0, "step": "FMS Nozzles"},
+  {"is_optional": 0, "step": "FMS Shift Template"},
+  {"is_optional": 0, "step": "FMS First Shift"}
+ ],
+ "subtitle": "Set up your fuel stations in a few steps",
+ "title": "Get started with Forecourt Management"
+}

@@ -1,0 +1,16 @@
+{
+ "action": "Create Entry",
+ "action_label": "Open Company Settings",
+ "description": "Set your accounting accounts, station defaults, and approval limits for each company that operates stations.",
+ "doctype": "Onboarding Step",
+ "is_complete": 0,
+ "is_optional": 0,
+ "is_single": 0,
+ "is_skipped": 0,
+ "name": "FMS Company Settings",
+ "reference_document": "Forecourt Company Settings",
+ "show_form_tour": 0,
+ "show_full_form": 1,
+ "title": "Configure company settings",
+ "validate_action": 1
+}

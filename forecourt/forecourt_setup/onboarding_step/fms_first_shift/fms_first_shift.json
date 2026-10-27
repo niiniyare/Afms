@@ -1,0 +1,16 @@
+{
+ "action": "Create Entry",
+ "action_label": "Post your first Forecourt Shift",
+ "description": "Open a Forecourt Shift from the Forecourt workspace, enter the meter readings, dips and cashier collections, then submit.",
+ "doctype": "Onboarding Step",
+ "is_complete": 0,
+ "is_optional": 0,
+ "is_single": 0,
+ "is_skipped": 0,
+ "name": "FMS First Shift",
+ "reference_document": "Forecourt Shift",
+ "show_form_tour": 0,
+ "show_full_form": 1,
+ "title": "Post your first shift",
+ "validate_action": 1
+}

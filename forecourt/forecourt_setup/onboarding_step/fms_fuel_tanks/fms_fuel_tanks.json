@@ -1,0 +1,16 @@
+{
+ "action": "Create Entry",
+ "action_label": "Add your first Fuel Tank",
+ "description": "Each underground tank holds one product. The FMS creates a matching ERPNext Warehouse automatically.",
+ "doctype": "Onboarding Step",
+ "is_complete": 0,
+ "is_optional": 0,
+ "is_single": 0,
+ "is_skipped": 0,
+ "name": "FMS Fuel Tanks",
+ "reference_document": "Fuel Tank",
+ "show_form_tour": 0,
+ "show_full_form": 1,
+ "title": "Add fuel tanks",
+ "validate_action": 1
+}

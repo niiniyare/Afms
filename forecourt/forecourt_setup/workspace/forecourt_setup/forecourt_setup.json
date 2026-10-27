@@ -39,6 +39,7 @@
     {"type": "DocType", "label": "New Station", "link_to": "Station", "doc_view": "new"},
     {"type": "DocType", "label": "Station Groups", "link_to": "Station Group", "doc_view": "list"}
   ],
+  "onboarding": "Forecourt Setup Onboarding",
   "standard": "Yes",
   "title": "Forecourt Setup",
   "type": "Dashboard"
