@@ -19,7 +19,7 @@
 | C. Foundation masters (Phase 0) | 14 | 13 |
 | D. Calculation core | 8 | 0 |
 | E. Station movements | 10 | 0 |
-| F. Forecourt Shift (Phase 1 core) | 18 | 17 |
+| F. Forecourt Shift (Phase 1 core) | 18 | 18 |
 | G. Shift Correction | 6 | 0 |
 | H. Reports and workspaces | 12 | 0 |
 | I. Approvals, roles and permissions | 6 | 0 |
@@ -28,7 +28,7 @@
 | L. CI/CD | 4 | 0 |
 | M. Deployment and operations | 8 | 0 |
 | N. Pilot and go-live | 5 | 0 |
-| **Total (Phases 0–3)** | **124** | **31** |
+| **Total (Phases 0–3)** | **124** | **32** |
 | P. Later phases (backlog) | 8 epics | — |
 
 Update the *Done* column in the same commit that ticks a task.
@@ -510,7 +510,7 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
   - **Verify (UI):** Print preview fits one A4 page for the test station.
   - **Commit:** `feat(shift): form layout and Shift Report`
 
-- [ ] **FMS-F18 · Writing Test · Shift integration tests** · L · F01–F17
+- [x] **FMS-F18 · Writing Test · Shift integration tests** · L · F01–F17
   - **Skills:** `frappe-testing-unit`
   - **Description:** Scenarios: normal shift; shortage charged; excess; rollover; delivery mid-shift; own use; price change mid-shift; three-meter drift; over-limit credit; multi-currency cash; debt receipt by mobile money; overnight shift; background close. Each asserts GL balances, stock per tank and ledger rows.
   - **Verify:** `bench --site test_fms run-tests --app forecourt --module forecourt.tests.test_shift_scenarios` passes.
