@@ -53,6 +53,7 @@ FMS_S112 = "FMS-S112"  # Price segment has no meter readings
 FMS_S113 = "FMS-S113"  # Draft Fuel Own Use entry in shift window
 FMS_S114 = "FMS-S114"  # Duplicate mobile money / card reference
 FMS_S115 = "FMS-S115"  # Test volume above nozzle per-shift limit (D29, proposed)
+FMS_S116 = "FMS-S116"  # Shift has resolutions/variances requiring area manager approval
 
 # ---------------------------------------------------------------------------
 # FMS-W1xx  Meters and drift

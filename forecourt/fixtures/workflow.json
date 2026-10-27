@@ -71,5 +71,104 @@
         "action_master": "Apply"
       }
     ]
+  },
+  {
+    "doctype": "Workflow",
+    "name": "Forecourt Shift Approval",
+    "document_type": "Forecourt Shift",
+    "is_active": 1,
+    "send_email_alert": 0,
+    "workflow_state_field": "approval_state",
+    "states": [
+      {
+        "state": "Not Required",
+        "doc_status": "0",
+        "allow_edit": "Station Manager"
+      },
+      {
+        "state": "Pending Approval",
+        "doc_status": "0",
+        "allow_edit": "Station Manager"
+      },
+      {
+        "state": "Approved",
+        "doc_status": "0",
+        "allow_edit": "Station Manager"
+      },
+      {
+        "state": "Rejected",
+        "doc_status": "0",
+        "allow_edit": "Station Manager"
+      }
+    ],
+    "transitions": [
+      {
+        "state": "Pending Approval",
+        "action": "Approve",
+        "next_state": "Approved",
+        "allowed": "Area Manager",
+        "condition": "doc.owner != frappe.session.user"
+      },
+      {
+        "state": "Pending Approval",
+        "action": "Reject",
+        "next_state": "Rejected",
+        "allowed": "Area Manager",
+        "condition": "doc.owner != frappe.session.user"
+      }
+    ]
+  },
+  {
+    "doctype": "Workflow",
+    "name": "Fuel Price Change Approval",
+    "document_type": "Fuel Price Change",
+    "is_active": 1,
+    "send_email_alert": 0,
+    "workflow_state_field": "approval_state",
+    "states": [
+      {
+        "state": "Draft",
+        "doc_status": "0",
+        "allow_edit": "Station Manager"
+      },
+      {
+        "state": "Pending Approval",
+        "doc_status": "0",
+        "allow_edit": "Area Manager"
+      },
+      {
+        "state": "Approved",
+        "doc_status": "1",
+        "allow_edit": ""
+      },
+      {
+        "state": "Rejected",
+        "doc_status": "0",
+        "allow_edit": "Station Manager"
+      }
+    ],
+    "transitions": [
+      {
+        "state": "Draft",
+        "action": "Submit for Approval",
+        "next_state": "Pending Approval",
+        "allowed": "Station Manager",
+        "condition": ""
+      },
+      {
+        "state": "Pending Approval",
+        "action": "Approve",
+        "next_state": "Approved",
+        "allowed": "Area Manager",
+        "condition": ""
+      },
+      {
+        "state": "Pending Approval",
+        "action": "Reject",
+        "next_state": "Rejected",
+        "allowed": "Area Manager",
+        "condition": ""
+      }
+    ]
   }
 ]

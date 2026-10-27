@@ -49,6 +49,7 @@ from forecourt.errors import (
 	FMS_S113,
 	FMS_S114,
 	FMS_S115,
+	FMS_S116,
 	FMS_W103,
 )
 
@@ -77,6 +78,7 @@ class ForecourtShift(Document):
 		self._gate_collection_refs(errors)
 		self._gate_cashier_resolved(errors)
 		self._gate_tank_variance_approved(errors)
+		self._gate_shift_approval(errors)
 		self._gate_test_volume(errors)
 		if errors:
 			frappe.throw("<br>".join(errors), title=_("Shift Cannot Be Closed"))
@@ -591,6 +593,7 @@ class ForecourtShift(Document):
 		self._compute_tank_dip_rows()
 		self._compute_cashier_rows()
 		self._compute_resolution_approval()  # F11
+		self._set_approval_state()  # I03
 		self._update_cashier_resolved()  # F11
 		self._compute_parent_totals()
 		self._build_posting_summary()  # F17
@@ -636,6 +639,53 @@ class ForecourtShift(Document):
 				row.resolved = 1
 			else:
 				row.resolved = 0
+
+	# ------------------------------------------------------------------ I03
+
+	def _set_approval_state(self) -> None:
+		"""Drive approval_state from resolution rows (design guide 6.2, D19).
+
+		'Not Required' when no resolution needs approval.
+		'Pending Approval' when any does, unless already Approved — in which case reset
+		only if the approval-relevant data changed since last save.
+		"""
+		needs = any(flt(r.needs_approval) for r in self.resolutions)
+		if not needs:
+			self.approval_state = "Not Required"
+			return
+		if self.approval_state == "Approved":
+			old = self.get_doc_before_save()
+			if old and self._approval_data_changed(old):
+				self.approval_state = "Pending Approval"
+		elif self.approval_state not in ("Pending Approval", "Rejected"):
+			self.approval_state = "Pending Approval"
+
+	def _approval_data_changed(self, old: "ForecourtShift") -> bool:
+		"""True if any approval-relevant resolution field changed since last save."""
+		old_rows = {r.name: r for r in old.resolutions}
+		if len(self.resolutions) != len(old.resolutions):
+			return True
+		for row in self.resolutions:
+			o = old_rows.get(row.name)
+			if not o:
+				return True
+			if (
+				flt(row.amount, 2) != flt(o.amount, 2)
+				or flt(row.volume_l, 3) != flt(o.volume_l, 3)
+				or (row.reason or "") != (o.reason or "")
+				or (row.action or "") != (o.action or "")
+			):
+				return True
+		return False
+
+	def _gate_shift_approval(self, errors: list[str]) -> None:
+		"""FMS-S116: shift cannot close while approval_state is Pending Approval or Rejected."""
+		if self.approval_state in ("Pending Approval", "Rejected"):
+			errors.append(
+				_(
+					"{0}: Shift has write-offs or variances that require area manager approval before closing."
+				).format(FMS_S116)
+			)
 
 	# ------------------------------------------------------------------ F17
 
