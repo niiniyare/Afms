@@ -1,1 +1,27 @@
-[]
+[
+  {
+    "doctype": "Workflow State",
+    "name": "Draft",
+    "style": "Primary"
+  },
+  {
+    "doctype": "Workflow State",
+    "name": "Pending Director Approval",
+    "style": "Warning"
+  },
+  {
+    "doctype": "Workflow State",
+    "name": "Approved",
+    "style": "Success"
+  },
+  {
+    "doctype": "Workflow State",
+    "name": "Applied",
+    "style": "Success"
+  },
+  {
+    "doctype": "Workflow State",
+    "name": "Rejected",
+    "style": "Danger"
+  }
+]

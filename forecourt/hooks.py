@@ -62,9 +62,44 @@ fixtures = [
 		],
 	},
 	# Workflow and workflow states/actions for FMS DocTypes
-	{"dt": "Workflow State", "filters": [["name", "like", "FMS %"]]},
-	{"dt": "Workflow Action Master", "filters": [["name", "like", "FMS %"]]},
-	{"dt": "Workflow", "filters": [["document_type", "like", "Forecourt %"]]},
+	{
+		"dt": "Workflow State",
+		"filters": [
+			[
+				"name",
+				"in",
+				[
+					"Draft",
+					"Pending Director Approval",
+					"Approved",
+					"Applied",
+					"Rejected",
+					"Pending Approval",
+					"Not Required",
+				],
+			]
+		],
+	},
+	{
+		"dt": "Workflow Action Master",
+		"filters": [
+			[
+				"name",
+				"in",
+				["Submit for Approval", "Approve", "Apply", "Reject"],
+			]
+		],
+	},
+	{
+		"dt": "Workflow",
+		"filters": [
+			[
+				"name",
+				"in",
+				["Shift Correction Approval", "Forecourt Shift Approval", "Fuel Price Change Approval"],
+			]
+		],
+	},
 	# FMS stock entry types
 	{"dt": "Stock Entry Type", "filters": [["name", "like", "Fuel %"]]},
 	# Station as an accounting dimension

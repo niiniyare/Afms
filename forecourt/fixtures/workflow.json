@@ -1,1 +1,75 @@
-[]
+[
+  {
+    "doctype": "Workflow",
+    "name": "Shift Correction Approval",
+    "document_type": "Shift Correction",
+    "is_active": 1,
+    "send_email_alert": 0,
+    "workflow_state_field": "workflow_state",
+    "states": [
+      {
+        "state": "Draft",
+        "doc_status": "0",
+        "allow_edit": "Station Manager"
+      },
+      {
+        "state": "Pending Director Approval",
+        "doc_status": "0",
+        "allow_edit": "Forecourt Director"
+      },
+      {
+        "state": "Approved",
+        "doc_status": "0",
+        "allow_edit": "Forecourt Director"
+      },
+      {
+        "state": "Applied",
+        "doc_status": "1",
+        "allow_edit": ""
+      },
+      {
+        "state": "Rejected",
+        "doc_status": "0",
+        "allow_edit": "Forecourt Director"
+      }
+    ],
+    "transitions": [
+      {
+        "state": "Draft",
+        "action": "Submit for Approval",
+        "next_state": "Pending Director Approval",
+        "allowed": "Station Manager",
+        "condition": ""
+      },
+      {
+        "state": "Draft",
+        "action": "Submit for Approval",
+        "next_state": "Pending Director Approval",
+        "allowed": "Area Manager",
+        "condition": ""
+      },
+      {
+        "state": "Pending Director Approval",
+        "action": "Approve",
+        "next_state": "Approved",
+        "allowed": "Forecourt Director",
+        "condition": ""
+      },
+      {
+        "state": "Pending Director Approval",
+        "action": "Reject",
+        "next_state": "Rejected",
+        "allowed": "Forecourt Director",
+        "condition": ""
+      },
+      {
+        "state": "Approved",
+        "action": "Apply",
+        "next_state": "Applied",
+        "allowed": "Forecourt Director",
+        "condition": "",
+        "action_master": "Apply"
+      }
+    ]
+  }
+]

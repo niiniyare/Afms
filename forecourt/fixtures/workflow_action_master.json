@@ -1,1 +1,18 @@
-[]
+[
+  {
+    "doctype": "Workflow Action Master",
+    "name": "Submit for Approval"
+  },
+  {
+    "doctype": "Workflow Action Master",
+    "name": "Approve"
+  },
+  {
+    "doctype": "Workflow Action Master",
+    "name": "Apply"
+  },
+  {
+    "doctype": "Workflow Action Master",
+    "name": "Reject"
+  }
+]

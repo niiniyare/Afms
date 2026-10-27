@@ -1,323 +1,347 @@
 {
- "name": "Nozzle Ledger Entry",
- "module": "Forecourt Finance",
- "autoname": "hash",
- "track_changes": 0,
- "is_submittable": 0,
- "fields": [
-  {
-   "fieldname": "company",
-   "fieldtype": "Link",
-   "label": "Company",
-   "options": "Company",
-   "reqd": 1,
-   "search_index": 1,
-   "in_list_view": 1
-  },
-  {
-   "fieldname": "station",
-   "fieldtype": "Link",
-   "label": "Station",
-   "options": "Station",
-   "reqd": 1,
-   "search_index": 1
-  },
-  {
-   "fieldname": "posting_date",
-   "fieldtype": "Date",
-   "label": "Posting Date",
-   "reqd": 1,
-   "search_index": 1,
-   "in_list_view": 1
-  },
-  {
-   "fieldname": "forecourt_shift",
-   "fieldtype": "Link",
-   "label": "Forecourt Shift",
-   "options": "Forecourt Shift",
-   "search_index": 1
-  },
-  {
-   "fieldname": "col_break_1",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "voucher_type",
-   "fieldtype": "Data",
-   "label": "Voucher Type"
-  },
-  {
-   "fieldname": "voucher_no",
-   "fieldtype": "Data",
-   "label": "Voucher No",
-   "search_index": 1
-  },
-  {
-   "fieldname": "is_cancelled",
-   "fieldtype": "Check",
-   "label": "Is Cancelled"
-  },
-  {
-   "fieldname": "section_nozzle",
-   "fieldtype": "Section Break",
-   "label": "Nozzle"
-  },
-  {
-   "fieldname": "nozzle",
-   "fieldtype": "Link",
-   "label": "Nozzle",
-   "options": "Nozzle",
-   "reqd": 1,
-   "search_index": 1,
-   "in_list_view": 1
-  },
-  {
-   "fieldname": "tank",
-   "fieldtype": "Link",
-   "label": "Tank",
-   "options": "Fuel Tank"
-  },
-  {
-   "fieldname": "item",
-   "fieldtype": "Link",
-   "label": "Item",
-   "options": "Item"
-  },
-  {
-   "fieldname": "cashier",
-   "fieldtype": "Link",
-   "label": "Cashier",
-   "options": "Employee",
-   "search_index": 1
-  },
-  {
-   "fieldname": "col_break_2",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "shift_template",
-   "fieldtype": "Link",
-   "label": "Shift Template",
-   "options": "Forecourt Shift Template"
-  },
-  {
-   "fieldname": "dispenser",
-   "fieldtype": "Link",
-   "label": "Dispenser",
-   "options": "Pump"
-  },
-  {
-   "fieldname": "island",
-   "fieldtype": "Link",
-   "label": "Island",
-   "options": "Island"
-  },
-  {
-   "fieldname": "attendant",
-   "fieldtype": "Link",
-   "label": "Attendant",
-   "options": "Employee"
-  },
-  {
-   "fieldname": "segment_no",
-   "fieldtype": "Int",
-   "label": "Segment No"
-  },
-  {
-   "fieldname": "price",
-   "fieldtype": "Currency",
-   "label": "Price"
-  },
-  {
-   "fieldname": "source",
-   "fieldtype": "Select",
-   "label": "Source",
-   "options": "Manual\nATG\nImport"
-  },
-  {
-   "fieldname": "section_readings",
-   "fieldtype": "Section Break",
-   "label": "Readings"
-  },
-  {
-   "fieldname": "opening_elec_cash",
-   "fieldtype": "Float",
-   "label": "Opening E-Cash",
-   "precision": 3
-  },
-  {
-   "fieldname": "closing_elec_cash",
-   "fieldtype": "Float",
-   "label": "Closing E-Cash",
-   "precision": 3
-  },
-  {
-   "fieldname": "ecash_delta",
-   "fieldtype": "Float",
-   "label": "E-Cash Delta",
-   "precision": 3
-  },
-  {
-   "fieldname": "col_break_3",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "opening_elec_meter",
-   "fieldtype": "Float",
-   "label": "Opening E-Vol",
-   "precision": 3
-  },
-  {
-   "fieldname": "closing_elec_meter",
-   "fieldtype": "Float",
-   "label": "Closing E-Vol",
-   "precision": 3
-  },
-  {
-   "fieldname": "evol_delta",
-   "fieldtype": "Float",
-   "label": "E-Vol Delta",
-   "precision": 3
-  },
-  {
-   "fieldname": "col_break_4",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "opening_man_meter",
-   "fieldtype": "Float",
-   "label": "Opening M-Vol",
-   "precision": 3
-  },
-  {
-   "fieldname": "closing_man_meter",
-   "fieldtype": "Float",
-   "label": "Closing M-Vol",
-   "precision": 3
-  },
-  {
-   "fieldname": "mvol_delta",
-   "fieldtype": "Float",
-   "label": "M-Vol Delta",
-   "precision": 3
-  },
-  {
-   "fieldname": "section_sales",
-   "fieldtype": "Section Break",
-   "label": "Sales"
-  },
-  {
-   "fieldname": "basis_meter",
-   "fieldtype": "Select",
-   "label": "Basis Meter",
-   "options": "Elec Cash\nElec Vol\nMan Vol\nHighest"
-  },
-  {
-   "fieldname": "gross_l",
-   "fieldtype": "Float",
-   "label": "Gross L",
-   "precision": 3
-  },
-  {
-   "fieldname": "test_l",
-   "fieldtype": "Float",
-   "label": "Test L",
-   "precision": 3
-  },
-  {
-   "fieldname": "own_use_l",
-   "fieldtype": "Float",
-   "label": "Own Use L",
-   "precision": 3
-  },
-  {
-   "fieldname": "net_l",
-   "fieldtype": "Float",
-   "label": "Net L",
-   "precision": 3
-  },
-  {
-   "fieldname": "amount",
-   "fieldtype": "Currency",
-   "label": "Amount"
-  },
-  {
-   "fieldname": "col_break_5",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "drift_l",
-   "fieldtype": "Float",
-   "label": "Drift L",
-   "precision": 3
-  },
-  {
-   "fieldname": "drift_pct",
-   "fieldtype": "Percent",
-   "label": "Drift %"
-  },
-  {
-   "fieldname": "drift_reason",
-   "fieldtype": "Data",
-   "label": "Drift Reason"
-  }
- ],
- "permissions": [
-  {
-   "permlevel": 0,
-   "read": 1,
-   "report": 1,
-   "export": 1,
-   "role": "Business Executive"
-  },
-  {
-   "permlevel": 0,
-   "read": 1,
-   "report": 1,
-   "export": 1,
-   "role": "Station Manager"
-  },
-  {
-   "permlevel": 0,
-   "read": 1,
-   "report": 1,
-   "export": 1,
-   "role": "Assistant Station Manager"
-  },
-  {
-   "permlevel": 0,
-   "read": 1,
-   "report": 1,
-   "export": 1,
-   "role": "Forecourt Supervisor"
-  },
-  {
-   "permlevel": 0,
-   "read": 1,
-   "report": 1,
-   "export": 1,
-   "role": "Forecourt Sales Operator"
-  },
-  {
-   "permlevel": 0,
-   "read": 1,
-   "report": 1,
-   "export": 1,
-   "role": "Site Cashier"
-  },
-  {
-   "permlevel": 0,
-   "read": 1,
-   "report": 1,
-   "export": 1,
-   "role": "Station Accountant"
-  },
-  {
-   "permlevel": 0,
-   "read": 1,
-   "report": 1,
-   "export": 1,
-   "role": "Integration Service Account"
-  }
- ]
+  "name": "Nozzle Ledger Entry",
+  "module": "Forecourt Finance",
+  "autoname": "hash",
+  "track_changes": 0,
+  "is_submittable": 0,
+  "fields": [
+    {
+      "fieldname": "company",
+      "fieldtype": "Link",
+      "label": "Company",
+      "options": "Company",
+      "reqd": 1,
+      "search_index": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "station",
+      "fieldtype": "Link",
+      "label": "Station",
+      "options": "Station",
+      "reqd": 1,
+      "search_index": 1
+    },
+    {
+      "fieldname": "posting_date",
+      "fieldtype": "Date",
+      "label": "Posting Date",
+      "reqd": 1,
+      "search_index": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "forecourt_shift",
+      "fieldtype": "Link",
+      "label": "Forecourt Shift",
+      "options": "Forecourt Shift",
+      "search_index": 1
+    },
+    {
+      "fieldname": "col_break_1",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "voucher_type",
+      "fieldtype": "Data",
+      "label": "Voucher Type"
+    },
+    {
+      "fieldname": "voucher_no",
+      "fieldtype": "Data",
+      "label": "Voucher No",
+      "search_index": 1
+    },
+    {
+      "fieldname": "is_cancelled",
+      "fieldtype": "Check",
+      "label": "Is Cancelled"
+    },
+    {
+      "fieldname": "section_nozzle",
+      "fieldtype": "Section Break",
+      "label": "Nozzle"
+    },
+    {
+      "fieldname": "nozzle",
+      "fieldtype": "Link",
+      "label": "Nozzle",
+      "options": "Nozzle",
+      "reqd": 1,
+      "search_index": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "tank",
+      "fieldtype": "Link",
+      "label": "Tank",
+      "options": "Fuel Tank"
+    },
+    {
+      "fieldname": "item",
+      "fieldtype": "Link",
+      "label": "Item",
+      "options": "Item"
+    },
+    {
+      "fieldname": "cashier",
+      "fieldtype": "Link",
+      "label": "Cashier",
+      "options": "Employee",
+      "search_index": 1
+    },
+    {
+      "fieldname": "col_break_2",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "shift_template",
+      "fieldtype": "Link",
+      "label": "Shift Template",
+      "options": "Forecourt Shift Template"
+    },
+    {
+      "fieldname": "dispenser",
+      "fieldtype": "Link",
+      "label": "Dispenser",
+      "options": "Pump"
+    },
+    {
+      "fieldname": "island",
+      "fieldtype": "Link",
+      "label": "Island",
+      "options": "Island"
+    },
+    {
+      "fieldname": "attendant",
+      "fieldtype": "Link",
+      "label": "Attendant",
+      "options": "Employee"
+    },
+    {
+      "fieldname": "segment_no",
+      "fieldtype": "Int",
+      "label": "Segment No"
+    },
+    {
+      "fieldname": "price",
+      "fieldtype": "Currency",
+      "label": "Price"
+    },
+    {
+      "fieldname": "source",
+      "fieldtype": "Select",
+      "label": "Source",
+      "options": "Manual\nATG\nImport"
+    },
+    {
+      "fieldname": "section_readings",
+      "fieldtype": "Section Break",
+      "label": "Readings"
+    },
+    {
+      "fieldname": "opening_elec_cash",
+      "fieldtype": "Float",
+      "label": "Opening E-Cash",
+      "precision": 3
+    },
+    {
+      "fieldname": "closing_elec_cash",
+      "fieldtype": "Float",
+      "label": "Closing E-Cash",
+      "precision": 3
+    },
+    {
+      "fieldname": "ecash_delta",
+      "fieldtype": "Float",
+      "label": "E-Cash Delta",
+      "precision": 3
+    },
+    {
+      "fieldname": "col_break_3",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "opening_elec_meter",
+      "fieldtype": "Float",
+      "label": "Opening E-Vol",
+      "precision": 3
+    },
+    {
+      "fieldname": "closing_elec_meter",
+      "fieldtype": "Float",
+      "label": "Closing E-Vol",
+      "precision": 3
+    },
+    {
+      "fieldname": "evol_delta",
+      "fieldtype": "Float",
+      "label": "E-Vol Delta",
+      "precision": 3
+    },
+    {
+      "fieldname": "col_break_4",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "opening_man_meter",
+      "fieldtype": "Float",
+      "label": "Opening M-Vol",
+      "precision": 3
+    },
+    {
+      "fieldname": "closing_man_meter",
+      "fieldtype": "Float",
+      "label": "Closing M-Vol",
+      "precision": 3
+    },
+    {
+      "fieldname": "mvol_delta",
+      "fieldtype": "Float",
+      "label": "M-Vol Delta",
+      "precision": 3
+    },
+    {
+      "fieldname": "section_sales",
+      "fieldtype": "Section Break",
+      "label": "Sales"
+    },
+    {
+      "fieldname": "basis_meter",
+      "fieldtype": "Select",
+      "label": "Basis Meter",
+      "options": "Elec Cash\nElec Vol\nMan Vol\nHighest"
+    },
+    {
+      "fieldname": "gross_l",
+      "fieldtype": "Float",
+      "label": "Gross L",
+      "precision": 3
+    },
+    {
+      "fieldname": "test_l",
+      "fieldtype": "Float",
+      "label": "Test L",
+      "precision": 3
+    },
+    {
+      "fieldname": "own_use_l",
+      "fieldtype": "Float",
+      "label": "Own Use L",
+      "precision": 3
+    },
+    {
+      "fieldname": "net_l",
+      "fieldtype": "Float",
+      "label": "Net L",
+      "precision": 3
+    },
+    {
+      "fieldname": "amount",
+      "fieldtype": "Currency",
+      "label": "Amount"
+    },
+    {
+      "fieldname": "col_break_5",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "drift_l",
+      "fieldtype": "Float",
+      "label": "Drift L",
+      "precision": 3
+    },
+    {
+      "fieldname": "drift_pct",
+      "fieldtype": "Percent",
+      "label": "Drift %"
+    },
+    {
+      "fieldname": "drift_reason",
+      "fieldtype": "Data",
+      "label": "Drift Reason"
+    },
+    {
+      "fieldname": "section_correction_audit",
+      "fieldtype": "Section Break",
+      "label": "Correction Audit",
+      "collapsible": 1
+    },
+    {
+      "fieldname": "superseded_by",
+      "fieldtype": "Link",
+      "label": "Superseded By",
+      "options": "Shift Correction",
+      "read_only": 1,
+      "search_index": 1,
+      "description": "Set when this row is superseded by a correction"
+    },
+    {
+      "fieldname": "correction",
+      "fieldtype": "Link",
+      "label": "Correction",
+      "options": "Shift Correction",
+      "read_only": 1,
+      "search_index": 1,
+      "description": "The correction that created this row"
+    }
+  ],
+  "permissions": [
+    {
+      "permlevel": 0,
+      "read": 1,
+      "report": 1,
+      "export": 1,
+      "role": "Business Executive"
+    },
+    {
+      "permlevel": 0,
+      "read": 1,
+      "report": 1,
+      "export": 1,
+      "role": "Station Manager"
+    },
+    {
+      "permlevel": 0,
+      "read": 1,
+      "report": 1,
+      "export": 1,
+      "role": "Assistant Station Manager"
+    },
+    {
+      "permlevel": 0,
+      "read": 1,
+      "report": 1,
+      "export": 1,
+      "role": "Forecourt Supervisor"
+    },
+    {
+      "permlevel": 0,
+      "read": 1,
+      "report": 1,
+      "export": 1,
+      "role": "Forecourt Sales Operator"
+    },
+    {
+      "permlevel": 0,
+      "read": 1,
+      "report": 1,
+      "export": 1,
+      "role": "Site Cashier"
+    },
+    {
+      "permlevel": 0,
+      "read": 1,
+      "report": 1,
+      "export": 1,
+      "role": "Station Accountant"
+    },
+    {
+      "permlevel": 0,
+      "read": 1,
+      "report": 1,
+      "export": 1,
+      "role": "Integration Service Account"
+    }
+  ]
 }

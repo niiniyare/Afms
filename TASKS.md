@@ -17,10 +17,10 @@
 | A. Environment | 9 | 9 |
 | B. Repository and app scaffold | 9 | 8 |
 | C. Foundation masters (Phase 0) | 14 | 13 |
-| D. Calculation core | 8 | 0 |
-| E. Station movements | 10 | 0 |
+| D. Calculation core | 8 | 8 |
+| E. Station movements | 10 | 10 |
 | F. Forecourt Shift (Phase 1 core) | 18 | 18 |
-| G. Shift Correction | 6 | 0 |
+| G. Shift Correction | 6 | 1 |
 | H. Reports and workspaces | 12 | 0 |
 | I. Approvals, roles and permissions | 6 | 0 |
 | J. Payment import and integrations | 8 | 0 |
@@ -28,7 +28,7 @@
 | L. CI/CD | 4 | 0 |
 | M. Deployment and operations | 8 | 0 |
 | N. Pilot and go-live | 5 | 0 |
-| **Total (Phases 0–3)** | **124** | **32** |
+| **Total (Phases 0–3)** | **124** | **51** |
 | P. Later phases (backlog) | 8 epics | — |
 
 Update the *Done* column in the same commit that ticks a task.
@@ -520,7 +520,7 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
 
 ## G. Shift Correction
 
-- [ ] **FMS-G01 · Writing Feature · Shift Correction DocType and workflow** · M · F15
+- [x] **FMS-G01 · Writing Feature · Shift Correction DocType and workflow** · M · F15
   - **Skills:** `frappe-syntax-doctypes`, `frappe-core-workflow`, `frappe-impl-workflow`
   - **Description:** Catalogue 10.5 with workflow Draft → Pending Director Approval → Approved → Applied / Rejected. Add the ledgers' `superseded_by` and `correction` links (catalogue 3.1). Cancel guards on generated documents (catalogue 12 hooks, FMS-C502) that allow cancellation only from a correction.
   - **Verify (UI):** Cancelling a shift's Payment Entry directly is refused with a message pointing to Shift Correction.

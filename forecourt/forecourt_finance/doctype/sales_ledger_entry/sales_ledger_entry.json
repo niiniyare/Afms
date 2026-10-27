@@ -1,239 +1,263 @@
 {
- "name": "Sales Ledger Entry",
- "module": "Forecourt Finance",
- "autoname": "hash",
- "track_changes": 0,
- "is_submittable": 0,
- "fields": [
-  {
-   "fieldname": "company",
-   "fieldtype": "Link",
-   "label": "Company",
-   "options": "Company",
-   "reqd": 1,
-   "search_index": 1,
-   "in_list_view": 1
-  },
-  {
-   "fieldname": "station",
-   "fieldtype": "Link",
-   "label": "Station",
-   "options": "Station",
-   "reqd": 1,
-   "search_index": 1
-  },
-  {
-   "fieldname": "posting_date",
-   "fieldtype": "Date",
-   "label": "Posting Date",
-   "reqd": 1,
-   "search_index": 1,
-   "in_list_view": 1
-  },
-  {
-   "fieldname": "forecourt_shift",
-   "fieldtype": "Link",
-   "label": "Forecourt Shift",
-   "options": "Forecourt Shift",
-   "reqd": 1,
-   "search_index": 1
-  },
-  {
-   "fieldname": "col_break_1",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "voucher_type",
-   "fieldtype": "Data",
-   "label": "Voucher Type"
-  },
-  {
-   "fieldname": "voucher_no",
-   "fieldtype": "Data",
-   "label": "Voucher No",
-   "search_index": 1
-  },
-  {
-   "fieldname": "is_cancelled",
-   "fieldtype": "Check",
-   "label": "Is Cancelled"
-  },
-  {
-   "fieldname": "section_sale",
-   "fieldtype": "Section Break",
-   "label": "Sale"
-  },
-  {
-   "fieldname": "cashier",
-   "fieldtype": "Link",
-   "label": "Cashier",
-   "options": "Employee",
-   "reqd": 1,
-   "search_index": 1,
-   "in_list_view": 1
-  },
-  {
-   "fieldname": "item",
-   "fieldtype": "Link",
-   "label": "Item",
-   "options": "Item",
-   "reqd": 1,
-   "search_index": 1
-  },
-  {
-   "fieldname": "item_group",
-   "fieldtype": "Link",
-   "label": "Item Group",
-   "options": "Item Group"
-  },
-  {
-   "fieldname": "is_fuel",
-   "fieldtype": "Check",
-   "label": "Is Fuel"
-  },
-  {
-   "fieldname": "col_break_2",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "shift_template",
-   "fieldtype": "Link",
-   "label": "Shift Template",
-   "options": "Forecourt Shift Template"
-  },
-  {
-   "fieldname": "nozzle",
-   "fieldtype": "Link",
-   "label": "Nozzle",
-   "options": "Nozzle"
-  },
-  {
-   "fieldname": "dispenser",
-   "fieldtype": "Link",
-   "label": "Dispenser",
-   "options": "Pump"
-  },
-  {
-   "fieldname": "island",
-   "fieldtype": "Link",
-   "label": "Island",
-   "options": "Island"
-  },
-  {
-   "fieldname": "tank",
-   "fieldtype": "Link",
-   "label": "Tank",
-   "options": "Fuel Tank"
-  },
-  {
-   "fieldname": "section_payment",
-   "fieldtype": "Section Break",
-   "label": "Payment"
-  },
-  {
-   "fieldname": "payment_type",
-   "fieldtype": "Select",
-   "label": "Payment Type",
-   "options": "Cash\nMobile Money\nCard\nCredit\nVoucher",
-   "in_list_view": 1
-  },
-  {
-   "fieldname": "mode_of_payment",
-   "fieldtype": "Link",
-   "label": "Mode of Payment",
-   "options": "Mode of Payment"
-  },
-  {
-   "fieldname": "customer",
-   "fieldtype": "Link",
-   "label": "Customer",
-   "options": "Customer"
-  },
-  {
-   "fieldname": "customer_vehicle",
-   "fieldtype": "Link",
-   "label": "Customer Vehicle",
-   "options": "Customer Vehicle"
-  },
-  {
-   "fieldname": "col_break_3",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "qty",
-   "fieldtype": "Float",
-   "label": "Qty",
-   "precision": 3
-  },
-  {
-   "fieldname": "amount",
-   "fieldtype": "Currency",
-   "label": "Amount",
-   "in_list_view": 1
-  },
-  {
-   "fieldname": "basis",
-   "fieldtype": "Select",
-   "label": "Basis",
-   "options": "Exact\nAttributed"
-  }
- ],
- "permissions": [
-  {
-   "permlevel": 0,
-   "read": 1,
-   "report": 1,
-   "export": 1,
-   "role": "Business Executive"
-  },
-  {
-   "permlevel": 0,
-   "read": 1,
-   "report": 1,
-   "export": 1,
-   "role": "Station Manager"
-  },
-  {
-   "permlevel": 0,
-   "read": 1,
-   "report": 1,
-   "export": 1,
-   "role": "Assistant Station Manager"
-  },
-  {
-   "permlevel": 0,
-   "read": 1,
-   "report": 1,
-   "export": 1,
-   "role": "Forecourt Supervisor"
-  },
-  {
-   "permlevel": 0,
-   "read": 1,
-   "report": 1,
-   "export": 1,
-   "role": "Forecourt Sales Operator"
-  },
-  {
-   "permlevel": 0,
-   "read": 1,
-   "report": 1,
-   "export": 1,
-   "role": "Site Cashier"
-  },
-  {
-   "permlevel": 0,
-   "read": 1,
-   "report": 1,
-   "export": 1,
-   "role": "Station Accountant"
-  },
-  {
-   "permlevel": 0,
-   "read": 1,
-   "report": 1,
-   "export": 1,
-   "role": "Integration Service Account"
-  }
- ]
+  "name": "Sales Ledger Entry",
+  "module": "Forecourt Finance",
+  "autoname": "hash",
+  "track_changes": 0,
+  "is_submittable": 0,
+  "fields": [
+    {
+      "fieldname": "company",
+      "fieldtype": "Link",
+      "label": "Company",
+      "options": "Company",
+      "reqd": 1,
+      "search_index": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "station",
+      "fieldtype": "Link",
+      "label": "Station",
+      "options": "Station",
+      "reqd": 1,
+      "search_index": 1
+    },
+    {
+      "fieldname": "posting_date",
+      "fieldtype": "Date",
+      "label": "Posting Date",
+      "reqd": 1,
+      "search_index": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "forecourt_shift",
+      "fieldtype": "Link",
+      "label": "Forecourt Shift",
+      "options": "Forecourt Shift",
+      "reqd": 1,
+      "search_index": 1
+    },
+    {
+      "fieldname": "col_break_1",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "voucher_type",
+      "fieldtype": "Data",
+      "label": "Voucher Type"
+    },
+    {
+      "fieldname": "voucher_no",
+      "fieldtype": "Data",
+      "label": "Voucher No",
+      "search_index": 1
+    },
+    {
+      "fieldname": "is_cancelled",
+      "fieldtype": "Check",
+      "label": "Is Cancelled"
+    },
+    {
+      "fieldname": "section_sale",
+      "fieldtype": "Section Break",
+      "label": "Sale"
+    },
+    {
+      "fieldname": "cashier",
+      "fieldtype": "Link",
+      "label": "Cashier",
+      "options": "Employee",
+      "reqd": 1,
+      "search_index": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "item",
+      "fieldtype": "Link",
+      "label": "Item",
+      "options": "Item",
+      "reqd": 1,
+      "search_index": 1
+    },
+    {
+      "fieldname": "item_group",
+      "fieldtype": "Link",
+      "label": "Item Group",
+      "options": "Item Group"
+    },
+    {
+      "fieldname": "is_fuel",
+      "fieldtype": "Check",
+      "label": "Is Fuel"
+    },
+    {
+      "fieldname": "col_break_2",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "shift_template",
+      "fieldtype": "Link",
+      "label": "Shift Template",
+      "options": "Forecourt Shift Template"
+    },
+    {
+      "fieldname": "nozzle",
+      "fieldtype": "Link",
+      "label": "Nozzle",
+      "options": "Nozzle"
+    },
+    {
+      "fieldname": "dispenser",
+      "fieldtype": "Link",
+      "label": "Dispenser",
+      "options": "Pump"
+    },
+    {
+      "fieldname": "island",
+      "fieldtype": "Link",
+      "label": "Island",
+      "options": "Island"
+    },
+    {
+      "fieldname": "tank",
+      "fieldtype": "Link",
+      "label": "Tank",
+      "options": "Fuel Tank"
+    },
+    {
+      "fieldname": "section_payment",
+      "fieldtype": "Section Break",
+      "label": "Payment"
+    },
+    {
+      "fieldname": "payment_type",
+      "fieldtype": "Select",
+      "label": "Payment Type",
+      "options": "Cash\nMobile Money\nCard\nCredit\nVoucher",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "mode_of_payment",
+      "fieldtype": "Link",
+      "label": "Mode of Payment",
+      "options": "Mode of Payment"
+    },
+    {
+      "fieldname": "customer",
+      "fieldtype": "Link",
+      "label": "Customer",
+      "options": "Customer"
+    },
+    {
+      "fieldname": "customer_vehicle",
+      "fieldtype": "Link",
+      "label": "Customer Vehicle",
+      "options": "Customer Vehicle"
+    },
+    {
+      "fieldname": "col_break_3",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "qty",
+      "fieldtype": "Float",
+      "label": "Qty",
+      "precision": 3
+    },
+    {
+      "fieldname": "amount",
+      "fieldtype": "Currency",
+      "label": "Amount",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "basis",
+      "fieldtype": "Select",
+      "label": "Basis",
+      "options": "Exact\nAttributed"
+    },
+    {
+      "fieldname": "section_correction_audit",
+      "fieldtype": "Section Break",
+      "label": "Correction Audit",
+      "collapsible": 1
+    },
+    {
+      "fieldname": "superseded_by",
+      "fieldtype": "Link",
+      "label": "Superseded By",
+      "options": "Shift Correction",
+      "read_only": 1,
+      "search_index": 1,
+      "description": "Set when this row is superseded by a correction"
+    },
+    {
+      "fieldname": "correction",
+      "fieldtype": "Link",
+      "label": "Correction",
+      "options": "Shift Correction",
+      "read_only": 1,
+      "search_index": 1,
+      "description": "The correction that created this row"
+    }
+  ],
+  "permissions": [
+    {
+      "permlevel": 0,
+      "read": 1,
+      "report": 1,
+      "export": 1,
+      "role": "Business Executive"
+    },
+    {
+      "permlevel": 0,
+      "read": 1,
+      "report": 1,
+      "export": 1,
+      "role": "Station Manager"
+    },
+    {
+      "permlevel": 0,
+      "read": 1,
+      "report": 1,
+      "export": 1,
+      "role": "Assistant Station Manager"
+    },
+    {
+      "permlevel": 0,
+      "read": 1,
+      "report": 1,
+      "export": 1,
+      "role": "Forecourt Supervisor"
+    },
+    {
+      "permlevel": 0,
+      "read": 1,
+      "report": 1,
+      "export": 1,
+      "role": "Forecourt Sales Operator"
+    },
+    {
+      "permlevel": 0,
+      "read": 1,
+      "report": 1,
+      "export": 1,
+      "role": "Site Cashier"
+    },
+    {
+      "permlevel": 0,
+      "read": 1,
+      "report": 1,
+      "export": 1,
+      "role": "Station Accountant"
+    },
+    {
+      "permlevel": 0,
+      "read": 1,
+      "report": 1,
+      "export": 1,
+      "role": "Integration Service Account"
+    }
+  ]
 }
