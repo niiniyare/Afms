@@ -21,14 +21,14 @@
 | E. Station movements | 10 | 10 |
 | F. Forecourt Shift (Phase 1 core) | 18 | 18 |
 | G. Shift Correction | 6 | 5 |
-| H. Reports and workspaces | 12 | 9 |
+| H. Reports and workspaces | 12 | 10 |
 | I. Approvals, roles and permissions | 6 | 0 |
 | J. Payment import and integrations | 8 | 0 |
 | K. Quality, scenarios and UAT | 7 | 0 |
 | L. CI/CD | 4 | 0 |
 | M. Deployment and operations | 8 | 0 |
 | N. Pilot and go-live | 5 | 0 |
-| **Total (Phases 0–3)** | **124** | **64** |
+| **Total (Phases 0–3)** | **124** | **65** |
 | P. Later phases (backlog) | 8 epics | — |
 
 Update the *Done* column in the same commit that ticks a task.
@@ -602,7 +602,7 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
   - **Verify (UI):** A fresh site shows the onboarding checklist; each step opens the right form.
   - **Commit:** `feat(setup): onboarding`
 
-- [ ] **FMS-H10 · Writing Feature · FMS Health report and daily email** · M · H06
+- [x] **FMS-H10 · Writing Feature · FMS Health report and daily email** · M · H06
   - **Skills:** `frappe-impl-scheduler`, `frappe-core-notifications`
   - **Description:** Design guide 15.4 checks; scheduled daily, emailed to administrators and area managers.
   - **Verify (CLI):** `bench --site fms.localhost execute forecourt.forecourt_setup.report.fms_health.fms_health.send_daily` sends an email visible in the Email Queue.

@@ -326,23 +326,11 @@ doctype_js = {
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"forecourt.tasks.all"
-# 	],
-# 	"daily": [
-# 		"forecourt.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"forecourt.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"forecourt.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"forecourt.tasks.monthly"
-# 	],
-# }
+scheduler_events = {
+	"daily": [
+		"forecourt.forecourt_setup.report.fms_health.fms_health.send_daily",
+	],
+}
 
 # Testing
 # -------
