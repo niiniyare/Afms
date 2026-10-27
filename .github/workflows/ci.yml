@@ -128,3 +128,82 @@ jobs:
           bench --site test_fms run-tests --app forecourt --failfast
         env:
           TYPE: server
+
+  # ------------------------------------------------------------------
+  # Upgrade test — installs previous release, migrates to current branch
+  # ------------------------------------------------------------------
+  upgrade:
+    runs-on: ubuntu-latest
+    name: Upgrade Migration Test
+    # Only run on PRs that touch patches.txt, patches/, or DocType JSON
+    if: |
+      github.event_name == 'pull_request' &&
+      contains(github.event.pull_request.changed_files, 'patches')
+
+    services:
+      mariadb:
+        image: mariadb:11.8
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: --health-cmd="mariadb-admin ping" --health-interval=5s --health-timeout=2s --health-retries=3
+      redis-cache:
+        image: redis:alpine
+        ports:
+          - 13000:6379
+      redis-queue:
+        image: redis:alpine
+        ports:
+          - 11000:6379
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install MariaDB Client
+        run: sudo apt update && sudo apt-get install -y mariadb-client
+
+      - name: Install bench and base branch app
+        run: |
+          pip install frappe-bench
+          bench init --skip-redis-config-generation --skip-assets \
+            --python "$(which python)" --frappe-branch version-16 ~/frappe-bench
+
+      - name: Install apps at base branch (main)
+        working-directory: /home/runner/frappe-bench
+        run: |
+          bench get-app --branch version-16 payments
+          bench get-app --branch version-16 erpnext
+          # Install from the merge-base (base branch state) for migration test
+          git clone --depth 1 --branch main \
+            https://github.com/${{ github.repository }}.git apps/forecourt-base
+          bench get-app forecourt apps/forecourt-base
+          bench setup requirements
+          bench new-site --db-root-password root --admin-password admin upgrade_test
+          bench --site upgrade_test install-app payments
+          bench --site upgrade_test install-app erpnext
+          bench --site upgrade_test install-app forecourt
+          bench --site upgrade_test migrate
+        env:
+          CI: 'Yes'
+
+      - name: Upgrade to PR branch and migrate
+        working-directory: /home/runner/frappe-bench
+        run: |
+          # Replace app with PR branch code
+          rm -rf apps/forecourt
+          cp -r $GITHUB_WORKSPACE apps/forecourt
+          bench --site upgrade_test migrate
+          echo "Migration succeeded"
+        env:
+          CI: 'Yes'
