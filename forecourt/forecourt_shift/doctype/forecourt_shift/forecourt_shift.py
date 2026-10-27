@@ -256,18 +256,19 @@ class ForecourtShift(Document):
 
 	def _gate_expenses(self, errors: list[str]) -> None:
 		"""FMS-S109: expense collections need a type and must be within the per-expense limit."""
-		settings = frappe.get_cached_doc("Forecourt Settings")
-		per_expense_limit = flt(getattr(settings, "per_expense_limit", 0) or 0)
 		problems = []
 		for row in self.collections:
 			if row.collection_type != "Expense":
 				continue
 			if not row.expense_type:
 				problems.append(_("Row {0}: missing expense type.").format(row.idx))
-			elif per_expense_limit and flt(row.amount) > per_expense_limit:
+				continue
+			et = frappe.get_cached_doc("Expense Type", row.expense_type)
+			max_per_line = flt(et.max_per_line or 0)
+			if max_per_line and flt(row.amount) > max_per_line:
 				problems.append(
-					_("Row {0}: amount {1} exceeds limit {2}.").format(
-						row.idx, flt(row.amount, 2), per_expense_limit
+					_("Row {0}: amount {1} exceeds the {2} limit of {3}.").format(
+						row.idx, flt(row.amount, 2), row.expense_type, max_per_line
 					)
 				)
 		if problems:
@@ -422,8 +423,9 @@ class ForecourtShift(Document):
 			)
 
 	def _gate_collection_refs(self, errors: list[str]) -> None:
-		"""FMS-S114: mobile money and card collections require unique references per provider."""
+		"""FMS-S114: mobile money and card collections require unique references per provider (site-wide)."""
 		seen: dict[str, str] = {}
+		mobile_card: list[tuple[str, str, int]] = []  # (provider, reference, idx)
 		problems = []
 		for row in self.collections:
 			if row.collection_type not in ("Mobile Money", "Card"):
@@ -442,6 +444,26 @@ class ForecourtShift(Document):
 				)
 			else:
 				seen[key] = str(row.idx)
+				mobile_card.append((row.provider or "", row.reference, row.idx))
+
+		# Cross-shift check: reference must be unique per provider across the site
+		if mobile_card:
+			ref_list = [r for _, r, _ in mobile_card]
+			existing = frappe.get_all(
+				"Shift Collection",
+				filters={"parent": ["!=", self.name or ""], "reference": ["in", ref_list]},
+				fields=["parent", "reference", "provider"],
+			)
+			existing_map: dict[tuple, str] = {(e.provider, e.reference): e.parent for e in existing}
+			for provider, ref, idx in mobile_card:
+				other_shift = existing_map.get((provider, ref))
+				if other_shift:
+					problems.append(
+						_("Row {0}: reference {1} is already used in shift {2}.").format(
+							idx, ref, other_shift
+						)
+					)
+
 		if problems:
 			errors.append(_("{0}: ").format(FMS_S114) + " ".join(problems))
 
