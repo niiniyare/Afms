@@ -1,0 +1,17 @@
+{
+  "add_total_row": 1,
+  "doctype": "Report",
+  "is_standard": "Yes",
+  "module": "Forecourt Finance",
+  "name": "Payment Mix Matrix",
+  "ref_doctype": "Sales Ledger Entry",
+  "report_name": "Payment Mix Matrix",
+  "report_type": "Script Report",
+  "roles": [
+    {"role": "Station Manager"},
+    {"role": "Area Manager"},
+    {"role": "Forecourt Director"},
+    {"role": "Forecourt Accountant"},
+    {"role": "Forecourt Administrator"}
+  ]
+}

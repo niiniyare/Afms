@@ -1,0 +1,15 @@
+{
+  "add_total_row": 1,
+  "doctype": "Report",
+  "is_standard": "Yes",
+  "module": "Forecourt Finance",
+  "name": "Clearing Account Ageing",
+  "ref_doctype": "Payment Entry",
+  "report_name": "Clearing Account Ageing",
+  "report_type": "Script Report",
+  "roles": [
+    {"role": "Forecourt Accountant"},
+    {"role": "Forecourt Director"},
+    {"role": "Forecourt Administrator"}
+  ]
+}

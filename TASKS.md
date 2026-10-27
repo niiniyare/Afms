@@ -21,14 +21,14 @@
 | E. Station movements | 10 | 10 |
 | F. Forecourt Shift (Phase 1 core) | 18 | 18 |
 | G. Shift Correction | 6 | 5 |
-| H. Reports and workspaces | 12 | 0 |
+| H. Reports and workspaces | 12 | 6 |
 | I. Approvals, roles and permissions | 6 | 0 |
 | J. Payment import and integrations | 8 | 0 |
 | K. Quality, scenarios and UAT | 7 | 0 |
 | L. CI/CD | 4 | 0 |
 | M. Deployment and operations | 8 | 0 |
 | N. Pilot and go-live | 5 | 0 |
-| **Total (Phases 0–3)** | **124** | **55** |
+| **Total (Phases 0–3)** | **124** | **61** |
 | P. Later phases (backlog) | 8 epics | — |
 
 Update the *Done* column in the same commit that ticks a task.
@@ -555,32 +555,32 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
 
 ## H. Reports and workspaces
 
-- [ ] **FMS-H01 · Writing Feature · Daily Station Report** · M · F15
+- [x] **FMS-H01 · Writing Feature · Daily Station Report** · M · F15
   - **Skills:** `frappe-impl-reports`, `frappe-syntax-reports`
   - **Verify (UI):** For one day with two shifts, totals by product and payment type match the shifts.
   - **Commit:** `feat(reports): Daily Station Report`
 
-- [ ] **FMS-H02 · Writing Feature · Sales by Product, Tank, Pump and Nozzle, Shift, Cashier** · L · F15
+- [x] **FMS-H02 · Writing Feature · Sales by Product, Tank, Pump and Nozzle, Shift, Cashier** · L · F15
   - **Skills:** `frappe-impl-reports`, `frappe-syntax-query-builder`
   - **Description:** Five script reports over the Sales and Nozzle Ledgers with the Exact/Attributed basis column.
   - **Verify (UI):** Each report's grand total equals the Daily Station Report for the same period.
   - **Commit:** `feat(reports): sales by product, tank, pump, shift, cashier`
 
-- [ ] **FMS-H03 · Writing Feature · Payment Mix Matrix** · M · H02
+- [x] **FMS-H03 · Writing Feature · Payment Mix Matrix** · M · H02
   - **Verify (UI):** Pivot product × payment type sums to the same total as H02.
   - **Commit:** `feat(reports): payment mix matrix`
 
-- [ ] **FMS-H04 · Writing Feature · Wetstock reports** · L · F15
+- [x] **FMS-H04 · Writing Feature · Wetstock reports** · L · F15
   - **Description:** Tank Stock Position, Wetstock Variance (shift, daily, cumulative %), Delivery Variance, Meter Drift, Run-out Forecast.
   - **Verify (UI):** Cumulative variance % for T1 over the test data matches a manual calculation in a spreadsheet.
   - **Commit:** `feat(reports): wetstock reports`
 
-- [ ] **FMS-H05 · Writing Feature · Cashier and finance reports** · M · F15
+- [x] **FMS-H05 · Writing Feature · Cashier and finance reports** · M · F15
   - **Description:** Cashier Statement, Cashier Variance Ranking, Credit Slips Register (with slip gaps), Clearing Account Ageing, Cash Position by Station.
   - **Verify (UI):** Cashier Statement balance for Amina equals the Staff Shortage Receivable GL balance for her.
   - **Commit:** `feat(reports): cashier and finance reports`
 
-- [ ] **FMS-H06 · Writing Feature · Exception Register, Open Items, Station Comparison** · M · F15, G01
+- [x] **FMS-H06 · Writing Feature · Exception Register, Open Items, Station Comparison** · M · F15, G01
   - **Verify (UI):** A shift with a write-off and a correction appears in the Exception Register.
   - **Commit:** `feat(reports): exceptions, open items, station comparison`
 

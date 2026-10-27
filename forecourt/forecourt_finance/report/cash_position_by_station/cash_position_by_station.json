@@ -1,0 +1,15 @@
+{
+  "add_total_row": 1,
+  "doctype": "Report",
+  "is_standard": "Yes",
+  "module": "Forecourt Finance",
+  "name": "Cash Position by Station",
+  "ref_doctype": "GL Entry",
+  "report_name": "Cash Position by Station",
+  "report_type": "Script Report",
+  "roles": [
+    {"role": "Forecourt Accountant"},
+    {"role": "Forecourt Director"},
+    {"role": "Forecourt Administrator"}
+  ]
+}
