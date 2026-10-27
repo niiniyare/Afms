@@ -16,19 +16,19 @@
 |---|---|---|
 | A. Environment | 9 | 9 |
 | B. Repository and app scaffold | 9 | 8 |
-| C. Foundation masters (Phase 0) | 14 | 13 |
+| C. Foundation masters (Phase 0) | 14 | 14 |
 | D. Calculation core | 8 | 8 |
 | E. Station movements | 10 | 10 |
 | F. Forecourt Shift (Phase 1 core) | 18 | 18 |
-| G. Shift Correction | 6 | 5 |
-| H. Reports and workspaces | 12 | 10 |
-| I. Approvals, roles and permissions | 6 | 0 |
-| J. Payment import and integrations | 8 | 0 |
+| G. Shift Correction | 6 | 6 |
+| H. Reports and workspaces | 12 | 11 |
+| I. Approvals, roles and permissions | 6 | 6 |
+| J. Payment import and integrations | 8 | 8 |
 | K. Quality, scenarios and UAT | 7 | 0 |
 | L. CI/CD | 4 | 0 |
 | M. Deployment and operations | 8 | 0 |
 | N. Pilot and go-live | 5 | 0 |
-| **Total (Phases 0–3)** | **124** | **65** |
+| **Total (Phases 0–3)** | **124** | **98** |
 | P. Later phases (backlog) | 8 epics | — |
 
 Update the *Done* column in the same commit that ticks a task.
@@ -546,7 +546,7 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
   - **Verify (UI):** Attempt on an older shift is refused; on the latest shift with approval it succeeds.
   - **Commit:** `feat(shift): exceptional whole-shift cancellation`
 
-- [ ] **FMS-G06 · Writing Test · Correction tests** · M · G02–G05
+- [x] **FMS-G06 · Writing Test · Correction tests** · M · G02–G05
   - **Skills:** `frappe-testing-unit`
   - **Verify:** `bench --site test_fms run-tests --app forecourt --module forecourt.tests.test_corrections` passes, including ledger totals before and after.
   - **Commit:** `test(shift): corrections`
@@ -608,7 +608,7 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
   - **Verify (CLI):** `bench --site fms.localhost execute forecourt.forecourt_setup.report.fms_health.fms_health.send_daily` sends an email visible in the Email Queue.
   - **Commit:** `feat(reports): FMS health check`
 
-- [ ] **FMS-H11 · Writing Test · Report totals tests** · M · H01–H06
+- [x] **FMS-H11 · Writing Test · Report totals tests** · M · H01–H06
   - **Description:** Tests that every report's totals agree with each other and with the GL for the scenario data.
   - **Verify:** Report tests pass.
   - **Commit:** `test(reports): totals agree`
@@ -623,35 +623,35 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
 
 ## I. Approvals, roles and permissions
 
-- [ ] **FMS-I01 · Writing Feature · Role permissions on all DocTypes** · M · F15
+- [x] **FMS-I01 · Writing Feature · Role permissions on all DocTypes** · M · F15
   - **Skills:** `frappe-core-permissions`
   - **Description:** Apply the catalogue permission tables to every DocType JSON.
   - **Verify (UI):** Role Permissions Manager matches the catalogue for five sampled DocTypes.
   - **Commit:** `feat(setup): role permissions`
 
-- [ ] **FMS-I02 · Writing Feature · Station and Station Group user permissions** · M · I01
+- [x] **FMS-I02 · Writing Feature · Station and Station Group user permissions** · M · I01
   - **Skills:** `frappe-core-permissions`, `frappe-errors-permissions`
   - **Description:** `permission_query_conditions` and `has_permission` (returning explicit `True` in v16) expanding Station Group permissions to descendant stations, applied to FMS DocTypes and ledgers.
   - **Verify (UI):** Area manager with permission on *Region Nairobi* sees Westlands and Karen but not Mombasa stations.
   - **Commit:** `feat(setup): station group permissions`
 
-- [ ] **FMS-I03 · Writing Feature · Shift approval workflow** · M · F11
+- [x] **FMS-I03 · Writing Feature · Shift approval workflow** · M · F11
   - **Skills:** `frappe-impl-workflow`, `frappe-core-workflow`
   - **Description:** Workflow *Forecourt Shift Approval* on `approval_state` only (design guide 6.2, D19): the controller sets *Pending Approval* for write-offs above the limit and large variances; the area manager approves or rejects; approver cannot be the preparer; a change after approval resets it to *Pending Approval*. `status` stays controller-driven.
   - **Verify (UI):** A shift with a large write-off shows *Pending Approval*; area manager approves; manager closes; the manager cannot approve their own shift.
   - **Commit:** `feat(shift): approval workflow`
 
-- [ ] **FMS-I04 · Writing Feature · Notifications for approvals** · S · I03
+- [x] **FMS-I04 · Writing Feature · Notifications for approvals** · S · I03
   - **Skills:** `frappe-core-notifications`
   - **Description:** Email and system notifications for shifts awaiting approval, corrections awaiting the director, and price changes awaiting approval.
   - **Verify (UI):** Area manager receives a notification when a shift is sent for approval.
   - **Commit:** `feat(shift): approval notifications`
 
-- [ ] **FMS-I05 · Writing Test · Permission tests** · M · I01–I04
+- [x] **FMS-I05 · Writing Test · Permission tests** · M · I01–I04
   - **Verify:** Tests log in as each role and assert allowed and refused actions.
   - **Commit:** `test(setup): permissions`
 
-- [ ] **FMS-I06 · Review · Security review** · S · I05
+- [x] **FMS-I06 · Review · Security review** · S · I05
   - **Skills:** `frappe-agent-validator`
   - **Description:** Review whitelisted methods for permission checks, `ignore_permissions` use limited to ledger writes, no SQL built from user input.
   - **Verify:** Review report has no errors.
@@ -661,48 +661,48 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
 
 ## J. Payment import and integrations
 
-- [ ] **FMS-J01 · Writing Feature · Payment Import Batch (Phase 1)** · L · F10
+- [x] **FMS-J01 · Writing Feature · Payment Import Batch (Phase 1)** · L · F10
   - **Skills:** `frappe-impl-whitelisted`, `frappe-core-files`
   - **Description:** Catalogue 11.3, and add `Shift Collection.import_batch`. Mapping-driven CSV and Excel parser; creates collection rows on the shift; duplicates skipped by reference; row log. **Import transactions** button on the shift.
   - **Expectation:** Importing a 300-row M-Pesa statement takes under 10 seconds and assigns rows by till.
   - **Verify (UI):** Import a sample statement → rows appear on the right cashiers; re-import creates zero rows.
   - **Commit:** `feat(integrations): payment statement import`
 
-- [ ] **FMS-J02 · Writing Test · Import tests with sample files** · S · J01
+- [x] **FMS-J02 · Writing Test · Import tests with sample files** · S · J01
   - **Deliverables:** Anonymised sample files in `tests/fixtures/` (M-Pesa, EVC Plus, one card terminal batch report).
   - **Verify:** Import tests pass.
   - **Commit:** `test(integrations): statement import`
 
-- [ ] **FMS-J03 · Writing Feature · Integration Inbox** · M · C06
+- [x] **FMS-J03 · Writing Feature · Integration Inbox** · M · C06
   - **Skills:** `frappe-impl-integrations`, `frappe-core-logging`
   - **Description:** Catalogue 11.1 with unique (provider, external_id), processing job with retry and backoff, *Retry* button.
   - **Verify (UI):** A malformed message shows *Failed* with the error; *Retry* after fixing mapping processes it.
   - **Commit:** `feat(integrations): integration inbox`
 
-- [ ] **FMS-J04 · Writing Feature · Payment Feed Entry and shift matching** · M · J03, F10
+- [x] **FMS-J04 · Writing Feature · Payment Feed Entry and shift matching** · M · J03, F10
   - **Description:** Catalogue 11.2, and add `Shift Collection.feed_entry`; at shift creation and refresh, matched feed entries become collection rows; unmatched block close (FMS-S111).
   - **Verify (UI):** A feed entry for the station's till during the shift appears on the cashier automatically.
   - **Commit:** `feat(integrations): payment feed matching`
 
-- [ ] **FMS-J05 · Writing Feature · First mobile money adapter** · L · J04
+- [x] **FMS-J05 · Writing Feature · First mobile money adapter** · L · J04
   - **Skills:** `frappe-impl-integrations`, `frappe-impl-whitelisted`, `frappe-core-api`
   - **Description:** Adapter for the owner's first market (default M-Pesa C2B confirmation callback), validated endpoint, credentials in site config, idempotent.
   - **Verify (CLI):** Posting a sample callback to the endpoint with `curl` creates one inbox row and one feed entry; posting it again creates none.
   - **Commit:** `feat(integrations): M-Pesa adapter`
 
-- [ ] **FMS-J06 · Writing Feature · Bank statement import and reconciliation setup** · M · F13
+- [x] **FMS-J06 · Writing Feature · Bank statement import and reconciliation setup** · M · F13
   - **Skills:** `frappe-impl-integrations`
   - **Description:** Configure ERPNext Bank Statement Import mappings for the owner's banks; document matching per Payment Entry reference in a short guide.
   - **Verify (UI):** Import a sample statement; Bank Reconciliation Tool matches Payment Entries by reference.
   - **Commit:** `docs(finance): bank reconciliation setup`
 
-- [ ] **FMS-J07 · Writing Feature · First fiscal adapter** · L · F13
+- [x] **FMS-J07 · Writing Feature · First fiscal adapter** · L · F13
   - **Skills:** `frappe-impl-integrations`
   - **Description:** Fiscal Adapter interface (`submit`, `status`, `cancel`) and the first country implementation (default Kenya eTIMS) on Sales Invoice submit, via the Integration Inbox (direction Out).
   - **Verify (UI):** Submitting the shift's walk-in invoice in sandbox mode stores the fiscal receipt number on the invoice.
   - **Commit:** `feat(integrations): fiscal adapter`
 
-- [ ] **FMS-J08 · Writing Test · Integration tests with mocked providers** · M · J03–J07
+- [x] **FMS-J08 · Writing Test · Integration tests with mocked providers** · M · J03–J07
   - **Verify:** Integration tests pass without network access.
   - **Commit:** `test(integrations): mocked providers`
 
