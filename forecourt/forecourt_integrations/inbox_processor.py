@@ -89,6 +89,20 @@ def _lazy_mpesa_handler(inbox: "frappe.Document") -> dict | None:
 	return handle_c2b_confirmation(inbox)
 
 
+def _lazy_fiscal_submit(inbox: "frappe.Document") -> dict | None:
+	from forecourt.forecourt_integrations.fiscal_hooks import process_fiscal_submit
+
+	return process_fiscal_submit(inbox)
+
+
+def _lazy_fiscal_cancel(inbox: "frappe.Document") -> dict | None:
+	from forecourt.forecourt_integrations.fiscal_hooks import process_fiscal_cancel
+
+	return process_fiscal_cancel(inbox)
+
+
 _HANDLERS: dict[str, callable] = {
 	"c2b_confirmation": _lazy_mpesa_handler,
+	"fiscal_submit": _lazy_fiscal_submit,
+	"fiscal_cancel": _lazy_fiscal_cancel,
 }

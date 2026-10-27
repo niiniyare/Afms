@@ -107,7 +107,7 @@
    "label": "Delivery Shortage Claims Account",
    "options": "Account",
    "reqd": 1,
-   "description": "Current asset account (must not be Receivable type \u2014 a Stock Entry cannot carry a party)"
+   "description": "Current asset account (must not be Receivable type — a Stock Entry cannot carry a party)"
   },
   {
    "fieldname": "voucher_clearing_account",
@@ -144,7 +144,7 @@
    "fieldname": "approval_multiplier",
    "fieldtype": "Float",
    "label": "Approval Multiplier",
-   "description": "Variance above tolerance \u00d7 this multiplier requires director approval"
+   "description": "Variance above tolerance × this multiplier requires director approval"
   },
   {
    "default": "0.3",
@@ -233,7 +233,7 @@
    "fieldname": "price_cross_check_amount",
    "fieldtype": "Currency",
    "label": "Price Cross-Check Amount",
-   "description": "Maximum allowed difference between meter cash amount and volume \u00d7 price (design guide 5.6)"
+   "description": "Maximum allowed difference between meter cash amount and volume × price (design guide 5.6)"
   },
   {
    "default": "0",
@@ -252,7 +252,49 @@
    "fieldtype": "Check",
    "label": "Temperature Compensation",
    "read_only": 1,
-   "description": "Reserved for backlog epic P7 (Phase 0\u20133 record temperature and density only)"
+   "description": "Reserved for backlog epic P7 (Phase 0–3 record temperature and density only)"
+  },
+  {
+   "fieldname": "fiscal_section",
+   "fieldtype": "Section Break",
+   "label": "Fiscal Integration"
+  },
+  {
+   "fieldname": "fiscal_adapter",
+   "fieldtype": "Select",
+   "label": "Fiscal Adapter",
+   "options": "\neTIMS Kenya",
+   "description": "Leave empty to disable fiscalisation."
+  },
+  {
+   "fieldname": "fiscal_sandbox_mode",
+   "fieldtype": "Check",
+   "label": "Sandbox Mode",
+   "default": "1",
+   "description": "Use the sandbox URL for testing. Uncheck in production."
+  },
+  {
+   "fieldname": "fiscal_device_id",
+   "fieldtype": "Data",
+   "label": "Device / BHF ID",
+   "description": "Branch Head File ID assigned by KRA (eTIMS). Default 00."
+  },
+  {
+   "fieldname": "fiscal_device_serial",
+   "fieldtype": "Data",
+   "label": "Device Serial Number"
+  },
+  {
+   "fieldname": "fiscal_api_url",
+   "fieldtype": "Data",
+   "label": "API Base URL Override",
+   "description": "Leave empty to use the default sandbox or production URL."
+  },
+  {
+   "fieldname": "fiscal_api_key",
+   "fieldtype": "Password",
+   "label": "API Key / Authorization",
+   "description": "Bearer token or API key for the fiscal API."
   }
  ],
  "links": [],

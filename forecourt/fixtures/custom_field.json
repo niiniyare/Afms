@@ -261,6 +261,52 @@
  },
  {
   "doctype": "Custom Field",
+  "dt": "Sales Invoice",
+  "fieldname": "fms_fiscal_status",
+  "label": "Fiscal Status",
+  "fieldtype": "Select",
+  "options": "\nPending\nSubmitted\nFailed\nCancelled",
+  "insert_after": "fms_cashier",
+  "read_only": 1,
+  "no_copy": 1,
+  "module": "Forecourt Integrations"
+ },
+ {
+  "doctype": "Custom Field",
+  "dt": "Sales Invoice",
+  "fieldname": "fms_fiscal_receipt_no",
+  "label": "Fiscal Receipt No.",
+  "fieldtype": "Data",
+  "insert_after": "fms_fiscal_status",
+  "read_only": 1,
+  "no_copy": 1,
+  "module": "Forecourt Integrations"
+ },
+ {
+  "doctype": "Custom Field",
+  "dt": "Sales Invoice",
+  "fieldname": "fms_fiscal_signature",
+  "label": "Fiscal Signature",
+  "fieldtype": "Small Text",
+  "insert_after": "fms_fiscal_receipt_no",
+  "read_only": 1,
+  "no_copy": 1,
+  "module": "Forecourt Integrations"
+ },
+ {
+  "doctype": "Custom Field",
+  "dt": "Sales Invoice",
+  "fieldname": "fms_fiscal_qr",
+  "label": "Fiscal QR Data",
+  "fieldtype": "Small Text",
+  "insert_after": "fms_fiscal_signature",
+  "read_only": 1,
+  "no_copy": 1,
+  "hidden": 1,
+  "module": "Forecourt Integrations"
+ },
+ {
+  "doctype": "Custom Field",
   "name": "POS Invoice-fms_forecourt_shift",
   "dt": "POS Invoice",
   "module": "Forecourt Shift",
