@@ -114,11 +114,14 @@ jobs:
         run: |
           bench get-app --branch version-16 payments
           bench get-app --branch version-16 erpnext
-          # $GITHUB_WORKSPACE ends in the repo name (Afms), not the app name.
-          # bench derives the app directory from the last path component, so
-          # copy to /tmp/forecourt so bench registers it as "forecourt".
+          # bench get-app reads the app name from the git remote URL, which is
+          # the repo name (Afms), and registers that in apps.txt instead of
+          # the app_name ("forecourt").  Copy first to detach the remote, then
+          # ensure the correct name is in apps.txt after installation.
           cp -r $GITHUB_WORKSPACE /tmp/forecourt
+          git -C /tmp/forecourt remote remove origin || true
           bench get-app --skip-assets forecourt /tmp/forecourt
+          grep -qxF "forecourt" apps/apps.txt || echo "forecourt" >> apps/apps.txt
           bench setup requirements --dev
           bench new-site --db-root-password root --admin-password admin test_fms
           bench --site test_fms install-app payments
@@ -190,10 +193,11 @@ jobs:
         run: |
           bench get-app --branch version-16 payments
           bench get-app --branch version-16 erpnext
-          # Clone to /tmp/forecourt so bench registers the app as "forecourt".
           git clone --depth 1 --branch main \
             https://github.com/${{ github.repository }}.git /tmp/forecourt
+          git -C /tmp/forecourt remote remove origin || true
           bench get-app --skip-assets forecourt /tmp/forecourt
+          grep -qxF "forecourt" apps/apps.txt || echo "forecourt" >> apps/apps.txt
           bench setup requirements
           bench new-site --db-root-password root --admin-password admin upgrade_test
           bench --site upgrade_test install-app payments
