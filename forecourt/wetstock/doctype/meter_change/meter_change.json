@@ -1,0 +1,142 @@
+{
+ "actions": [],
+ "autoname": "format:MC-{station}-{YYYY}-{#####}",
+ "creation": "2026-10-27 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "nozzle",
+  "station",
+  "col_break_1",
+  "changed_at",
+  "technician",
+  "section_reason",
+  "reason",
+  "certificate",
+  "section_old",
+  "old_final_ecash",
+  "old_final_evol",
+  "old_final_mvol",
+  "section_new",
+  "new_start_ecash",
+  "new_start_evol",
+  "new_start_mvol"
+ ],
+ "fields": [
+  {
+   "fieldname": "nozzle",
+   "fieldtype": "Link",
+   "label": "Nozzle",
+   "options": "Nozzle",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "station",
+   "fieldtype": "Link",
+   "label": "Station",
+   "options": "Station",
+   "fetch_from": "nozzle.station",
+   "fetch_if_empty": 0,
+   "read_only": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "col_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "changed_at",
+   "fieldtype": "Datetime",
+   "label": "Changed At",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "technician",
+   "fieldtype": "Data",
+   "label": "Technician",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_reason",
+   "fieldtype": "Section Break",
+   "label": "Reason"
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Select",
+   "label": "Reason",
+   "options": "\nReplacement\nReset\nCalibration\nRepair",
+   "reqd": 1
+  },
+  {
+   "fieldname": "certificate",
+   "fieldtype": "Attach",
+   "label": "Certificate"
+  },
+  {
+   "fieldname": "section_old",
+   "fieldtype": "Section Break",
+   "label": "Old Final Readings"
+  },
+  {
+   "fieldname": "old_final_ecash",
+   "fieldtype": "Float",
+   "label": "Old Final Elec Cash"
+  },
+  {
+   "fieldname": "old_final_evol",
+   "fieldtype": "Float",
+   "label": "Old Final Elec Mtr"
+  },
+  {
+   "fieldname": "old_final_mvol",
+   "fieldtype": "Float",
+   "label": "Old Final Man Mtr"
+  },
+  {
+   "fieldname": "section_new",
+   "fieldtype": "Section Break",
+   "label": "New Start Readings"
+  },
+  {
+   "fieldname": "new_start_ecash",
+   "fieldtype": "Float",
+   "label": "New Start Elec Cash"
+  },
+  {
+   "fieldname": "new_start_evol",
+   "fieldtype": "Float",
+   "label": "New Start Elec Mtr"
+  },
+  {
+   "fieldname": "new_start_mvol",
+   "fieldtype": "Float",
+   "label": "New Start Man Mtr"
+  }
+ ],
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-10-27 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Wetstock",
+ "name": "Meter Change",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {"create": 1, "delete": 1, "submit": 1, "permlevel": 0, "read": 1, "role": "Station Manager", "write": 1},
+  {"create": 1, "submit": 1, "cancel": 1, "amend": 1, "permlevel": 0, "read": 1, "role": "Area Manager", "write": 1},
+  {"permlevel": 0, "read": 1, "role": "Forecourt Administrator"},
+  {"permlevel": 0, "read": 1, "role": "Business Executive"},
+  {"permlevel": 0, "read": 1, "role": "Station Accountant"}
+ ],
+ "search_fields": "nozzle,station",
+ "sort_field": "changed_at",
+ "sort_order": "DESC",
+ "title_field": "nozzle",
+ "track_changes": 1
+}

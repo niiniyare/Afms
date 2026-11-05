@@ -1,0 +1,32 @@
+{
+ "actions": [],
+ "creation": "2026-10-27 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": ["cashier", "float_amount"],
+ "fields": [
+  {
+   "fieldname": "cashier",
+   "fieldtype": "Link",
+   "label": "Cashier",
+   "options": "Employee",
+   "reqd": 1,
+   "in_list_view": 1,
+   "get_query": "return {filters: {fms_is_forecourt_cashier: 1}}"
+  },
+  {
+   "fieldname": "float_amount",
+   "fieldtype": "Currency",
+   "label": "Opening Float",
+   "in_list_view": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-27 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Forecourt Shift",
+ "name": "Shift Template Cashier",
+ "owner": "Administrator",
+ "permissions": []
+}

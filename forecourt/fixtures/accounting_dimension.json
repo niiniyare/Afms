@@ -1,1 +1,12 @@
-[]
+[
+ {
+  "doctype": "Accounting Dimension",
+  "disabled": 0,
+  "document_type": "Station",
+  "fieldname": "station",
+  "label": "Station",
+  "mandatory_for_bs": 0,
+  "mandatory_for_pl": 0,
+  "name": "Station"
+ }
+]

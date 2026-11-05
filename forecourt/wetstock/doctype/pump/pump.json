@@ -1,0 +1,173 @@
+{
+ "actions": [],
+ "autoname": "format:{station}-{pump_code}",
+ "creation": "2026-01-01 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "station",
+  "col_break_1",
+  "company",
+  "pump_code",
+  "island",
+  "equipment_section",
+  "make",
+  "model",
+  "col_break_2",
+  "serial_no",
+  "meters_section",
+  "meters_override",
+  "record_elec_cash",
+  "record_elec_meter",
+  "record_man_meter",
+  "sales_basis",
+  "status_section",
+  "status"
+ ],
+ "fields": [
+  {
+   "fieldname": "station",
+   "fieldtype": "Link",
+   "label": "Station",
+   "options": "Station",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "col_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "fetch_from": "station.company",
+   "fetch_if_empty": 0,
+   "read_only": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "pump_code",
+   "fieldtype": "Data",
+   "label": "Pump Code",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "island",
+   "fieldtype": "Link",
+   "label": "Island",
+   "options": "Island",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "equipment_section",
+   "fieldtype": "Section Break",
+   "label": "Equipment",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "make",
+   "fieldtype": "Data",
+   "label": "Make"
+  },
+  {
+   "fieldname": "model",
+   "fieldtype": "Data",
+   "label": "Model"
+  },
+  {
+   "fieldname": "col_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "serial_no",
+   "fieldtype": "Data",
+   "label": "Serial No."
+  },
+  {
+   "fieldname": "meters_section",
+   "fieldtype": "Section Break",
+   "label": "Meter Override"
+  },
+  {
+   "fieldname": "meters_override",
+   "fieldtype": "Check",
+   "label": "Override Station Meter Settings"
+  },
+  {
+   "fieldname": "record_elec_cash",
+   "fieldtype": "Check",
+   "label": "Elec Cash",
+   "depends_on": "eval:doc.meters_override"
+  },
+  {
+   "fieldname": "record_elec_meter",
+   "fieldtype": "Check",
+   "label": "Elec Mtr",
+   "depends_on": "eval:doc.meters_override"
+  },
+  {
+   "fieldname": "record_man_meter",
+   "fieldtype": "Check",
+   "label": "Man Mtr",
+   "depends_on": "eval:doc.meters_override"
+  },
+  {
+   "fieldname": "sales_basis",
+   "fieldtype": "Select",
+   "label": "Sales Basis Override",
+   "options": "Elec Cash\nElec Mtr\nMan Mtr\nHighest",
+   "depends_on": "eval:doc.meters_override",
+   "mandatory_depends_on": "eval:doc.meters_override"
+  },
+  {
+   "fieldname": "status_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Active\nOut of service",
+   "default": "Active",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-01-01 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Wetstock",
+ "name": "Pump",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "permlevel": 0,
+   "read": 1,
+   "role": "Forecourt Administrator",
+   "write": 1
+  },
+  {"permlevel": 0, "read": 1, "role": "Business Executive"},
+  {"permlevel": 0, "read": 1, "role": "Station Manager"},
+  {"permlevel": 0, "read": 1, "role": "Assistant Station Manager"},
+  {"permlevel": 0, "read": 1, "role": "Forecourt Supervisor"},
+  {"permlevel": 0, "read": 1, "role": "Forecourt Sales Operator"},
+  {"permlevel": 0, "read": 1, "role": "Site Cashier"},
+  {"permlevel": 0, "read": 1, "role": "Station Accountant"},
+  {"permlevel": 0, "read": 1, "role": "Integration Service Account"}
+ ],
+ "search_fields": "station,island",
+ "sort_field": "station",
+ "sort_order": "ASC",
+ "title_field": "pump_code",
+ "track_changes": 1
+}
