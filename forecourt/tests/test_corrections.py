@@ -14,7 +14,6 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import frappe
-import pytest
 from frappe.tests.utils import FrappeTestCase
 
 from forecourt.corrections import cashier, dip, meter, native, reclassify, whole_shift
@@ -86,7 +85,7 @@ class TestWholeShiftValidation(FrappeTestCase):
 	def test_assert_latest_shift_raises_when_later_shift_exists(self):
 		shift = _mock_shift()
 		with patch("frappe.db.count", return_value=2):
-			with pytest.raises(FMSValidationError):
+			with self.assertRaises(FMSValidationError):
 				whole_shift._assert_latest_shift(shift)
 
 	def test_assert_latest_shift_passes_when_no_later_shift(self):

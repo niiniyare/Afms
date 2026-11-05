@@ -14,7 +14,6 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import frappe
-import pytest
 from frappe.tests.utils import FrappeTestCase
 
 from forecourt.permissions import (
