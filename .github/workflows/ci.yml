@@ -121,10 +121,10 @@ jobs:
           cp -r $GITHUB_WORKSPACE /tmp/forecourt
           git -C /tmp/forecourt remote remove origin || true
           bench get-app --skip-assets forecourt /tmp/forecourt
-          # Frappe reads the bench app registry from sites/apps.txt (not apps/apps.txt).
-          # bench get-app may register the app under the git-remote-derived name; ensure
-          # "forecourt" is present under the correct name.
-          grep -qxF "forecourt" sites/apps.txt || echo "forecourt" >> sites/apps.txt
+          # Frappe reads the bench app registry from sites/apps.txt.
+          # Overwrite explicitly to avoid concatenation when the file lacks a
+          # trailing newline (which would produce e.g. "paymentsforecourt").
+          printf 'frappe\npayments\nerpnext\nforecourt\n' > sites/apps.txt
           bench setup requirements --dev
           bench new-site --db-root-password root --admin-password admin test_fms
           bench --site test_fms install-app payments
@@ -200,7 +200,7 @@ jobs:
             https://github.com/${{ github.repository }}.git /tmp/forecourt
           git -C /tmp/forecourt remote remove origin || true
           bench get-app --skip-assets forecourt /tmp/forecourt
-          grep -qxF "forecourt" sites/apps.txt || echo "forecourt" >> sites/apps.txt
+          printf 'frappe\npayments\nerpnext\nforecourt\n' > sites/apps.txt
           bench setup requirements
           bench new-site --db-root-password root --admin-password admin upgrade_test
           bench --site upgrade_test install-app payments
