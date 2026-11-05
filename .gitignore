@@ -54,3 +54,11 @@ venv/
 
 # Pre-commit
 .pre-commit-config.yaml.lock
+
+# Bench infrastructure (not app source)
+apps/
+config/
+logs/
+sites/
+Procfile
+patches.txt
