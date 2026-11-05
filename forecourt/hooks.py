@@ -265,10 +265,23 @@ doc_events = {
 	"POS Invoice": {
 		"validate": "forecourt.forecourt_shift.price_hooks.set_fuel_price_on_invoice",
 	},
+	"Payment Entry": {
+		"on_cancel": "forecourt.forecourt_shift.cancel_guards.on_cancel_native",
+	},
+	"Delivery Note": {
+		"on_cancel": "forecourt.forecourt_shift.cancel_guards.on_cancel_native",
+	},
+	"Journal Entry": {
+		"on_cancel": "forecourt.forecourt_shift.cancel_guards.on_cancel_native",
+	},
+	"Stock Reconciliation": {
+		"on_cancel": "forecourt.forecourt_shift.cancel_guards.on_cancel_native",
+	},
 }
 
 doctype_js = {
 	"Purchase Receipt": "public/js/purchase_receipt.js",
+	"Forecourt Shift": "public/js/forecourt_shift.js",
 }
 
 # Scheduled Tasks

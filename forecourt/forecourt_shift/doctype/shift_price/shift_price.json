@@ -1,0 +1,25 @@
+{
+ "actions": [],
+ "creation": "2026-10-27 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": ["item","segment_no","col_break_1","price","effective_from","effective_to","fuel_price_change"],
+ "fields": [
+  {"fieldname":"item","fieldtype":"Link","label":"Item","options":"Item","reqd":1,"read_only":1,"in_list_view":1},
+  {"fieldname":"segment_no","fieldtype":"Int","label":"Segment","read_only":1,"in_list_view":1},
+  {"fieldname":"col_break_1","fieldtype":"Column Break"},
+  {"fieldname":"price","fieldtype":"Currency","label":"Price","read_only":1,"in_list_view":1},
+  {"fieldname":"effective_from","fieldtype":"Datetime","label":"Effective From","read_only":1,"in_list_view":1},
+  {"fieldname":"effective_to","fieldtype":"Datetime","label":"Effective To","read_only":1},
+  {"fieldname":"fuel_price_change","fieldtype":"Link","label":"Fuel Price Change","options":"Fuel Price Change","read_only":1}
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-27 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Forecourt Shift",
+ "name": "Shift Price",
+ "owner": "Administrator",
+ "permissions": []
+}

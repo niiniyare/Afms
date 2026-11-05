@@ -1,4 +1,4 @@
-"""doc_events handlers for Stock Entry (Fuel Own Use validation, E05)."""
+"""doc_events handlers for Stock Entry (Fuel Own Use validation, E05; shift default, F06)."""
 
 from __future__ import annotations
 
@@ -11,9 +11,20 @@ _FUEL_OWN_USE_TYPE = "Fuel Own Use"
 
 
 def validate_stock_entry(doc, method=None) -> None:
-	"""Validate Fuel Own Use entries."""
+	"""Validate Fuel Own Use entries; default shift to open shift at the station (F06)."""
 	if doc.stock_entry_type != _FUEL_OWN_USE_TYPE:
 		return
+
+	# F06: default fms_forecourt_shift to the open shift at the station
+	if not doc.get("fms_forecourt_shift") and doc.get("station"):
+		open_shift = frappe.db.get_value(
+			"Forecourt Shift",
+			{"station": doc.station, "docstatus": 0},
+			"name",
+			order_by="shift_start desc",
+		)
+		if open_shift:
+			doc.fms_forecourt_shift = open_shift
 
 	if not doc.remarks:
 		frappe.throw(

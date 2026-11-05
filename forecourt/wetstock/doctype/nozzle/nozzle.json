@@ -21,6 +21,7 @@
   "last_ecash",
   "last_evol",
   "last_mvol",
+  "last_reading_shift",
   "opening_section",
   "opening_date",
   "opening_ecash",
@@ -144,6 +145,13 @@
    "fieldname": "last_mvol",
    "fieldtype": "Float",
    "label": "Last Man Mtr",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_reading_shift",
+   "fieldtype": "Link",
+   "label": "Last Reading Shift",
+   "options": "Forecourt Shift",
    "read_only": 1
   },
   {
