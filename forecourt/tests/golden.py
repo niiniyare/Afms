@@ -520,6 +520,23 @@ def _make_and_close_shift(
 			"shift_start": str(shift_start),
 			"shift_end": str(shift_end),
 			"status": "Reconciled",
+			# Prices must be present so posting/sales.py can find the rate for SI line items.
+			# _create_price_rows in before_insert reads from Item Price (which golden doesn't create),
+			# so we seed prices here before insert.
+			"prices": [
+				{
+					"item": _FUEL_ITEM,
+					"segment_no": 1,
+					"price": price_pms,
+					"effective_from": str(shift_start),
+				},
+				{
+					"item": _FUEL_ITEM_AGO,
+					"segment_no": 1,
+					"price": price_ago,
+					"effective_from": str(shift_start),
+				},
+			],
 			"meter_readings": meter_readings,
 			"credit_sales": credit_sales,
 		}
@@ -568,7 +585,7 @@ def _make_and_close_shift(
 				"cashier": setup.cashiers[0],
 				"action": "Charge to cashier",
 				"amount": flt(cash_short, 2),
-				"reason": "Golden scenario: cashier short",
+				"reason": "Counting error",  # Variance Reason with applies_to_cashier=1
 			},
 		)
 
@@ -595,19 +612,32 @@ def _check(label: str, condition: bool, detail: str = "") -> None:
 
 
 def _assert_gl_matches_ledger(company: str, month_start: date, month_end: date) -> None:
-	"""Sum Sales Ledger Entries and compare with GL debit on the walk-in receivable."""
+	"""Compare attributed SLE totals with total GL debits on all shift-linked SIs.
+
+	SLEs use shift_end.date() so the last shift of the period may land one day past
+	month_end (e.g. a midnight-ending shift on day 14 produces SLEs dated day 15).
+	Extend the SLE window by one day to capture that edge case.
+
+	Credit-sale SLEs (basis='Exact') overlap with nozzle SLEs (basis='Attributed') —
+	the nozzle reading already includes the credit customer's volume — so we sum only
+	Attributed SLEs to avoid double-counting.  The GL side therefore includes ALL
+	shift-linked SIs (walk-in + credit customers) so both sides equal total nozzle revenue.
+	"""
+	sle_end = month_end + timedelta(days=1)
+
 	sle_total = frappe.db.sql(
 		"""
         SELECT IFNULL(SUM(amount), 0)
         FROM `tabSales Ledger Entry`
         WHERE company = %s
           AND posting_date BETWEEN %s AND %s
+          AND basis = 'Attributed'
           AND is_cancelled = 0
         """,
-		(company, str(month_start), str(month_end)),
+		(company, str(month_start), str(sle_end)),
 	)[0][0]
 
-	# GL: debit side of the walk-in sales invoices posted by this company
+	# GL: debit side of ALL shift-linked SIs (walk-in + credit customers)
 	gl_total = frappe.db.sql(
 		"""
         SELECT IFNULL(SUM(gle.debit), 0)
@@ -616,7 +646,6 @@ def _assert_gl_matches_ledger(company: str, month_start: date, month_end: date) 
         WHERE gle.company = %s
           AND gle.voucher_type = 'Sales Invoice'
           AND si.fms_forecourt_shift IS NOT NULL
-          AND si.customer LIKE 'Walk-in%%'
           AND gle.posting_date BETWEEN %s AND %s
           AND gle.is_cancelled = 0
         """,
@@ -624,7 +653,7 @@ def _assert_gl_matches_ledger(company: str, month_start: date, month_end: date) 
 	)[0][0]
 
 	_check(
-		f"GL walk-in debit matches SLE total ({company})",
+		f"GL SI debit matches SLE attributed total ({company})",
 		abs(flt(sle_total, 2) - flt(gl_total, 2)) < 1.0,
 		f"SLE={sle_total}, GL={gl_total}",
 	)
@@ -642,13 +671,13 @@ def _assert_stock_matches_dips(company: str, month_end: date) -> None:
 			continue
 		book_stock = frappe.db.sql(
 			"""
-            SELECT IFNULL(SUM(actual_qty), 0)
-            FROM `tabStock Ledger Entry`
+            SELECT IFNULL(actual_qty, 0)
+            FROM `tabBin`
             WHERE warehouse = %s
-              AND is_cancelled = 0
             """,
 			(tank.warehouse,),
-		)[0][0]
+		)
+		book_stock = book_stock[0][0] if book_stock else 0
 
 		last_dip = frappe.db.sql(
 			"""
@@ -689,6 +718,7 @@ def _assert_reports_run(company: str, station: str, month_start: date, month_end
 	filters: dict[str, Any] = {
 		"company": company,
 		"station": station,
+		"date": str(month_start),  # daily_station_report uses "date" (single day)
 		"from_date": str(month_start),
 		"to_date": str(month_end),
 	}
@@ -890,6 +920,45 @@ def _setup_opening_stock(setup: StationSetup) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Company settings helper
+# ---------------------------------------------------------------------------
+
+
+def _ensure_company_settings_currency() -> None:
+	"""Update Forecourt Company Settings so all accounts match the company currency.
+
+	ERPNext JE validation rejects entries mixing currencies without multi_currency=1.
+	The test company may have USD accounts configured; replace them with same-currency ones.
+	"""
+	companies = frappe.get_all("Forecourt Company Settings", pluck="name")
+	for company in companies:
+		ccy = frappe.db.get_value("Company", company, "default_currency") or ""
+		if not ccy:
+			continue
+		cs = frappe.get_doc("Forecourt Company Settings", company)
+		changed = False
+		for fname in ("staff_shortage_receivable_account", "cash_over_account", "cash_short_account"):
+			acct = getattr(cs, fname, None)
+			if not acct:
+				continue
+			acct_ccy = frappe.db.get_value("Account", acct, "account_currency") or ccy
+			if acct_ccy != ccy:
+				# Find a same-currency account of the same type
+				acct_type = frappe.db.get_value("Account", acct, "account_type") or ""
+				replacement = frappe.db.get_value(
+					"Account",
+					{"company": company, "account_type": acct_type, "account_currency": ccy, "is_group": 0},
+					"name",
+				)
+				if replacement:
+					setattr(cs, fname, replacement)
+					changed = True
+		if changed:
+			cs.flags.ignore_permissions = True
+			cs.save(ignore_permissions=True)
+
+
+# ---------------------------------------------------------------------------
 # Main entry point
 # ---------------------------------------------------------------------------
 
@@ -903,6 +972,9 @@ def run() -> None:
 	pms = _ensure_item(_FUEL_ITEM)
 	ago = _ensure_item(_FUEL_ITEM_AGO)
 	fleet = _ensure_customer(_FLEET_CUSTOMER)
+
+	# --- fix company settings to use same-currency accounts (avoids multi-currency JE failure) ---
+	_ensure_company_settings_currency()
 
 	# --- setup stations ---
 	alpha = _setup_station(_STATION_ALPHA, "Station Alpha", pms, ago)
