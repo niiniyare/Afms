@@ -68,31 +68,9 @@ fixtures = [
 	# FMS stock entry types
 	{"dt": "Stock Entry Type", "filters": [["name", "like", "Fuel %"]]},
 	# Station as an accounting dimension
-	{"dt": "Accounting Dimension", "filters": [["document_type", "=", "Station"]]},
+	{"dt": "Accounting Dimension", "filters": [["document_type", "=", "Forecourt Station"]]},
 	# Station Group root seed record
 	{"dt": "Station Group", "filters": [["name", "=", "All Station Groups"]]},
-	# Reference master seed records (catalogue 4.4)
-	{
-		"dt": "Variance Reason",
-		"filters": [
-			[
-				"name",
-				"in",
-				[
-					"Dip error",
-					"Suspected leak",
-					"Suspected theft",
-					"Meter fault",
-					"Temperature",
-					"Delivery",
-					"Counting error",
-					"Drive-off (cashier)",
-					"Spillage (tank)",
-					"Unknown",
-				],
-			],
-		],
-	},
 ]
 
 # Each item in the list will be shown as an app in the apps page
