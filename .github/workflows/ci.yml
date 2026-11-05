@@ -25,6 +25,9 @@ jobs:
         with:
           python-version: '3.14'
 
+      - name: Install test dependencies
+        run: pip install pytest hypothesis
+
       - name: Run calc unit tests
         run: |
           python -m pytest forecourt/calc/ forecourt/tests/test_calc_properties.py \
@@ -111,13 +114,12 @@ jobs:
         run: |
           bench get-app --branch version-16 payments
           bench get-app --branch version-16 erpnext
-          bench get-app forecourt $GITHUB_WORKSPACE
+          bench get-app --skip-assets forecourt $GITHUB_WORKSPACE
           bench setup requirements --dev
           bench new-site --db-root-password root --admin-password admin test_fms
           bench --site test_fms install-app payments
           bench --site test_fms install-app erpnext
           bench --site test_fms install-app forecourt
-          bench build
         env:
           CI: 'Yes'
 
@@ -187,7 +189,7 @@ jobs:
           # Install from the merge-base (base branch state) for migration test
           git clone --depth 1 --branch main \
             https://github.com/${{ github.repository }}.git apps/forecourt-base
-          bench get-app forecourt apps/forecourt-base
+          bench get-app --skip-assets forecourt apps/forecourt-base
           bench setup requirements
           bench new-site --db-root-password root --admin-password admin upgrade_test
           bench --site upgrade_test install-app payments
