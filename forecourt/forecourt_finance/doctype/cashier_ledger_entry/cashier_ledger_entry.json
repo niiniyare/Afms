@@ -1,4 +1,5 @@
 {
+ "doctype": "DocType",
  "name": "Cashier Ledger Entry",
  "module": "Forecourt Finance",
  "autoname": "hash",

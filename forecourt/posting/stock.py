@@ -53,10 +53,18 @@ def post_stock_reconciliations(shift) -> list[str]:
 				"qty": qty,
 			},
 		)
+		from erpnext.stock.doctype.stock_reconciliation.stock_reconciliation import (
+			EmptyStockReconciliationItemsError,
+		)
+
 		sr.flags.ignore_permissions = True
-		sr.insert(ignore_permissions=True)
-		sr.submit()
-		posted.append(sr.name)
+		try:
+			sr.insert(ignore_permissions=True)
+			sr.submit()
+			posted.append(sr.name)
+		except EmptyStockReconciliationItemsError:
+			# Dip matches book stock exactly — no stock adjustment needed; skip SR
+			pass
 
 	return posted
 

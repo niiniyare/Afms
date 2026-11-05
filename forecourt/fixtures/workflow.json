@@ -2,6 +2,7 @@
   {
     "doctype": "Workflow",
     "name": "Shift Correction Approval",
+    "workflow_name": "Shift Correction Approval",
     "document_type": "Shift Correction",
     "is_active": 1,
     "send_email_alert": 0,
@@ -25,7 +26,7 @@
       {
         "state": "Applied",
         "doc_status": "1",
-        "allow_edit": ""
+        "allow_edit": "Administrator"
       },
       {
         "state": "Rejected",
@@ -75,6 +76,7 @@
   {
     "doctype": "Workflow",
     "name": "Forecourt Shift Approval",
+    "workflow_name": "Forecourt Shift Approval",
     "document_type": "Forecourt Shift",
     "is_active": 1,
     "send_email_alert": 0,
@@ -121,6 +123,7 @@
   {
     "doctype": "Workflow",
     "name": "Fuel Price Change Approval",
+    "workflow_name": "Fuel Price Change Approval",
     "document_type": "Fuel Price Change",
     "is_active": 1,
     "send_email_alert": 0,
@@ -139,7 +142,7 @@
       {
         "state": "Approved",
         "doc_status": "1",
-        "allow_edit": ""
+        "allow_edit": "Administrator"
       },
       {
         "state": "Rejected",

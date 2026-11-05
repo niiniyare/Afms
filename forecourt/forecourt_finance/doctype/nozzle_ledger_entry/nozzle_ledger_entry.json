@@ -1,4 +1,5 @@
 {
+ "doctype": "DocType",
  "name": "Nozzle Ledger Entry",
  "module": "Forecourt Finance",
  "autoname": "hash",

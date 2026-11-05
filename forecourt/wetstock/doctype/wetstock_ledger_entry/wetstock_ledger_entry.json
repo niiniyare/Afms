@@ -1,4 +1,5 @@
 {
+ "doctype": "DocType",
  "name": "Wetstock Ledger Entry",
  "module": "Wetstock",
  "autoname": "hash",

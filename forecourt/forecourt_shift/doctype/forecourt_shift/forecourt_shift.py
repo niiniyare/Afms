@@ -851,7 +851,7 @@ class ForecourtShift(Document):
 					opening=flt(row.opening_elec_cash),
 					closing=flt(row.closing_elec_cash),
 					rollover=bool(row.rollover_elec_cash),
-					rollover_max=flt(frappe.db.get_value("Nozzle", row.nozzle, "ecash_rollover_max") or 0),
+					rollover_max=flt(frappe.db.get_value("Nozzle", row.nozzle, "ecash_max") or 0),
 				)
 				if row.rec_elec_cash and row.closing_elec_cash
 				else None
@@ -861,7 +861,7 @@ class ForecourtShift(Document):
 					opening=flt(row.opening_elec_meter),
 					closing=flt(row.closing_elec_meter),
 					rollover=bool(row.rollover_elec_meter),
-					rollover_max=flt(frappe.db.get_value("Nozzle", row.nozzle, "evol_rollover_max") or 0),
+					rollover_max=flt(frappe.db.get_value("Nozzle", row.nozzle, "evol_max") or 0),
 				)
 				if row.rec_elec_meter and row.closing_elec_meter
 				else None
@@ -871,7 +871,7 @@ class ForecourtShift(Document):
 					opening=flt(row.opening_man_meter),
 					closing=flt(row.closing_man_meter),
 					rollover=bool(row.rollover_man_meter),
-					rollover_max=flt(frappe.db.get_value("Nozzle", row.nozzle, "mvol_rollover_max") or 0),
+					rollover_max=flt(frappe.db.get_value("Nozzle", row.nozzle, "mvol_max") or 0),
 				)
 				if row.rec_man_meter and row.closing_man_meter
 				else None
@@ -898,13 +898,25 @@ class ForecourtShift(Document):
 			row.net_volume_l = flt(result.basis_litres - test_l - own_use_l, 3)
 			row.amount = flt(row.net_volume_l * price, 2)
 
-			# drift
+			# drift — only meaningful when both meters in a pair were recorded
 			ecash_l = result.ecash_litres
 			evol_l = result.evol_litres
 			mvol_l = result.mvol_litres
-			row.drift_ecash_evol_l = flt(calc_drift.ecash_vs_evol(ecash_l, evol_l), 3)
-			row.drift_ecash_mvol_l = flt(calc_drift.ecash_vs_mvol(ecash_l, mvol_l), 3)
-			row.drift_evol_mvol_l = flt(calc_drift.evol_vs_mvol(evol_l, mvol_l), 3)
+			row.drift_ecash_evol_l = (
+				flt(calc_drift.ecash_vs_evol(ecash_l, evol_l), 3)
+				if (ecash is not None and evol is not None)
+				else 0.0
+			)
+			row.drift_ecash_mvol_l = (
+				flt(calc_drift.ecash_vs_mvol(ecash_l, mvol_l), 3)
+				if (ecash is not None and mvol is not None)
+				else 0.0
+			)
+			row.drift_evol_mvol_l = (
+				flt(calc_drift.evol_vs_mvol(evol_l, mvol_l), 3)
+				if (evol is not None and mvol is not None)
+				else 0.0
+			)
 
 			max_drift = max(
 				abs(row.drift_ecash_evol_l),
@@ -1265,6 +1277,9 @@ class ForecourtShift(Document):
 			if isinstance(t, str):
 				h, m, s = [*t.split(":"), "0"][:3]
 				t = time(int(h), int(m), int(float(s)))
+			elif isinstance(t, timedelta):
+				total = int(t.total_seconds())
+				t = time(total // 3600, (total % 3600) // 60, total % 60)
 			return datetime(d.year, d.month, d.day, t.hour, t.minute, t.second)
 
 		if not self.shift_start:

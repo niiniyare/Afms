@@ -261,6 +261,7 @@
  },
  {
   "doctype": "Custom Field",
+  "name": "Sales Invoice-fms_fiscal_status",
   "dt": "Sales Invoice",
   "fieldname": "fms_fiscal_status",
   "label": "Fiscal Status",
@@ -273,6 +274,7 @@
  },
  {
   "doctype": "Custom Field",
+  "name": "Sales Invoice-fms_fiscal_receipt_no",
   "dt": "Sales Invoice",
   "fieldname": "fms_fiscal_receipt_no",
   "label": "Fiscal Receipt No.",
@@ -284,6 +286,7 @@
  },
  {
   "doctype": "Custom Field",
+  "name": "Sales Invoice-fms_fiscal_signature",
   "dt": "Sales Invoice",
   "fieldname": "fms_fiscal_signature",
   "label": "Fiscal Signature",
@@ -295,6 +298,7 @@
  },
  {
   "doctype": "Custom Field",
+  "name": "Sales Invoice-fms_fiscal_qr",
   "dt": "Sales Invoice",
   "fieldname": "fms_fiscal_qr",
   "label": "Fiscal QR Data",

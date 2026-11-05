@@ -24,7 +24,8 @@ def make_station_group(name: str = "KE", **kwargs) -> frappe.Document:
 	doc = frappe.get_doc(
 		{
 			"doctype": "Station Group",
-			"group_name": name,
+			"station_group_name": name,
+			"group_type": "Other",
 			"is_group": 1,
 			"parent_station_group": None,
 			**kwargs,
@@ -47,6 +48,25 @@ def make_station(
 		company = frappe.defaults.get_defaults().get("company") or frappe.get_all("Company", limit=1)[0].name
 	if not group:
 		group = make_station_group().name
+	abbr = frappe.db.get_value("Company", company, "abbr") or "TC"
+	currency = frappe.db.get_value("Company", company, "default_currency") or "USD"
+	cash_account = (
+		frappe.db.get_value(
+			"Account",
+			{"account_type": "Cash", "company": company},
+			"name",
+		)
+		or f"Cash - {abbr}"
+	)
+	cost_center = (
+		frappe.db.get_value("Cost Center", {"company": company, "is_group": 0}, "name")
+		or f"{company} - {abbr}"
+	)
+	warehouse_group = (
+		frappe.db.get_value("Warehouse", {"is_group": 1, "company": company}, "name")
+		or f"All Warehouses - {abbr}"
+	)
+	price_list = frappe.db.get_value("Price List", {"selling": 1, "enabled": 1}, "name") or "Standard Selling"
 	doc = frappe.get_doc(
 		{
 			"doctype": "Station",
@@ -54,6 +74,14 @@ def make_station(
 			"station_name": f"Test Station {code}",
 			"company": company,
 			"station_group": group,
+			"country": "Kenya",
+			"ownership_type": "Company-owned",
+			"timezone": "Africa/Nairobi",
+			"warehouse_group": warehouse_group,
+			"price_list": price_list,
+			"cost_center": cost_center,
+			"safe_account": cash_account,
+			"till_accounts": [{"currency": currency, "account": cash_account}],
 			**kwargs,
 		}
 	)
