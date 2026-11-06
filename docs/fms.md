@@ -1139,7 +1139,7 @@ The Station's name is its station code. Station codes are globally unique and fo
 |---|---|
 | Wetstock Variance | By tank, station, product, period; shift, daily and cumulative %; outliers highlighted |
 | Delivery Variance | By supplier, transporter, driver, station |
-| Cashier Variance Ranking | Shortages and excesses across stations |
+| Cashier Performance | Shortages and excesses across stations |
 | Exception Register | Every reason-coded variance, write-off, over-limit credit, back-dated post, rejected approval |
 | Meter Drift | Nozzle volume vs tank movement trend |
 | Sales Mix by Payment Type | Per station and per cashier, compared with the network average |

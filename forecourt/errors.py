@@ -125,27 +125,27 @@ from contextlib import contextmanager
 
 @contextmanager
 def fms_error_wrapper(operation: str):
-    """Catch unexpected exceptions, log to Error Log, re-raise as FMS-P399.
+	"""Catch unexpected exceptions, log to Error Log, re-raise as FMS-P399.
 
-    Use this in whitelisted methods and background job entry points so that
-    station roles never see a raw Python traceback.
+	Use this in whitelisted methods and background job entry points so that
+	station roles never see a raw Python traceback.
 
-    Example::
+	Example::
 
-        with fms_error_wrapper("close_shift"):
-            _do_close(shift_name)
-    """
-    try:
-        yield
-    except (FMSValidationError, FMSPermissionError, frappe.ValidationError, frappe.PermissionError):
-        raise
-    except Exception:
-        ref = frappe.log_error(frappe.get_traceback(), f"FMS-P399 {operation}")
-        raise FMSValidationError(
-            FMS_P399,
-            _(
-                "An unexpected error occurred in {0}. "
-                "Reference: {1}. "
-                "Please contact your system administrator."
-            ).format(operation, ref.name if ref else "—"),
-        ) from None
+	    with fms_error_wrapper("close_shift"):
+	        _do_close(shift_name)
+	"""
+	try:
+		yield
+	except (FMSValidationError, FMSPermissionError, frappe.ValidationError, frappe.PermissionError):
+		raise
+	except Exception:
+		ref = frappe.log_error(frappe.get_traceback(), f"FMS-P399 {operation}")
+		raise FMSValidationError(
+			FMS_P399,
+			_(
+				"An unexpected error occurred in {0}. "
+				"Reference: {1}. "
+				"Please contact your system administrator."
+			).format(operation, ref.name if ref else "—"),
+		) from None

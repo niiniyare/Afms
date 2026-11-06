@@ -1134,7 +1134,7 @@ All shipped as fixtures (`Custom Field`, `Property Setter`) filtered by `module 
 | Delivery Variance | Script | Wetstock | Wetstock Ledger (Delivery) |
 | Meter Drift | Script | Wetstock | Nozzle Ledger |
 | Cashier Statement | Script | Forecourt Finance | Cashier Ledger, GL (Staff Shortage Receivable) |
-| Cashier Variance Ranking | Script | Forecourt Finance | Cashier Ledger |
+| Cashier Performance | Script | Forecourt Finance | Cashier Ledger |
 | Credit Slips Register | Query | Forecourt Finance | Shift Credit Sale |
 | Clearing Account Ageing | Script | Forecourt Finance | Payment Entry, GL |
 | Cash Position by Station | Script | Forecourt Finance | GL |
@@ -1230,7 +1230,7 @@ Forecourt                      (parent, Station Manager home)
 |---|---|
 | Number cards | Shifts awaiting approval · Corrections pending · Tank variance this month |
 | Chart | Station comparison: litres per day |
-| Link cards | *Approvals*: Forecourt Shift (Pending Approval), Fuel Price Change (Pending), Shift Correction (Pending) · *Reports*: Exception Register, Station Comparison, Cashier Variance Ranking, Wetstock Variance, Meter Drift |
+| Link cards | *Approvals*: Forecourt Shift (Pending Approval), Fuel Price Change (Pending), Shift Correction (Pending) · *Reports*: Exception Register, Station Comparison, Cashier Performance, Wetstock Variance, Meter Drift |
 
 **Forecourt Group** (module Forecourt Finance; roles Forecourt Director, Forecourt Investor)
 
