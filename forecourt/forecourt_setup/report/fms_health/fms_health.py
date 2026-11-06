@@ -106,7 +106,7 @@ def _check_stale_draft_shifts(today, station_filter) -> list[dict]:
 			{
 				"category": _("Stale Draft Shift"),
 				"station": d.station,
-				"issue": _("Draft shift {0} is {1} days old").format(d.name, age),
+				"issue": _("Draft shift {0} dated {1} ({2} days ago)").format(d.name, d.shift_date, age),
 				"document": d.name,
 				"doctype": "Forecourt Shift",
 				"age_days": age,
