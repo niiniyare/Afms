@@ -1,3 +1,19 @@
+// Status indicator colours — overrides the workflow approval_state badge.
+const STATUS_COLOUR = {
+	Open: "orange",
+	Counting: "yellow",
+	"Pending Approval": "purple",
+	Reconciled: "blue",
+	Closing: "blue",
+	Closed: "green",
+};
+
+function _set_status_indicator(frm) {
+	if (frm.doc.docstatus === 1) return; // submitted; Frappe shows green "Submitted"
+	const colour = STATUS_COLOUR[frm.doc.status] || "grey";
+	frm.page.set_indicator(__(frm.doc.status), colour);
+}
+
 // F11: Resolve buttons on cashier and tank-dip rows (inline form_render).
 frappe.ui.form.on("Shift Cashier", {
 	form_render(frm, cdt, cdn) {
@@ -29,6 +45,8 @@ frappe.ui.form.on("Forecourt Shift", {
 	},
 
 	refresh(frm) {
+		_set_status_indicator(frm);
+
 		if (frm.doc.docstatus === 0 && frm.doc.status === "Reconciled") {
 			frm.add_custom_button(__("Close"), function () {
 				frappe.confirm(
