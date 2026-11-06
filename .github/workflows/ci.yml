@@ -130,6 +130,9 @@ jobs:
           bench --site test_fms install-app payments
           bench --site test_fms install-app erpnext
           bench --site test_fms install-app forecourt
+          # Run migrate so that accounting-dimension custom fields (e.g. "station"
+          # on Purchase Receipt) are added to the database schema before tests run.
+          bench --site test_fms migrate
         env:
           CI: 'Yes'
 
