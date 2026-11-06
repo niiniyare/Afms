@@ -62,7 +62,7 @@ def close_shift_in_background(shift_name: str) -> None:
 		try:
 			frappe.get_doc("Forecourt Shift", shift_name).add_comment(
 				"Comment",
-				_("Background close failed. Error:\n{0}").format(tb[:500]),
+				_("Background close failed. Error: {0}").format(tb[:500]),
 			)
 		except Exception:
 			pass

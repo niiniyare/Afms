@@ -11,29 +11,22 @@ from __future__ import annotations
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-_FMS_TEST_COMPANY = "_Test FMS Company"
-
 
 def _ensure_test_company() -> str:
-	"""Return a company name, creating a minimal one if none exists."""
+	"""Return a company name, loading ERPNext test records if none exist."""
 	company = frappe.defaults.get_defaults().get("company")
 	if company:
 		return company
 	companies = frappe.get_all("Company", limit=1, pluck="name")
 	if companies:
 		return companies[0]
-	doc = frappe.get_doc(
-		{
-			"doctype": "Company",
-			"company_name": _FMS_TEST_COMPANY,
-			"abbr": "TFC",
-			"default_currency": frappe.db.get_default("currency") or "USD",
-			"country": "Kenya",
-		}
-	)
-	doc.flags.ignore_permissions = True
-	doc.insert()
-	return doc.name
+	# No company on a fresh test site — load ERPNext's standard test records.
+	# This is what bench run-tests --app erpnext does in its own setUpClass.
+	frappe.test_runner.make_test_records("Company", verbose=False)
+	companies = frappe.get_all("Company", limit=1, pluck="name")
+	if companies:
+		return companies[0]
+	frappe.throw(frappe._("No company found. Run ERPNext setup before FMS tests."))
 
 
 class FMSTestCase(FrappeTestCase):

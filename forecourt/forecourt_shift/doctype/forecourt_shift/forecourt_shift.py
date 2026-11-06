@@ -272,7 +272,7 @@ class ForecourtShift(Document):
 					)
 				)
 		if problems:
-			errors.append(_("{0}: ").format(FMS_S109) + " ".join(problems))
+			errors.append(_("{0}: {1}").format(FMS_S109, " ".join(problems)))
 
 	def _gate_no_overlap(self, errors: list[str]) -> None:
 		"""FMS-S110: shift window must not overlap another submitted shift at this station."""
@@ -465,7 +465,7 @@ class ForecourtShift(Document):
 					)
 
 		if problems:
-			errors.append(_("{0}: ").format(FMS_S114) + " ".join(problems))
+			errors.append(_("{0}: {1}").format(FMS_S114, " ".join(problems)))
 
 	def _gate_cashier_resolved(self, errors: list[str]) -> None:
 		"""FMS-S105: every cashier with a non-zero difference must have a resolution line."""
@@ -492,7 +492,7 @@ class ForecourtShift(Document):
 					_("Tank {0}: variance above approval threshold is not approved.").format(row.tank)
 				)
 		if problems:
-			errors.append(_("{0}: ").format(FMS_S106) + " ".join(problems))
+			errors.append(_("{0}: {1}").format(FMS_S106, " ".join(problems)))
 
 	# ------------------------------------------------------------------ F08 helpers
 
