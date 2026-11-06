@@ -136,6 +136,14 @@ jobs:
         env:
           CI: 'Yes'
 
+      - name: Seed ERPNext test records
+        working-directory: /home/runner/frappe-bench
+        run: |
+          bench --site test_fms execute \
+            "from erpnext.setup.utils import before_tests; before_tests()"
+        env:
+          CI: 'Yes'
+
       - name: Run integration tests
         working-directory: /home/runner/frappe-bench
         run: |

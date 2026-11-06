@@ -9,25 +9,28 @@ Never leave persistent state — use FMSTestCase which rolls back.
 from __future__ import annotations
 
 import frappe
-import frappe.test_runner
 from frappe.tests.utils import FrappeTestCase
 
 
 def _ensure_test_company() -> str:
-	"""Return a company name, loading ERPNext test records if none exist."""
+	"""Return a company name, or raise if the site has no companies.
+
+	The CI workflow seeds ERPNext test records (erpnext.setup.utils.before_tests)
+	before running forecourt tests, so at least _Test Company always exists.
+	"""
 	company = frappe.defaults.get_defaults().get("company")
 	if company:
 		return company
 	companies = frappe.get_all("Company", limit=1, pluck="name")
 	if companies:
 		return companies[0]
-	# No company on a fresh test site — load ERPNext's standard test records.
-	# This is what bench run-tests --app erpnext does in its own setUpClass.
-	frappe.test_runner.make_test_records("Company")
-	companies = frappe.get_all("Company", limit=1, pluck="name")
-	if companies:
-		return companies[0]
-	frappe.throw(frappe._("No company found. Run ERPNext setup before FMS tests."))
+	frappe.throw(
+		frappe._(
+			"No company found. Seed ERPNext test records first: "
+			"bench --site test_fms execute "
+			'"from erpnext.setup.utils import before_tests; before_tests()"'
+		)
+	)
 
 
 class FMSTestCase(FrappeTestCase):
