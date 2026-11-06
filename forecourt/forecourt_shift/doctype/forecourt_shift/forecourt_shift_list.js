@@ -104,7 +104,9 @@ function _set_dialog_info(dialog, text) {
 	const $html = dialog.get_field("info_html").$wrapper;
 	if (text) {
 		$html.html(
-			`<p class="text-muted small" style="margin:4px 0">${frappe.utils.escape_html(text)}</p>`
+			`<p class="text-muted small" style="margin:4px 0">${frappe.utils.escape_html(
+				text
+			)}</p>`
 		);
 	} else {
 		$html.html("");
