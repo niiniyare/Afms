@@ -62,7 +62,7 @@ def _check_no_shift_today(today, station_filter) -> list[dict]:
 			"Forecourt Shift",
 			filters={
 				"docstatus": 1,
-				"posting_date": [">=", cutoff],
+				"shift_date": [">=", cutoff],
 			},
 			pluck="station",
 		)
@@ -90,18 +90,18 @@ def _check_stale_draft_shifts(today, station_filter) -> list[dict]:
 
 	backdating_limit = 2
 	cutoff = add_days(today, -backdating_limit)
-	f = {"docstatus": 0, "posting_date": ["<", cutoff]}
+	f = {"docstatus": 0, "shift_date": ["<", cutoff]}
 	if station_filter:
 		f["station"] = station_filter
 
 	drafts = frappe.get_all(
 		"Forecourt Shift",
 		filters=f,
-		fields=["name", "station", "posting_date"],
+		fields=["name", "station", "shift_date"],
 	)
 	rows = []
 	for d in drafts:
-		age = (today - getdate(d.posting_date)).days
+		age = (today - getdate(d.shift_date)).days
 		rows.append(
 			{
 				"category": _("Stale Draft Shift"),

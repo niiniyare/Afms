@@ -2,7 +2,7 @@
  {
   "doctype": "Dashboard Chart",
   "name": "FMS - Litres per Day by Product",
-  "chart_name": "FMS - Litres per Day by Product",
+  "chart_name": "FMS - Litres per Day",
   "chart_type": "Sum",
   "document_type": "Nozzle Ledger Entry",
   "based_on": "posting_date",
@@ -10,7 +10,7 @@
   "type": "Line",
   "filters_json": "[[\"Nozzle Ledger Entry\",\"is_cancelled\",\"=\",0,false]]",
   "timespan": "Last Month",
-  "time_interval": "Daily",
+  "time_interval": "Weekly",
   "is_public": 1,
   "is_standard": 0,
   "module": "Forecourt Shift"

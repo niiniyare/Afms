@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import frappe
 from frappe import _
+from frappe.query_builder.functions import Sum
 from frappe.utils import flt, today
 
 
@@ -70,21 +71,20 @@ def _data(filters):
 	if not till_accounts:
 		return []
 
+	GLE = frappe.qb.DocType("GL Entry")
 	result = []
 	for ta in till_accounts:
-		gl_rows = frappe.get_all(
-			"GL Entry",
-			filters={
-				"account": ta["account"],
-				"company": ta["company"],
-				"station": ta["station"],
-				"posting_date": ["<=", as_of],
-				"is_cancelled": 0,
-			},
-			fields=["sum(debit) as debit", "sum(credit) as credit"],
-		)
-		debit = flt((gl_rows[0].debit if gl_rows else 0) or 0, 2)
-		credit = flt((gl_rows[0].credit if gl_rows else 0) or 0, 2)
+		gl_data = (
+			frappe.qb.from_(GLE)
+			.select(Sum(GLE.debit).as_("debit"), Sum(GLE.credit).as_("credit"))
+			.where(GLE.account == ta["account"])
+			.where(GLE.company == ta["company"])
+			.where(GLE.station == ta["station"])
+			.where(GLE.posting_date <= as_of)
+			.where(GLE.is_cancelled == 0)
+		).run(as_dict=True)
+		debit = flt((gl_data[0].debit if gl_data else 0) or 0, 2)
+		credit = flt((gl_data[0].credit if gl_data else 0) or 0, 2)
 		result.append(
 			{
 				"station": ta["station"],
