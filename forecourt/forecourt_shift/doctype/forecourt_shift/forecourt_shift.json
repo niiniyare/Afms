@@ -235,6 +235,11 @@
    "label": "Overview"
   },
   {
+   "fieldname": "section_readiness",
+   "fieldtype": "Section Break",
+   "label": ""
+  },
+  {
    "fieldname": "readiness_html",
    "fieldtype": "HTML",
    "label": "Close Readiness"
