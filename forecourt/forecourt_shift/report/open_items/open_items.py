@@ -74,12 +74,22 @@ def _data(filters):
 		)
 
 	# Draft fuel GRNs (Purchase Receipt with fuel items)
+	# custom_station is the accounting-dimension field; guard against unset-up sites
+	_pr_has_station = frappe.get_meta("Purchase Receipt").has_field("custom_station")
 	fuel_items = [r.name for r in frappe.get_all("Item", filters={"fms_is_fuel": 1}, fields=["name"])]
 	if fuel_items:
+		grn_fields = ["name", "posting_date"]
+		if _pr_has_station:
+			grn_fields.append("custom_station as station")
+		grn_filters = {"docstatus": 0, "is_return": 0}
+		if station_filter.get("company"):
+			grn_filters["company"] = station_filter["company"]
+		if _pr_has_station and station_filter.get("station"):
+			grn_filters["custom_station"] = station_filter["station"]
 		for grn in frappe.get_all(
 			"Purchase Receipt",
-			filters={"docstatus": 0, "is_return": 0},
-			fields=["name", "posting_date", "custom_station as station"],
+			filters=grn_filters,
+			fields=grn_fields,
 			order_by="posting_date asc",
 		):
 			from frappe.utils import date_diff
@@ -96,7 +106,7 @@ def _data(filters):
 						"item_type": "Draft GRN",
 						"name": grn.name,
 						"doctype_name": "Purchase Receipt",
-						"station": grn.station,
+						"station": grn.get("station"),
 						"date": grn.posting_date,
 						"status": "Draft",
 						"age_days": age,
@@ -106,10 +116,7 @@ def _data(filters):
 	# Shift Corrections awaiting approval
 	for sc in frappe.get_all(
 		"Shift Correction",
-		filters={
-			"docstatus": 0,
-			**{k.replace("station", "custom_station"): v for k, v in station_filter.items()},
-		},
+		filters={"docstatus": 0, **station_filter},
 		fields=["name", "target_shift", "correction_type", "workflow_state"],
 		order_by="creation asc",
 	):
