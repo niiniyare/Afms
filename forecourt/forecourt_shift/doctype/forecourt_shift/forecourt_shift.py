@@ -137,6 +137,8 @@ class ForecourtShift(Document):
 		posting_ledgers.write_shift_cashier_ledger(self)
 		posting_ledgers.update_nozzle_last_readings(self)
 
+		frappe.db.set_value(self.doctype, self.name, "status", "Closed", update_modified=False)
+
 	# ------------------------------------------------------------------ F12 new gates
 
 	def _gate_nozzle_readings(self, errors: list[str]) -> None:
@@ -1364,12 +1366,23 @@ class ForecourtShift(Document):
 			filters={"fms_is_fuel": 1},
 			fields=["name"],
 		)
+		from frappe.query_builder import DocType as QBDocType
+
+		ItemPrice = QBDocType("Item Price")
+		ref_date = self.shift_date or frappe.utils.today()
 		for fuel in fuel_items:
-			price = frappe.db.get_value(
-				"Item Price",
-				{"item_code": fuel.name, "price_list": price_list, "selling": 1},
-				"price_list_rate",
+			rows = (
+				frappe.qb.from_(ItemPrice)
+				.select(ItemPrice.price_list_rate)
+				.where(ItemPrice.item_code == fuel.name)
+				.where(ItemPrice.price_list == price_list)
+				.where(ItemPrice.selling == 1)
+				.where((ItemPrice.valid_from.isnull()) | (ItemPrice.valid_from <= ref_date))
+				.orderby(ItemPrice.valid_from, order=frappe.qb.desc)
+				.limit(1)
+				.run(as_dict=True)
 			)
+			price = flt(rows[0].price_list_rate) if rows else 0.0
 			if price:
 				self.append(
 					"prices",

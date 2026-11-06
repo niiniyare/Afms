@@ -129,13 +129,21 @@ def _walkin_items(shift, tank_wh: dict[str, str], station) -> list[dict]:
 		if row.item and row.tank:
 			metered[(row.item, row.tank)] += flt(row.net_volume_l, 3)
 
-	# Credit sold per item (total across all credit customers)
-	credit_by_item: dict[str, float] = defaultdict(float)
+	# Credit sold per (item, tank) via nozzle→tank lookup; rows without nozzle fall back
+	# to proportional allocation across tanks weighted by metered volume.
+	nozzle_tank = _nozzle_tank_map(shift)
+	credit_by_tank: dict[tuple[str, str], float] = defaultdict(float)
+	credit_no_nozzle: dict[str, float] = defaultdict(float)
 	for row in shift.credit_sales:
-		if row.item:
-			credit_by_item[row.item] += flt(row.qty, 3)
+		if not row.item:
+			continue
+		tank = nozzle_tank.get(row.nozzle) if row.nozzle else None
+		if tank:
+			credit_by_tank[(row.item, tank)] += flt(row.qty, 3)
+		else:
+			credit_no_nozzle[row.item] += flt(row.qty, 3)
 
-	# Total metered per item (for proportional credit allocation across tanks)
+	# Total metered per item (for proportional fallback only)
 	total_metered_by_item: dict[str, float] = defaultdict(float)
 	for (item, _tank), vol in metered.items():
 		total_metered_by_item[item] += vol
@@ -143,12 +151,11 @@ def _walkin_items(shift, tank_wh: dict[str, str], station) -> list[dict]:
 	lines: list[dict] = []
 
 	for (item, tank), vol in metered.items():
-		credit_total = credit_by_item.get(item, 0.0)
+		direct = credit_by_tank.get((item, tank), 0.0)
+		no_nozzle_total = credit_no_nozzle.get(item, 0.0)
 		total_m = total_metered_by_item.get(item, 0.0)
-		if total_m > 0 and credit_total > 0:
-			credit_share = flt(credit_total * vol / total_m, 3)
-		else:
-			credit_share = 0.0
+		prop = flt(no_nozzle_total * vol / total_m, 3) if total_m > 0 and no_nozzle_total > 0 else 0.0
+		credit_share = flt(direct + prop, 3)
 		walkin_qty = flt(vol - credit_share, 3)
 		if walkin_qty <= 0:
 			continue
@@ -202,9 +209,12 @@ def _make_invoice(
 	si.posting_time = posting_time
 	si.set_posting_time = 1
 	si.update_stock = 1
+	si.ignore_pricing_rule = 1
 	si.fms_forecourt_shift = shift.name
 	si.station = shift.station
 	for item in items:
+		if "price_list_rate" not in item:
+			item["price_list_rate"] = item.get("rate", 0.0)
 		si.append("items", item)
 	si.flags.ignore_permissions = True
 	si.insert(ignore_permissions=True)
