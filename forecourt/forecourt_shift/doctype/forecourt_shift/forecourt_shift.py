@@ -1513,13 +1513,13 @@ class ForecourtShift(Document):
 
 @frappe.whitelist()
 def reconcile(shift_name: str) -> str:
-    """Module-level entry point for the Reconcile button.
+	"""Module-level entry point for the Reconcile button.
 
-    frm.call({method: "..."}) looks up module attributes, not class methods,
-    so the class method is called here via a full dotted path.
-    """
-    shift = frappe.get_doc("Forecourt Shift", shift_name)
-    return shift.reconcile()
+	frm.call({method: "..."}) looks up module attributes, not class methods,
+	so the class method is called here via a full dotted path.
+	"""
+	shift = frappe.get_doc("Forecourt Shift", shift_name)
+	return shift.reconcile()
 
 
 @frappe.whitelist()
