@@ -859,13 +859,13 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
 
 ## Q. UI/UX improvements (from ui-ux-design-guide.md)
 
-Decisions UX-01 and Q-11 confirmed 2026-11-06. All tasks here are **Proposed** until FMS-U01 (gap audit) is done.
+Decisions UX-01 and Q-11 confirmed 2026-11-06. FMS-U01 gap audit complete (2026-11-06); gap table in `docs/ui-ux-design-guide.md` section 24.1.
 
 | Task | Size | Depends on | Scope |
 |---|---|---|---|
-| FMS-U01 | S | — | Gap audit: read built DocType JSON, workspace JSON, client scripts and reports; list what differs from the guide sections 5, 6, 10, 14, 16, 18 |
+| ~~FMS-U01~~ ✓ | S | — | Gap audit done 2026-11-06; gap table appended to `docs/ui-ux-design-guide.md` §24.1 |
 | FMS-U02 | M | U01 | One Forecourt workspace: blocks, shortcuts with live counts, KPI cards; patch removing the 7 old workspaces (keep 7 until satisfied with new design) |
-| FMS-U03 | S | U01 | Shift form: Overview tab first, Prices section, Shop label (rename Items→Shop), settings section collapsed |
+| ~~FMS-U03~~ ✓ | S | U01 | Shift form: `tab_prices`→`tab_overview` (label "Overview"), `tab_items`→`tab_shop` (label "Shop") in DocType JSON — both copies updated 2026-11-06 |
 | FMS-U04 | M | U03 | Grid standards: column widths (10 units), flag column, row order, *Show all meters* toggle, *History* row button |
 | FMS-U05 | S | U03 | *New Shift* dialog + next-shift prompt + error codes S116–S119 in `errors.py` |
 | FMS-U06 | M | U03 | `get_close_readiness` whitelisted method; refactor gates to collect mode with targets; readiness panel HTML |

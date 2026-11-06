@@ -29,7 +29,7 @@
   "record_elec_cash",
   "record_elec_meter",
   "record_man_meter",
-  "tab_prices",
+  "tab_overview",
   "prices",
   "tab_meters",
   "meter_readings",
@@ -37,7 +37,7 @@
   "tank_dips",
   "tab_credit",
   "credit_sales",
-  "tab_items",
+  "tab_shop",
   "item_sales",
   "tab_cashiers",
   "cashiers",
@@ -224,9 +224,9 @@
    "read_only": 1
   },
   {
-   "fieldname": "tab_prices",
+   "fieldname": "tab_overview",
    "fieldtype": "Tab Break",
-   "label": "Prices"
+   "label": "Overview"
   },
   {
    "fieldname": "prices",
@@ -268,9 +268,9 @@
    "options": "Shift Credit Sale"
   },
   {
-   "fieldname": "tab_items",
+   "fieldname": "tab_shop",
    "fieldtype": "Tab Break",
-   "label": "Items"
+   "label": "Shop"
   },
   {
    "fieldname": "item_sales",

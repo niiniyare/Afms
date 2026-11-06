@@ -1781,6 +1781,73 @@ This guide was written from the documents, without the repository (see *How to r
 |---|---|---|
 | **FMS-U01 · Review · Gap check of the UI against this guide** | Read the built DocType JSON, workspace JSON, client scripts and reports; list where they differ from sections 5, 6, 10, 14, 16, 18 | A gap table appended to this section: confirmed, differs (with the reason), not built |
 
+**FMS-U01 gap table — audited 2026-11-06** against code at `apps/forecourt/` and `forecourt/` (bench root).
+
+Legend: ✅ Confirmed · ⚠ Differs · ❌ Not built
+
+#### Section 5 · Workspace
+
+| Item | Guide spec | Built state | Status | Task |
+|---|---|---|---|---|
+| 5.1 Single workspace | One *Forecourt* workspace replaces all others | 7 separate workspaces (`forecourt/forecourt_shift/workspace/` etc.) | ⚠ Multiple workspaces exist; UX-01 accepted — keep until new design ready | U02 |
+| 5.3 Shortcuts with live counts | To-do shortcuts show live counts (Open Shifts, Awaiting Approval) | 5 shortcuts, no live counts | ⚠ Counts missing | U02 |
+| 5.3 Shortcuts set | New Shift, Open Shifts, Awaiting Approval, GRN, Spot Dip | New Shift, Open Shifts, New GRN, Spot Dip, Daily Station Report | ⚠ Daily Station Report present, Awaiting Approval absent | U02 |
+| 5.4 Number cards on workspace | 9 KPI cards on workspace | 9 cards exist in `fixtures/number_card.json` | ✅ |  |
+| 5.5 Dashboard charts | 4 dashboards (Station, Cashier, Wetstock, Management) | 6 charts in `fixtures/dashboard_chart.json` — single dashboard, not 4 | ⚠ Structure differs | U09 |
+
+#### Section 6 · Form layout
+
+| Item | Guide spec | Built state | Status | Task |
+|---|---|---|---|---|
+| 6.1 Header order | Station, Company, Template, Date, Start, End | station, company (col break), template, date (col break), start, end | ✅ |  |
+| 6.2 Status section | Status, Approval State, Approved By, Previous Shift | section_status with status, approval_state, col break, approved_by_user, previous_shift | ✅ |  |
+| 6.3 Snapshot section collapsible | Station settings snapshot collapsed by default | `section_snapshot` has `collapsible: 1` | ✅ |  |
+| 6.7 Grid standards | Column order, 10-unit widths, locked system rows, physical row order | No `in_list_view` column-width metadata on child tables; not yet applied | ⚠ Not applied to grids | U04 |
+
+#### Section 10 · Shift form tabs
+
+| Item | Guide spec | Built state | Status | Task |
+|---|---|---|---|---|
+| 10.1 Tab order | Overview, Meters, Tanks, Credit, Shop, Cashiers, Review | Prices, Meters, Tanks, Credit, Items, Cashiers, Review | ⚠ No Overview tab; Items not renamed to Shop | U03 |
+| 10.1 Overview tab content | Prices section + summary totals + readiness panel | No Overview tab; prices are in a separate "Prices" tab | ⚠ Not built | U03, U06 |
+| 10.2 Meter grid columns | Nozzle, Basis, Opening, Closing, Sales Vol, Sales Cash, Drift | `meter_readings` table present; column metadata not applied | ⚠ Columns not set | U04 |
+| 10.3 Tank grid columns | Tank, Opening, Deliveries, Dips, Closing, Variance L, Variance %, Within Tolerance | `tank_dips` table present; columns not configured | ⚠ Columns not set | U04 |
+| 10.5 Cashier grid | Cashier, Expected, Counted, Difference, Resolved | `cashiers` + `cash_counts` + `collections` tables present | ✅ (tables exist) |  |
+
+#### Section 12 · Close shift
+
+| Item | Guide spec | Built state | Status | Task |
+|---|---|---|---|---|
+| 12.1 Readiness panel | `get_close_readiness` → panel showing blocking/waiting/attention items | No `get_close_readiness`; no panel | ❌ Not built | U06 |
+| 12.5 Close primary action | `frm.page.set_primary_action("Close Shift", …)` when Reconciled | `frm.add_custom_button("Close", …).addClass("btn-primary")` | ⚠ Wrong button placement; not `set_primary_action` | U07 |
+| 12.5 Confirm dialog | Summarised readiness items in confirm body | `frappe.confirm("Close this shift and post all accounting entries?", …)` — plain text | ⚠ No readiness summary | U07 |
+| 12.5 Duplicate protection | Re-entrancy guard while enqueued | Reloads doc to show Closing status; no explicit guard | ⚠ Partial | U07 |
+
+#### Section 14 · Reports
+
+| Item | Guide spec | Built state | Status | Task |
+|---|---|---|---|---|
+| 14.1 Report count | 21 built reports + 5 new + 2 extended | 21 Script Reports built; `common.py` framework absent | ⚠ Framework missing; 5 new not built | U08, R02 |
+| 14.2 `common.py` shared framework | `forecourt/reports/common.py` with shared filters/formatters | File does not exist | ❌ Not built | R02 |
+| 14.3 New reports | Meter Movement, Tank Stock Movement, Shift Reconciliation, Payment Reconciliation, Cash Collection | None of these 5 built | ❌ Not built | U08 |
+| 14.4 Extended reports | Cashier Performance, Pump/Nozzle — add grouping/totals | Built without grouping | ⚠ Needs extension | U08 |
+
+#### Section 16 · Status colours and indicators
+
+| Item | Guide spec | Built state | Status | Task |
+|---|---|---|---|---|
+| 16.1 Indicator colours | Open=orange, Counting=yellow, Pending Approval=purple, Reconciled=blue, Closing=blue, Closed=green | `STATUS_COLOUR` map in `forecourt_shift.js` lines 2–9 matches exactly | ✅ |  |
+| 16.1 Submitted override | On submit show Frappe green "Submitted" | `if (frm.doc.docstatus === 1) return;` guards correctly | ✅ |  |
+| 16.2 Closing disable save | Disable save while Closing | `frm.disable_save()` + intro when status === "Closing" | ✅ |  |
+
+#### Section 18 · Labels, roles, field descriptions
+
+| Item | Guide spec | Built state | Status | Task |
+|---|---|---|---|---|
+| 18.1 Tab label: Shop | Tab 5 labelled "Shop" | Tab labelled "Items" (fieldname `tab_items`) | ⚠ Rename needed | U03 |
+| 18.3 Roles on DocType | Supervisor + Assistant Station Manager have submit; Business Executive removed | DocType perms: Business Executive present, Supervisor and Asst Station Manager absent | ⚠ Permissions wrong | U11 |
+| 18.5 Field descriptions | Key fields carry description strings | No `description` on any field in the DocType JSON | ❌ Not added | U11 |
+
 ### 24.2 Proposed tasks (section U of TASKS.md, when accepted)
 
 | Task | Scope | Depends on | Size | Decisions |
