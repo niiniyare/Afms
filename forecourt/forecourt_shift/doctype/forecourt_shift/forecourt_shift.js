@@ -48,7 +48,10 @@ frappe.ui.form.on("Forecourt Shift", {
 		_set_status_indicator(frm);
 
 		// U06: readiness panel on Overview tab for active draft shifts.
-		if (frm.doc.docstatus === 0 && ["Counting", "Reconciled", "Pending Approval"].includes(frm.doc.status)) {
+		if (
+			frm.doc.docstatus === 0 &&
+			["Counting", "Reconciled", "Pending Approval"].includes(frm.doc.status)
+		) {
 			_load_readiness_panel(frm);
 		} else if (frm.fields_dict.readiness_html) {
 			frm.fields_dict.readiness_html.$wrapper.html("");
@@ -408,9 +411,7 @@ function _after_close_prompt(frm) {
 function _load_readiness_panel(frm) {
 	const $html = frm.fields_dict.readiness_html && frm.fields_dict.readiness_html.$wrapper;
 	if (!$html) return;
-	$html.html(
-		`<p class="text-muted small" style="margin:4px 0">${__("Checking…")}</p>`
-	);
+	$html.html(`<p class="text-muted small" style="margin:4px 0">${__("Checking…")}</p>`);
 	frappe.call({
 		method: "forecourt.forecourt_shift.readiness.get_close_readiness",
 		args: { shift_name: frm.docname },
@@ -445,7 +446,9 @@ function _render_readiness_panel(frm, data) {
 		`<div style="margin:6px 0 8px;display:flex;align-items:center;gap:8px">` +
 		`<span style="display:inline-block;padding:3px 10px;border-radius:3px;` +
 		`background:${color};color:#fff;font-weight:bold;font-size:0.88em">${label}</span>` +
-		`<button class="btn btn-xs btn-default fms-readiness-refresh">${__("Check again")}</button>` +
+		`<button class="btn btn-xs btn-default fms-readiness-refresh">${__(
+			"Check again"
+		)}</button>` +
 		`</div>`;
 
 	if (data.items && data.items.length) {
@@ -464,7 +467,9 @@ function _render_readiness_panel(frm, data) {
 			const msg = frappe.utils.escape_html(item.message.replace(/^\[.*?\]\s*/, ""));
 			html +=
 				`<tr>` +
-				`<td><code style="color:${sc}">${frappe.utils.escape_html(item.code)}</code></td>` +
+				`<td><code style="color:${sc}">${frappe.utils.escape_html(
+					item.code
+				)}</code></td>` +
 				`<td>${frappe.utils.escape_html(item.area)}</td>` +
 				`<td>${msg}</td>` +
 				`<td><em>${frappe.utils.escape_html(item.fix)}</em></td>` +

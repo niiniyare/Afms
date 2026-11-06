@@ -442,9 +442,7 @@ class ForecourtShift(Document):
 					"code": FMS_W103,
 					"severity": "attention",
 					"area": _("Meters"),
-					"message": _("[{0}] Drift beyond tolerance on {1}.").format(
-						FMS_W103, ", ".join(missing)
-					),
+					"message": _("[{0}] Drift beyond tolerance on {1}.").format(FMS_W103, ", ".join(missing)),
 					"fix": _("Record the drift reason before closing."),
 					"tab": "tab_meters",
 					"table": "meter_readings",
@@ -925,15 +923,15 @@ class ForecourtShift(Document):
 		        "state": "Blocked" | "Waiting" | "Attention" | "Ready",
 		        "items": [
 		            {
-		                "code":     str,         # e.g. "FMS-S101"
-		                "severity": str,         # "blocking" | "waiting" | "attention"
-		                "area":     str,         # translated area label
-		                "message":  str,         # human-readable with code prefix
-		                "fix":      str,         # actionable instruction
-		                "tab":      str | None,  # fieldname of the tab to navigate to
-		                "table":    str | None,  # fieldname of the child table
+		                "code": str,  # e.g. "FMS-S101"
+		                "severity": str,  # "blocking" | "waiting" | "attention"
+		                "area": str,  # translated area label
+		                "message": str,  # human-readable with code prefix
+		                "fix": str,  # actionable instruction
+		                "tab": str | None,  # fieldname of the tab to navigate to
+		                "table": str | None,  # fieldname of the child table
 		            },
-		            ...
+		            ...,
 		        ],
 		    }
 		"""
