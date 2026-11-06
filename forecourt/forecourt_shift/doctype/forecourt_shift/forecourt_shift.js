@@ -61,7 +61,24 @@ frappe.ui.form.on("Forecourt Shift", {
 			}).addClass("btn-primary");
 		}
 
-		if (frm.doc.docstatus === 0 && ["Open", "Reconciling"].includes(frm.doc.status)) {
+		if (frm.doc.docstatus === 0 && ["Open", "Counting"].includes(frm.doc.status)) {
+			frm.add_custom_button(__("Reconcile"), function () {
+				frm.call({
+					method: "reconcile",
+					freeze: true,
+					freeze_message: __("Checking shift…"),
+					callback(r) {
+						if (r.message) {
+							frm.reload_doc();
+							frappe.show_alert({
+								message: __("Shift is now {0}", [__(r.message)]),
+								indicator: r.message === "Reconciled" ? "green" : "orange",
+							});
+						}
+					},
+				});
+			}).addClass("btn-primary");
+
 			frm.add_custom_button(
 				__("Import Transactions"),
 				function () {

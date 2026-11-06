@@ -644,6 +644,7 @@ class ForecourtShift(Document):
 		self._compute_resolution_approval()  # F11
 		self._set_approval_state()  # I03
 		self._update_cashier_resolved()  # F11
+		self._update_status()  # F-REC
 		self._compute_parent_totals()
 		self._build_posting_summary()  # F17
 
@@ -726,6 +727,64 @@ class ForecourtShift(Document):
 			):
 				return True
 		return False
+
+	# ------------------------------------------------------------------ F-REC: reconcile lifecycle
+
+	def _update_status(self) -> None:
+		"""Auto-advance Open → Counting once closing meters and a cash count row exist."""
+		if self.status != "Open":
+			return
+		has_closing = any(
+			(row.closing_elec_cash or row.closing_elec_meter or row.closing_man_meter)
+			for row in self.meter_readings
+		)
+		if has_closing and self.cash_counts:
+			self.status = "Counting"
+
+	def _gate_tank_dips_explained(self, errors: list[str]) -> None:
+		"""Reconcile gate: tank variances outside tolerance need a reason. Approval pending is OK."""
+		missing = [row.tank for row in self.tank_dips if not row.within_tolerance and not row.reason]
+		if missing:
+			errors.append(
+				_(
+					"{0}: Tank {1} has variance outside tolerance with no reason. Add a resolution line."
+				).format(FMS_S106, ", ".join(missing))
+			)
+
+	def get_reconcile_blockers(self) -> list[str]:
+		"""Return blocker list for reconcile. Approval-pending resolutions are NOT blockers here."""
+		errors: list[str] = []
+		self._gate_nozzle_readings(errors)
+		self._gate_cashier_resolved(errors)
+		self._gate_tank_dips_required(errors)
+		self._gate_drift_reason(errors)
+		self._gate_credit_over_limit(errors)
+		self._gate_tank_dips_explained(errors)
+		return errors
+
+	@frappe.whitelist()
+	def reconcile(self) -> str:
+		"""Run reconcile checks; set status to Reconciled or Pending Approval.
+
+		Returns the new status string.
+		"""
+		frappe.has_permission("Forecourt Shift", "write", self, throw=True)
+		if self.docstatus != 0 or self.status not in ("Open", "Counting"):
+			frappe.throw(_("Shift cannot be reconciled from status {0}.").format(self.status))
+		blockers = self.get_reconcile_blockers()
+		if blockers:
+			frappe.throw(
+				_("Cannot reconcile:") + "<br>" + "<br>".join(blockers),
+				title=_("Reconcile Blocked"),
+			)
+		needs_approval = any(flt(r.needs_approval) and not r.approved_by for r in self.resolutions) or any(
+			not row.within_tolerance and row.needs_approval and not row.approved_by for row in self.tank_dips
+		)
+		self.status = "Pending Approval" if needs_approval else "Reconciled"
+		if needs_approval:
+			self.approval_state = "Pending Approval"
+		self.save()
+		return self.status
 
 	def _gate_shift_approval(self, errors: list[str]) -> None:
 		"""FMS-S116: shift cannot close while approval_state is Pending Approval or Rejected."""
