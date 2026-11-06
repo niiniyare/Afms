@@ -1040,7 +1040,7 @@ class ForecourtShift(Document):
 	def _compute_dip_volumes(self) -> None:
 		"""Convert dip_mm to dip_l via calibration chart when dip_entry_mode is Chart."""
 		for row in self.tank_dips:
-			if row.dip_entry_mode != "Chart":
+			if row.dip_entry_mode != "Depth via calibration chart":
 				continue
 			chart = frappe.db.get_value(
 				"Tank Calibration Chart",
@@ -1317,7 +1317,7 @@ class ForecourtShift(Document):
 		if not self.station:
 			return
 		station = frappe.get_cached_doc("Station", self.station)
-		self.dip_entry_mode = getattr(station, "dip_entry_mode", None) or "Litres"
+		self.dip_entry_mode = getattr(station, "dip_entry_mode", None) or "Litres entered directly"
 		self.sales_basis = getattr(station, "sales_basis", None) or "Elec Cash"
 		self.price_change_mode = getattr(station, "price_change_mode", None) or "Latest price"
 		self.record_elec_cash = int(getattr(station, "record_elec_cash", 1) or 1)
@@ -1444,7 +1444,9 @@ class ForecourtShift(Document):
 			fields=["name", "item", "dip_entry_mode", "opening_dip_l"],
 		)
 		station = frappe.get_cached_doc("Station", self.station)
-		station_dip_mode = getattr(station, "dip_entry_mode", "Litres") or "Litres"
+		station_dip_mode = (
+			getattr(station, "dip_entry_mode", "Litres entered directly") or "Litres entered directly"
+		)
 
 		for tank in tanks:
 			dip_mode = tank.dip_entry_mode or station_dip_mode

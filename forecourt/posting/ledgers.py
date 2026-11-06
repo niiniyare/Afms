@@ -286,7 +286,7 @@ def write_spot_dip_wetstock_ledger(dip_doc) -> str:
 	doc.tank = dip_doc.tank
 	doc.item = item
 	doc.dip_l = flt(flt(dip_doc.volume_l, 3) - flt(dip_doc.water_l, 3), 3)
-	doc.dip_entry_mode = dip_doc.dip_entry_mode or "Litres"
+	doc.dip_entry_mode = dip_doc.dip_entry_mode or "Litres entered directly"
 	doc.source = "Manual"
 	doc.flags.ignore_permissions = True
 	doc.insert(ignore_permissions=True)

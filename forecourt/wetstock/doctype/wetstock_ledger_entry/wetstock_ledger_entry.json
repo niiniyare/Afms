@@ -103,7 +103,7 @@
    "fieldname": "dip_entry_mode",
    "fieldtype": "Select",
    "label": "Dip Entry Mode",
-   "options": "Litres\nMillimetres"
+   "options": "\nDepth via calibration chart\nLitres entered directly"
   },
   {
    "fieldname": "source",

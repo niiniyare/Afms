@@ -62,11 +62,11 @@ def _compute_dip_row(doc, row) -> None:
 	"""Fill received_l, invoiced_l, variance_l, variance_pct on one dip row."""
 	tank = frappe.get_cached_doc("Fuel Tank", row.tank) if row.tank else None
 	if tank:
-		row.dip_entry_mode = tank.dip_entry_mode or "Litres"
+		row.dip_entry_mode = tank.dip_entry_mode or "Litres entered directly"
 	else:
-		row.dip_entry_mode = "Litres"
+		row.dip_entry_mode = "Litres entered directly"
 
-	if row.dip_entry_mode == "Chart":
+	if row.dip_entry_mode == "Depth via calibration chart":
 		chart = frappe.get_all(
 			"Tank Calibration Chart",
 			filters={"tank": row.tank, "docstatus": 1},

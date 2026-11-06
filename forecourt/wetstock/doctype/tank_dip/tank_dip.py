@@ -23,11 +23,11 @@ class TankDip(Document):
 	def _fill_dip_entry_mode(self) -> None:
 		if self.tank:
 			mode = frappe.db.get_value("Fuel Tank", self.tank, "dip_entry_mode")
-			self.dip_entry_mode = mode or "Litres"
+			self.dip_entry_mode = mode or "Litres entered directly"
 
 	def _compute_volumes(self) -> None:
 		"""In chart mode, interpolate volume from calibration chart."""
-		if self.dip_entry_mode != "Chart":
+		if self.dip_entry_mode != "Depth via calibration chart":
 			return
 		chart = frappe.get_all(
 			"Tank Calibration Chart",
