@@ -34,6 +34,24 @@ def _columns():
 		{"label": _("Avg Diff"), "fieldname": "avg_diff", "fieldtype": "Currency", "width": 110},
 		{"label": _("Short Shifts"), "fieldname": "short_shifts", "fieldtype": "Int", "width": 90},
 		{"label": _("Excess Shifts"), "fieldname": "excess_shifts", "fieldtype": "Int", "width": 100},
+		{
+			"label": _("Total Short"),
+			"fieldname": "total_short",
+			"fieldtype": "Currency",
+			"width": 110,
+		},
+		{
+			"label": _("Total Excess"),
+			"fieldname": "total_excess",
+			"fieldtype": "Currency",
+			"width": 110,
+		},
+		{
+			"label": _("Max Shortage"),
+			"fieldname": "max_shortage",
+			"fieldtype": "Currency",
+			"width": 110,
+		},
 	]
 
 
@@ -63,6 +81,9 @@ def _data(filters):
 				"total_diff": 0.0,
 				"short_shifts": 0,
 				"excess_shifts": 0,
+				"total_short": 0.0,
+				"total_excess": 0.0,
+				"max_shortage": 0.0,
 			}
 		d = cashier_map[key]
 		diff = flt(row.difference, 2)
@@ -70,8 +91,12 @@ def _data(filters):
 		d["total_diff"] = flt(d["total_diff"] + diff, 2)
 		if diff < 0:
 			d["short_shifts"] += 1
+			d["total_short"] = flt(d["total_short"] + diff, 2)
+			if diff < d["max_shortage"]:
+				d["max_shortage"] = diff
 		elif diff > 0:
 			d["excess_shifts"] += 1
+			d["total_excess"] = flt(d["total_excess"] + diff, 2)
 
 	result = sorted(cashier_map.values(), key=lambda r: r["total_diff"])
 	for idx, row in enumerate(result, 1):

@@ -42,6 +42,21 @@ def _columns():
 			"precision": 2,
 			"width": 80,
 		},
+		{"label": _("Shifts"), "fieldname": "shifts", "fieldtype": "Int", "width": 60},
+		{
+			"label": _("Avg L/Shift"),
+			"fieldname": "avg_l_per_shift",
+			"fieldtype": "Float",
+			"precision": 3,
+			"width": 90,
+		},
+		{
+			"label": _("Station %"),
+			"fieldname": "station_pct",
+			"fieldtype": "Percent",
+			"precision": 1,
+			"width": 80,
+		},
 	]
 
 
@@ -67,6 +82,7 @@ def _data(filters):
 			"nozzle",
 			"item",
 			"station",
+			"forecourt_shift",
 			"gross_l",
 			"own_use_l",
 			"net_l",
@@ -92,6 +108,7 @@ def _data(filters):
 				"drift_l": 0.0,
 				"drift_pct": 0.0,
 				"_count": 0,
+				"_shifts": set(),
 			}
 		d = key_map[key]
 		d["gross_l"] = flt(d["gross_l"] + flt(row.gross_l, 3), 3)
@@ -100,11 +117,24 @@ def _data(filters):
 		d["amount"] = flt(d["amount"] + flt(row.amount, 2), 2)
 		d["drift_l"] = flt(d["drift_l"] + flt(row.drift_l, 3), 3)
 		d["_count"] += 1
+		if row.get("forecourt_shift"):
+			d["_shifts"].add(row.forecourt_shift)
 		d["drift_pct"] = flt(d["drift_l"] / d["gross_l"] * 100, 2) if d["gross_l"] else 0.0
+
+	# station totals for % share
+	station_net: dict[str, float] = {}
+	for d in key_map.values():
+		st = d["station"] or ""
+		station_net[st] = flt(station_net.get(st, 0.0) + d["net_l"], 3)
 
 	result = []
 	for d in sorted(
 		key_map.values(), key=lambda r: (r["station"] or "", r["dispenser"] or "", r["nozzle"] or "")
 	):
-		result.append({k: v for k, v in d.items() if k != "_count"})
+		shifts = len(d["_shifts"]) or d["_count"]
+		d["shifts"] = shifts
+		d["avg_l_per_shift"] = flt(d["net_l"] / shifts, 3) if shifts else 0.0
+		st_total = station_net.get(d["station"] or "", 0.0)
+		d["station_pct"] = flt(d["net_l"] / st_total * 100, 1) if st_total else 0.0
+		result.append({k: v for k, v in d.items() if not k.startswith("_")})
 	return result

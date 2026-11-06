@@ -1,0 +1,17 @@
+{
+  "add_total_row": 0,
+  "doctype": "Report",
+  "is_standard": "Yes",
+  "module": "Forecourt Finance",
+  "name": "Payment Reconciliation",
+  "ref_doctype": "Payment Feed Entry",
+  "report_name": "Payment Reconciliation",
+  "report_type": "Script Report",
+  "roles": [
+    {"role": "Station Manager"},
+    {"role": "Area Manager"},
+    {"role": "Forecourt Director"},
+    {"role": "Forecourt Accountant"},
+    {"role": "Forecourt Administrator"}
+  ]
+}
