@@ -3,7 +3,7 @@
   "charts": [
     {"chart_name": "FMS - Litres per Day by Product", "label": "Litres per Day by Product"}
   ],
-  "content": "[{\"id\":\"nc1\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"FMS - Open Shifts\",\"col\":3}},{\"id\":\"nc2\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"FMS - Litres Sold Today\",\"col\":3}},{\"id\":\"nc3\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"FMS - Fuel Sales Today\",\"col\":3}},{\"id\":\"nc4\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"FMS - Unmatched Payments\",\"col\":3}},{\"id\":\"ch1\",\"type\":\"chart\",\"data\":{\"chart_name\":\"FMS - Litres per Day by Product\",\"col\":12}},{\"id\":\"ql1\",\"type\":\"quick_list\",\"data\":{\"document_type\":\"Forecourt Shift\",\"label\":\"Recent Shifts\",\"col\":12}}]",
+  "content": "[{\"id\":\"nc1\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Open Shifts\",\"col\":3}},{\"id\":\"nc2\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Litres Sold Today\",\"col\":3}},{\"id\":\"nc3\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Fuel Sales Today\",\"col\":3}},{\"id\":\"nc4\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Unmatched Payments\",\"col\":3}},{\"id\":\"ch1\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Litres per Day by Product\",\"col\":12}},{\"id\":\"ql1\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Recent Shifts\",\"col\":12}}]",
   "doctype": "Workspace",
   "icon": "fuel",
   "is_hidden": 0,
