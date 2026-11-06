@@ -82,8 +82,9 @@ frappe.ui.form.on("Forecourt Shift", {
 
 		if (frm.doc.docstatus === 0 && ["Open", "Counting"].includes(frm.doc.status)) {
 			frm.add_custom_button(__("Reconcile"), function () {
-				frm.call({
-					method: "reconcile",
+				frappe.call({
+					method: "forecourt.forecourt_shift.doctype.forecourt_shift.forecourt_shift.reconcile",
+					args: { shift_name: frm.docname },
 					freeze: true,
 					freeze_message: __("Checking shift…"),
 					callback(r) {

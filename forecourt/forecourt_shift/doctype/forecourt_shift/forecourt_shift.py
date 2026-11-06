@@ -764,11 +764,12 @@ class ForecourtShift(Document):
 		self._gate_tank_dips_explained(errors)
 		return errors
 
-	@frappe.whitelist()
 	def reconcile(self) -> str:
 		"""Run reconcile checks; set status to Reconciled or Pending Approval.
 
-		Returns the new status string.
+		Returns the new status string.  Called by the module-level
+		``reconcile()`` whitelisted function so the JS can reach it via a
+		full dotted path instead of the unreliable frm.call dict form.
 		"""
 		frappe.has_permission("Forecourt Shift", "write", self, throw=True)
 		if self.docstatus != 0 or self.status not in ("Open", "Counting"):
@@ -1499,6 +1500,17 @@ class ForecourtShift(Document):
 		if self.station and self.shift_template and self.shift_date:
 			station_label = frappe.db.get_value("Station", self.station, "station_name") or self.station
 			self.shift_title = f"{station_label} · {self.shift_template} · {self.shift_date}"
+
+
+@frappe.whitelist()
+def reconcile(shift_name: str) -> str:
+    """Module-level entry point for the Reconcile button.
+
+    frm.call({method: "..."}) looks up module attributes, not class methods,
+    so the class method is called here via a full dotted path.
+    """
+    shift = frappe.get_doc("Forecourt Shift", shift_name)
+    return shift.reconcile()
 
 
 @frappe.whitelist()
