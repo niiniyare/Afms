@@ -117,11 +117,11 @@ def _data(filters):
 	for sc in frappe.get_all(
 		"Shift Correction",
 		filters={"docstatus": 0, **station_filter},
-		fields=["name", "target_shift", "correction_type", "workflow_state"],
+		fields=["name", "forecourt_shift", "correction_type", "workflow_state"],
 		order_by="creation asc",
 	):
-		shift_date = frappe.db.get_value("Forecourt Shift", sc.target_shift, "shift_date")
-		station = frappe.db.get_value("Forecourt Shift", sc.target_shift, "station")
+		shift_date = frappe.db.get_value("Forecourt Shift", sc.forecourt_shift, "shift_date")
+		station = frappe.db.get_value("Forecourt Shift", sc.forecourt_shift, "station")
 		from frappe.utils import date_diff
 
 		age = date_diff(as_of, shift_date or as_of) if shift_date else 0

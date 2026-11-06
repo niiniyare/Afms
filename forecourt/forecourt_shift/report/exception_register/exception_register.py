@@ -77,24 +77,21 @@ def _data(filters):
 
 	result = []
 
-	# Resolutions (write-offs, write-ons, carry-forwards)
+	# Resolutions (all exception-clearing actions on closed shifts)
 	for res in frappe.get_all(
 		"Shift Resolution",
-		filters={
-			"parent": ["in", shift_names],
-			"resolution_type": ["in", ["Write-off", "Write-on", "Carry Forward"]],
-		},
-		fields=["parent", "resolution_type", "description", "amount", "qty_l", "approved_by"],
+		filters={"parent": ["in", shift_names]},
+		fields=["parent", "action", "note", "amount", "volume_l", "approved_by"],
 	):
 		s = shift_meta.get(res.parent, frappe._dict())
-		value = flt(res.amount or res.qty_l or 0, 2)
+		value = flt(res.amount or res.volume_l or 0, 2)
 		result.append(
 			{
 				"shift_date": s.get("shift_date"),
 				"name": res.parent,
 				"station": s.get("station"),
-				"exception_type": res.resolution_type,
-				"description": res.description or "",
+				"exception_type": res.action,
+				"description": res.note or "",
 				"value": value,
 				"approved_by": res.approved_by or "",
 				"correction": "",
@@ -104,14 +101,14 @@ def _data(filters):
 	# Corrections
 	for corr in frappe.get_all(
 		"Shift Correction",
-		filters={"target_shift": ["in", shift_names], "docstatus": 1},
-		fields=["name", "target_shift", "correction_type", "reason"],
+		filters={"forecourt_shift": ["in", shift_names], "docstatus": 1},
+		fields=["name", "forecourt_shift", "correction_type", "reason"],
 	):
-		s = shift_meta.get(corr.target_shift, frappe._dict())
+		s = shift_meta.get(corr.forecourt_shift, frappe._dict())
 		result.append(
 			{
 				"shift_date": s.get("shift_date"),
-				"name": corr.target_shift,
+				"name": corr.forecourt_shift,
 				"station": s.get("station"),
 				"exception_type": f"Correction: {corr.correction_type or ''}",
 				"description": corr.reason or "",
