@@ -71,7 +71,8 @@
    "reqd": 1,
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "search_index": 1
+   "search_index": 1,
+   "description": "The physical fuel station this shift belongs to."
   },
   {
    "fieldname": "company",
@@ -96,7 +97,8 @@
    "options": "Forecourt Shift Template",
    "reqd": 1,
    "in_list_view": 1,
-   "in_standard_filter": 1
+   "in_standard_filter": 1,
+   "description": "Template that defines the cashiers, nozzles and products for this shift."
   },
   {
    "fieldname": "shift_date",
@@ -137,7 +139,8 @@
    "read_only": 1,
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "allow_on_submit": 1
+   "allow_on_submit": 1,
+   "description": "Set by the system. Use Reconcile to advance from Open/Counting, then Close Shift when Reconciled."
   },
   {
    "fieldname": "approval_state",
@@ -146,7 +149,8 @@
    "options": "Not Required\nPending Approval\nApproved\nRejected",
    "default": "Not Required",
    "read_only": 1,
-   "in_standard_filter": 1
+   "in_standard_filter": 1,
+   "description": "Write-off approval step. Requires Station Manager or Director. Set by the workflow."
   },
   {
    "fieldname": "col_break_status",
@@ -187,13 +191,15 @@
    "fieldname": "dip_entry_mode",
    "fieldtype": "Data",
    "label": "Dip Entry Mode",
-   "read_only": 1
+   "read_only": 1,
+   "description": "Snapshot from station settings: Calibration Chart or Direct Litres."
   },
   {
    "fieldname": "sales_basis",
    "fieldtype": "Data",
    "label": "Sales Basis",
-   "read_only": 1
+   "read_only": 1,
+   "description": "Snapshot from station settings: which meter drives sales — E-Cash, E-Vol, M-Vol, or Highest."
   },
   {
    "fieldname": "price_change_mode",
@@ -411,6 +417,24 @@
  "permissions": [
   {
    "permlevel": 0,
+   "role": "Supervisor",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "print": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Assistant Station Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "print": 1
+  },
+  {
+   "permlevel": 0,
    "role": "Station Manager",
    "read": 1,
    "write": 1,
@@ -428,23 +452,19 @@
   },
   {
    "permlevel": 0,
+   "role": "Forecourt Director",
+   "read": 1,
+   "write": 1,
+   "submit": 1,
+   "print": 1
+  },
+  {
+   "permlevel": 0,
    "role": "Station Accountant",
    "read": 1,
    "report": 1,
    "export": 1,
    "print": 1
-  },
-  {
-   "permlevel": 0,
-   "role": "Business Executive",
-   "read": 1,
-   "report": 1
-  },
-  {
-   "permlevel": 0,
-   "role": "Forecourt Director",
-   "read": 1,
-   "report": 1
   },
   {
    "permlevel": 0,

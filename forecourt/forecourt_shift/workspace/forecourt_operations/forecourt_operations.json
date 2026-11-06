@@ -16,7 +16,7 @@
     {"type": "Card Break", "label": "Reports", "hidden": 0, "is_query_report": 0, "link_count": 5, "onboard": 0},
     {"type": "Link", "label": "Exception Register", "link_to": "Exception Register", "link_type": "Report", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
     {"type": "Link", "label": "Station Comparison", "link_to": "Station Comparison", "link_type": "Report", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
-    {"type": "Link", "label": "Cashier Variance Ranking", "link_to": "Cashier Variance Ranking", "link_type": "Report", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Cashier Performance", "link_to": "Cashier Performance", "link_type": "Report", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
     {"type": "Link", "label": "Wetstock Variance", "link_to": "Wetstock Variance", "link_type": "Report", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
     {"type": "Link", "label": "Meter Drift", "link_to": "Meter Drift", "link_type": "Report", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0}
   ],

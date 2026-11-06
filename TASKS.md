@@ -872,8 +872,8 @@ Decisions UX-01 and Q-11 confirmed 2026-11-06. FMS-U01 gap audit complete (2026-
 | FMS-U07 | S | U06 | *Close Shift* primary action, confirm summary, duplicate protection, error code S120 |
 | FMS-U08 | L | U01 | 5 new reports: Meter Movement (MTR-01), Tank Stock Movement (WET-02), Shift Reconciliation (SHF-04), Payment Reconciliation (PAY-01), Cash Collection (CSH-03); extend Cashier Performance (CSH-02) and Pump Performance (MTR-03) |
 | FMS-U09 | M | U08 | 4 dashboards (Station, Operations, Finance, Group) + KPI Number Cards per decisions.md UX-01 |
-| FMS-U10 | S | U01 | FMS-P399 error wrapper on close job and whitelisted methods; message wording pass on `errors.py` |
-| FMS-U11 | S | U01 | Status colour mapping in list indicators and form header; label pass (rename Cashier Variance Ranking → Cashier Performance, etc.); field descriptions on key fields |
+| ~~FMS-U10~~ ✓ | S | U01 | `fms_error_wrapper` context manager added to `errors.py`; S117–S120, P399 codes added 2026-11-06 |
+| ~~FMS-U11~~ ✓ | S | U01 | Permissions: added Supervisor + Asst Station Manager (submit), upgraded Director (write+submit), removed Business Executive; field descriptions on 6 key fields; Cashier Variance Ranking → Cashier Performance (report, workspace, catalogue, fms.md) — 2026-11-06 |
 | FMS-U12 | S | U02–U11 | Usability walk-through: 10-min close on tablet, 3-click daily task check; findings into bug log |
 
 **Q-11 permission rules (confirmed 2026-11-06):**

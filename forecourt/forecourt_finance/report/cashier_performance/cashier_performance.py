@@ -1,4 +1,4 @@
-"""Cashier Variance Ranking — FMS-H05. Rank cashiers by cumulative difference."""
+"""Cashier Performance — FMS-H05. Rank cashiers by cumulative cash difference."""
 
 from __future__ import annotations
 

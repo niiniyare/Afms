@@ -3,9 +3,9 @@
   "doctype": "Report",
   "is_standard": "Yes",
   "module": "Forecourt Finance",
-  "name": "Cashier Variance Ranking",
+  "name": "Cashier Performance",
   "ref_doctype": "Cashier Ledger Entry",
-  "report_name": "Cashier Variance Ranking",
+  "report_name": "Cashier Performance",
   "report_type": "Script Report",
   "roles": [
     {"role": "Area Manager"},

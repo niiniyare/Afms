@@ -53,7 +53,11 @@ FMS_S112 = "FMS-S112"  # Price segment has no meter readings
 FMS_S113 = "FMS-S113"  # Draft Fuel Own Use entry in shift window
 FMS_S114 = "FMS-S114"  # Duplicate mobile money / card reference
 FMS_S115 = "FMS-S115"  # Test volume above nozzle per-shift limit (D29, proposed)
-FMS_S116 = "FMS-S116"  # Shift has resolutions/variances requiring area manager approval
+FMS_S116 = "FMS-S116"  # Approver cannot be the preparer; approval pending or rejected
+FMS_S117 = "FMS-S117"  # New Shift: open shift already exists at station (reserved FMS-U05)
+FMS_S118 = "FMS-S118"  # New Shift: no shift template active for station (reserved FMS-U05)
+FMS_S119 = "FMS-S119"  # New Shift: previous shift not closed (reserved FMS-U05)
+FMS_S120 = "FMS-S120"  # Close Shift already in progress for this shift (reserved FMS-U07)
 
 # ---------------------------------------------------------------------------
 # FMS-W1xx  Meters and drift
@@ -79,6 +83,7 @@ FMS_T206 = "FMS-T206"  # GRN missing delivery dip for a required tank
 
 FMS_P301 = "FMS-P301"  # Mode of Payment has no account for company
 FMS_P302 = "FMS-P302"  # Negative stock in tank warehouse
+FMS_P399 = "FMS-P399"  # Unexpected error; see Error Log for details
 
 # ---------------------------------------------------------------------------
 # FMS-I4xx  Integrations
@@ -109,3 +114,38 @@ FMS_M608 = "FMS-M608"  # Fuel Tank cannot be deleted: it has stock history
 FMS_M609 = "FMS-M609"  # Nozzle opening readings cannot be changed after a shift references this nozzle
 FMS_M610 = "FMS-M610"  # Fuel Tank opening dip cannot be changed after stock has been recorded
 FMS_M630 = "FMS-M630"  # Station Group has children — cannot unset Is Group
+
+
+# ---------------------------------------------------------------------------
+# P399 wrapper — unexpected errors in whitelisted methods and background jobs
+# ---------------------------------------------------------------------------
+
+from contextlib import contextmanager
+
+
+@contextmanager
+def fms_error_wrapper(operation: str):
+    """Catch unexpected exceptions, log to Error Log, re-raise as FMS-P399.
+
+    Use this in whitelisted methods and background job entry points so that
+    station roles never see a raw Python traceback.
+
+    Example::
+
+        with fms_error_wrapper("close_shift"):
+            _do_close(shift_name)
+    """
+    try:
+        yield
+    except (FMSValidationError, FMSPermissionError, frappe.ValidationError, frappe.PermissionError):
+        raise
+    except Exception:
+        ref = frappe.log_error(frappe.get_traceback(), f"FMS-P399 {operation}")
+        raise FMSValidationError(
+            FMS_P399,
+            _(
+                "An unexpected error occurred in {0}. "
+                "Reference: {1}. "
+                "Please contact your system administrator."
+            ).format(operation, ref.name if ref else "—"),
+        ) from None
