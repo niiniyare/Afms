@@ -546,15 +546,15 @@ function _color_grid_flags(frm, grid_fieldname, child_doctype) {
 	if (!$grid) return;
 	const color_map =
 		child_doctype === "Shift Meter Reading" ? _METER_FLAG_COLOR : _TANK_FLAG_COLOR;
-	$grid.find('[data-fieldname="flag"] .like-disabled-input, [data-fieldname="flag"] .static-area').each(
-		function () {
+	$grid
+		.find('[data-fieldname="flag"] .like-disabled-input, [data-fieldname="flag"] .static-area')
+		.each(function () {
 			const text = $(this).text().trim();
 			const c = color_map[text];
 			if (c) {
 				$(this).css({ color: c, "font-weight": "bold" });
 			}
-		}
-	);
+		});
 }
 
 function _setup_meters_toggle(frm) {
