@@ -30,18 +30,14 @@ def _do_close_shift(shift_name: str) -> str:
 		frappe.throw(_("[FMS-F16] Shift {0} is already submitted.").format(shift_name))
 	if shift.status == "Closing":
 		frappe.throw(
-			_("[{0}] Close is already in progress for shift {1}. Please wait.").format(
-				FMS_S120, shift_name
-			)
+			_("[{0}] Close is already in progress for shift {1}. Please wait.").format(FMS_S120, shift_name)
 		)
 	if shift.status != "Reconciled":
 		frappe.throw(
 			_("[FMS-F16] Shift must be Reconciled before closing. Current status: {0}.").format(shift.status)
 		)
 
-	threshold = int(
-		frappe.db.get_single_value("Forecourt Settings", "background_close_threshold") or 200
-	)
+	threshold = int(frappe.db.get_single_value("Forecourt Settings", "background_close_threshold") or 200)
 	if len(shift.collections) < threshold:
 		shift.submit()
 		return "submitted"

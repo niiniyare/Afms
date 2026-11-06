@@ -380,8 +380,7 @@ function _show_close_confirm_dialog(frm) {
 	];
 
 	let table_html =
-		`<table class="table table-condensed" style="font-size:0.9em;margin:0">` +
-		`<tbody>`;
+		`<table class="table table-condensed" style="font-size:0.9em;margin:0">` + `<tbody>`;
 	for (const [label, value] of rows) {
 		if (label === "—") {
 			table_html += `<tr><td colspan="2"><hr style="margin:4px 0"></td></tr>`;
