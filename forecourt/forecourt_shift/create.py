@@ -160,7 +160,14 @@ def _next_template(station: str, last_shift: object | None) -> str | None:
 
 
 def _next_shift_date(last_shift: object | None) -> str:
-	if last_shift and last_shift.shift_date:
+	if not last_shift:
+		return today()
+	# Use the date on which the previous shift ended.  Handles same-day
+	# multi-shift (morning ends 14:00 → afternoon is the same date) and
+	# overnight shifts (night ends 06:00 next morning → morning is that date).
+	if last_shift.shift_end:
+		return str(getdate(last_shift.shift_end))
+	if last_shift.shift_date:
 		return str(add_days(last_shift.shift_date, 1))
 	return today()
 

@@ -148,19 +148,19 @@ class ForecourtShift(Document):
 			if not row.nozzle:
 				continue
 			if row.rec_elec_cash:
-				if not row.closing_elec_cash:
+				if flt(row.closing_elec_cash) == 0 and flt(row.opening_elec_cash) > 0:
 					problems.append(_("nozzle {0} e-cash (missing closing)").format(row.nozzle))
 				elif flt(row.closing_elec_cash) < flt(row.opening_elec_cash) and not row.rollover_elec_cash:
 					problems.append(_("nozzle {0} e-cash").format(row.nozzle))
 			if row.rec_elec_meter:
-				if not row.closing_elec_meter:
+				if flt(row.closing_elec_meter) == 0 and flt(row.opening_elec_meter) > 0:
 					problems.append(_("nozzle {0} e-vol (missing closing)").format(row.nozzle))
 				elif (
 					flt(row.closing_elec_meter) < flt(row.opening_elec_meter) and not row.rollover_elec_meter
 				):
 					problems.append(_("nozzle {0} e-vol").format(row.nozzle))
 			if row.rec_man_meter:
-				if not row.closing_man_meter:
+				if flt(row.closing_man_meter) == 0 and flt(row.opening_man_meter) > 0:
 					problems.append(_("nozzle {0} m-vol (missing closing)").format(row.nozzle))
 				elif flt(row.closing_man_meter) < flt(row.opening_man_meter) and not row.rollover_man_meter:
 					problems.append(_("nozzle {0} m-vol").format(row.nozzle))
@@ -1444,6 +1444,11 @@ class ForecourtShift(Document):
 					"opening_elec_cash": flt(nozzle.last_ecash),
 					"opening_elec_meter": flt(nozzle.last_evol),
 					"opening_man_meter": flt(nozzle.last_mvol),
+					# Pre-fill closing = opening so a nozzle with no sales this shift
+					# needs no data entry; clerk only changes if something was dispensed.
+					"closing_elec_cash": flt(nozzle.last_ecash),
+					"closing_elec_meter": flt(nozzle.last_evol),
+					"closing_man_meter": flt(nozzle.last_mvol),
 					"source": "Manual",
 				},
 			)
@@ -1475,6 +1480,10 @@ class ForecourtShift(Document):
 					"item": tank.item,
 					"dip_entry_mode": dip_mode,
 					"opening_l": flt(opening_l),
+					# Pre-fill closing dip = opening so an idle tank (no receipts, no
+					# sales) validates without manual entry; clerk replaces with actual
+					# measured dip when activity occurred.
+					"dip_l": flt(opening_l),
 					"source": "Manual",
 				},
 			)
