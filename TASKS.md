@@ -16,19 +16,19 @@
 |---|---|---|
 | A. Environment | 9 | 9 |
 | B. Repository and app scaffold | 9 | 8 |
-| C. Foundation masters (Phase 0) | 14 | 4 |
-| D. Calculation core | 8 | 0 |
-| E. Station movements | 10 | 0 |
-| F. Forecourt Shift (Phase 1 core) | 18 | 0 |
-| G. Shift Correction | 6 | 0 |
-| H. Reports and workspaces | 12 | 0 |
-| I. Approvals, roles and permissions | 6 | 0 |
-| J. Payment import and integrations | 8 | 0 |
+| C. Foundation masters (Phase 0) | 14 | 14 |
+| D. Calculation core | 8 | 8 |
+| E. Station movements | 10 | 10 |
+| F. Forecourt Shift (Phase 1 core) | 18 | 18 |
+| G. Shift Correction | 6 | 6 |
+| H. Reports and workspaces | 12 | 11 |
+| I. Approvals, roles and permissions | 6 | 6 |
+| J. Payment import and integrations | 8 | 8 |
 | K. Quality, scenarios and UAT | 7 | 0 |
 | L. CI/CD | 4 | 0 |
 | M. Deployment and operations | 8 | 0 |
 | N. Pilot and go-live | 5 | 0 |
-| **Total (Phases 0–3)** | **124** | **21** |
+| **Total (Phases 0–3)** | **124** | **98** |
 | P. Later phases (backlog) | 8 epics | — |
 
 Update the *Done* column in the same commit that ticks a task.
@@ -414,103 +414,103 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
 
 ## F. Forecourt Shift (Phase 1 core)
 
-- [ ] **FMS-F01 · Writing Feature · Shift DocType and child tables** · L · E02
+- [x] **FMS-F01 · Writing Feature · Shift DocType and child tables** · L · E02
   - **Skills:** `frappe-syntax-doctypes`, `frappe-syntax-controllers`
   - **Description:** Forecourt Shift and its nine child tables exactly as catalogue 9.1–9.2, no logic yet beyond required fields. Tabs in the specified order. Shift Collection's `feed_entry` and `import_batch` are left out (added in J04 and J01). Also add the forward links that target Forecourt Shift (catalogue 3.1): `Nozzle.last_reading_shift` and the `fms_forecourt_shift` custom fields on the eight native DocTypes.
   - **Verify (UI):** New Forecourt Shift form shows all tabs and grids; saves a draft.
   - **Commit:** `feat(shift): add Forecourt Shift structure`
 
-- [ ] **FMS-F02 · Writing Feature · Shift creation pre-fill** · M · F01, D01
+- [x] **FMS-F02 · Writing Feature · Shift creation pre-fill** · M · F01, D01
   - **Skills:** `frappe-impl-controllers`
   - **Description:** `before_insert`: previous shift, roster, reading rows with locked openings (from Nozzle last readings) and each row's meters and sales basis (dispenser override, else station), tank rows with opening stock and dip entry mode (tank override, else station), first price segment, settings snapshot, shift window in station time zone, `shift_date` = date of `shift_start` in station time (D20).
   - **Expectation:** A new shift for the test station is ready with 4 reading rows, 2 tank rows, prices, and no typing.
   - **Verify (UI):** Create a shift → all rows present; opening fields read-only.
   - **Commit:** `feat(shift): pre-fill new shift`
 
-- [ ] **FMS-F03 · Writing Feature · Live calculations in the form** · M · F02, D03–D06
+- [x] **FMS-F03 · Writing Feature · Live calculations in the form** · M · F02, D03–D06
   - **Skills:** `frappe-impl-clientscripts`, `frappe-syntax-clientscripts`
   - **Description:** Server-side `validate` recomputes everything through `calc/`; client script refreshes totals and the reconciliation summary on change (calling a whitelisted `preview` method, debounced). Enter-to-next-row on the meter and tank grids.
   - **Verify (UI):** Typing closing readings updates litres, amounts and cashier expected immediately.
   - **Commit:** `feat(shift): live calculations`
 
-- [ ] **FMS-F04 · Writing Feature · Meter modes and drift in the shift** · M · F03, D04
+- [x] **FMS-F04 · Writing Feature · Meter modes and drift in the shift** · M · F03, D04
   - **Description:** Show only the recorded meters (per row, from the dispenser override or the station); compute basis and drift; drift reason required beyond tolerance when configured.
   - **Verify (UI):** Switch the station to all three meters → three columns appear; a dispenser with an M-vol-only override requires only M-vol on its rows; a 2% drift asks for a reason.
   - **Commit:** `feat(shift): meter modes and drift`
 
-- [ ] **FMS-F05 · Writing Feature · Tank dips in the shift** · S · F03, D05
+- [x] **FMS-F05 · Writing Feature · Tank dips in the shift** · S · F03, D05
   - **Description:** Both dip entry modes; receipts pulled from submitted GRNs in the window; own use pulled; variance and tolerance status.
   - **Verify (UI):** With a GRN posted mid-shift, the tank row shows the receipt automatically.
   - **Commit:** `feat(shift): tank dips with pulled receipts`
 
-- [ ] **FMS-F06 · Writing Feature · Own use pull-in** · S · F05, E05
+- [x] **FMS-F06 · Writing Feature · Own use pull-in** · S · F05, E05
   - **Description:** A new Fuel Own Use entry defaults its shift to the open shift at the station; submitted entries in the window reduce the nozzle's net litres; drafts block close (FMS-S113).
   - **Verify (UI):** 40 L generator use appears on D01-N2's row.
   - **Commit:** `feat(shift): pull own use into shift`
 
-- [ ] **FMS-F07 · Writing Feature · Price segments** · M · F02, E09
+- [x] **FMS-F07 · Writing Feature · Price segments** · M · F02, E09
   - **Skills:** `frappe-impl-controllers`
   - **Description:** Add `Fuel Price Change.applied_to_shift`. On Fuel Price Change submit in *Latest price with segments* mode, add a segment to the open shift and split the affected reading rows; manager enters change-time readings; FMS-S112 gate.
   - **Verify (UI):** Approve a PMS change at 14:00 → the shift shows two PMS segments; closing without the 14:00 readings is refused.
   - **Commit:** `feat(shift): mid-shift price segments`
 
-- [ ] **FMS-F08 · Writing Feature · Credit sales** · M · F03, E01
+- [x] **FMS-F08 · Writing Feature · Credit sales** · M · F03, E01
   - **Description:** Credit Sale grid with vehicle filter, price from the segment at `sold_at`, slip uniqueness, vehicle belongs to customer and allows the product, credit limit and vehicle monthly litre limit checks with over-limit approval (FMS-S107).
   - **Verify (UI):** A slip over Coast Haulage's limit shows the limit warning and requires approval.
   - **Commit:** `feat(shift): credit sales`
 
-- [ ] **FMS-F09 · Writing Feature · Item sales and POS pull-in** · S · F03
+- [x] **FMS-F09 · Writing Feature · Item sales and POS pull-in** · S · F03
   - **Description:** Manual item sales; submitted POS Invoices and POS-created Sales Invoices (`is_pos`) for each cashier in the window pulled in as read-only lines (excluded from posting) (D25); POS cashier defaulted from `Employee.user_id`.
   - **Verify (UI):** A POS Invoice by cashier Amina during the shift appears under Items.
   - **Commit:** `feat(shift): item sales and POS pull-in`
 
-- [ ] **FMS-F10 · Writing Feature · Cashier counts and collections** · M · F03, C06
+- [x] **FMS-F10 · Writing Feature · Cashier counts and collections** · M · F03, C06
   - **Description:** Cash count grid per cashier and currency; collections grid for mobile money, card, voucher, expense, drop, debt receipt (with `paid_by`, design guide 7.2, D21); reference mandatory and unique per provider (FMS-S114); expense limits and receipts.
   - **Verify (UI):** Entering the same M-Pesa reference twice is refused.
   - **Commit:** `feat(shift): cashier counts and collections`
 
-- [ ] **FMS-F11 · Writing Feature · Resolutions** · M · F10, F05
+- [x] **FMS-F11 · Writing Feature · Resolutions** · M · F10, F05
   - **Description:** Shift Resolution grid: *Resolve* buttons on each cashier and tank row create a resolution line pre-filled with the policy default; write-offs above the small limit and tank variances above the approval threshold need approval.
   - **Verify (UI):** A −500 shortage cannot be submitted until a resolution line is confirmed.
   - **Commit:** `feat(shift): resolution lines`
 
-- [ ] **FMS-F12 · Writing Feature · Gates** · M · F04–F11
+- [x] **FMS-F12 · Writing Feature · Gates** · M · F04–F11
   - **Skills:** `frappe-errors-controllers`
   - **Description:** All gates in design guide 6.6 (including FMS-S115) in `before_submit`, each raising its coded message from one `forecourt/errors.py` catalogue. Gate failures are listed together, not one at a time. FMS-S110 is skipped when the company allows overlapping shifts.
   - **Verify (UI):** A shift with three problems shows all three codes in one message.
   - **Commit:** `feat(shift): close gates`
 
-- [ ] **FMS-F13 · Writing Feature · Posting: sales and payments** · L · F12
+- [x] **FMS-F13 · Writing Feature · Posting: sales and payments** · L · F12
   - **Skills:** `frappe-impl-controllers`, `frappe-core-database`
   - **Description:** `posting/sales.py`: credit Sales Invoices per customer (or Delivery Notes when the company invoices monthly, D26); walk-in Sales Invoice (update_stock from tank warehouses). `posting/payments.py`: one Payment Entry per mobile money and card collection (reference_no = provider reference), one cash Payment Entry per cashier, voucher and debt receipt entries (cash into the till, non-cash into the clearing account). All carry `fms_forecourt_shift`, `fms_cashier` and the station dimension, and use the posting times of design guide 6.7 (D35).
   - **Expectation:** After submit, the walk-in invoice is fully paid and every mobile money transaction has its own Payment Entry.
   - **Verify (UI):** Shift Connections tab lists the invoices and payment entries; Accounts Receivable shows walk-in at zero.
   - **Commit:** `feat(shift): post sales and payments`
 
-- [ ] **FMS-F14 · Writing Feature · Posting: journals and stock** · M · F13
+- [x] **FMS-F14 · Writing Feature · Posting: journals and stock** · M · F13
   - **Description:** `posting/journals.py`: expenses and resolutions; `posting/stock.py`: Stock Reconciliation per tank (according to the company setting), drops as internal transfers, and the float transfer to the safe when the company returns floats (D27).
   - **Verify (UI):** General Ledger filtered by the shift's vouchers: till balance equals counted cash; Fuel Stock Variance shows the tank variance value.
   - **Commit:** `feat(shift): post journals and stock reconciliation`
 
-- [ ] **FMS-F15 · Writing Feature · Ledgers** · M · F13, D07
+- [x] **FMS-F15 · Writing Feature · Ledgers** · M · F13, D07
   - **Skills:** `frappe-syntax-doctypes`, `frappe-core-database`
   - **Description:** The four ledger DocTypes (catalogue 10.1–10.4, without `superseded_by` and `correction`, added in G01) with composite indexes in `on_doctype_update`; `posting/ledgers.py` writes them on submit; Nozzle `last_*` updated. Also wire the ledger rows of E03 (*Delivery*), E06 (*Spot Dip*) and E08 (*Meter Change*) through `posting/ledgers.py`.
   - **Verify (CLI):** `bench --site fms.localhost mariadb -e "SHOW INDEX FROM \`tabSales Ledger Entry\`"` shows the composite indexes. **(UI)** Report view of each ledger shows the shift's rows; submitting a GRN, a spot dip and a meter change each writes its ledger row.
   - **Commit:** `feat(finance): FMS ledgers`
 
-- [ ] **FMS-F16 · Writing Feature · Background close for large shifts** · S · F13
+- [x] **FMS-F16 · Writing Feature · Background close for large shifts** · S · F13
   - **Skills:** `frappe-impl-scheduler`, `frappe-syntax-scheduler`
   - **Description:** Above `background_close_threshold` payment rows, *Close* enqueues a job (queue `long`, deduplicated by shift) that submits the shift in one transaction; status *Closing*; on failure, back to *Reconciled* with the error in a comment and an Error Log.
   - **Verify (UI):** A shift with 250 imported mobile rows closes via the job; the form refreshes to *Closed* through realtime.
   - **Commit:** `feat(shift): background close`
 
-- [ ] **FMS-F17 · Writing Feature · Shift form layout and print format** · M · F12
+- [x] **FMS-F17 · Writing Feature · Shift form layout and print format** · M · F12
   - **Skills:** `frappe-impl-jinja`, `frappe-syntax-print`
   - **Description:** Final form layout (catalogue 9.1 tabs, reconciliation summary HTML on Review); *Shift Report* print format (one page).
   - **Verify (UI):** Print preview fits one A4 page for the test station.
   - **Commit:** `feat(shift): form layout and Shift Report`
 
-- [ ] **FMS-F18 · Writing Test · Shift integration tests** · L · F01–F17
+- [x] **FMS-F18 · Writing Test · Shift integration tests** · L · F01–F17
   - **Skills:** `frappe-testing-unit`
   - **Description:** Scenarios: normal shift; shortage charged; excess; rollover; delivery mid-shift; own use; price change mid-shift; three-meter drift; over-limit credit; multi-currency cash; debt receipt by mobile money; overnight shift; background close. Each asserts GL balances, stock per tank and ledger rows.
   - **Verify:** `bench --site test_fms run-tests --app forecourt --module forecourt.tests.test_shift_scenarios` passes.
@@ -520,33 +520,33 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
 
 ## G. Shift Correction
 
-- [ ] **FMS-G01 · Writing Feature · Shift Correction DocType and workflow** · M · F15
+- [x] **FMS-G01 · Writing Feature · Shift Correction DocType and workflow** · M · F15
   - **Skills:** `frappe-syntax-doctypes`, `frappe-core-workflow`, `frappe-impl-workflow`
   - **Description:** Catalogue 10.5 with workflow Draft → Pending Director Approval → Approved → Applied / Rejected. Add the ledgers' `superseded_by` and `correction` links (catalogue 3.1). Cancel guards on generated documents (catalogue 12 hooks, FMS-C502) that allow cancellation only from a correction.
   - **Verify (UI):** Cancelling a shift's Payment Entry directly is refused with a message pointing to Shift Correction.
   - **Commit:** `feat(shift): Shift Correction workflow`
 
-- [ ] **FMS-G02 · Writing Feature · Native document corrections** · M · G01
+- [x] **FMS-G02 · Writing Feature · Native document corrections** · M · G01
   - **Description:** `corrections/native.py`: cancel and amend one target document (Sales Invoice, Payment Entry, Journal Entry) with the new values.
   - **Verify (UI):** Correct a mobile money reference → old Payment Entry cancelled, amended one submitted, shift banner lists the correction.
   - **Commit:** `feat(shift): native document corrections`
 
-- [ ] **FMS-G03 · Writing Feature · Meter reading corrections** · L · G01
+- [x] **FMS-G03 · Writing Feature · Meter reading corrections** · L · G01
   - **Description:** `corrections/meter.py`: move litres between the shift and the next one; superseding Nozzle and Sales Ledger rows; Credit Note or additional invoice for walk-in sales; new differences go to resolution lines in the correction.
   - **Verify (UI):** Correct a closing reading by +90 L → both shifts' reports show the corrected litres; audit view shows superseded rows.
   - **Commit:** `feat(shift): meter reading corrections`
 
-- [ ] **FMS-G04 · Writing Feature · Dip, cashier and reclassification corrections** · M · G01
+- [x] **FMS-G04 · Writing Feature · Dip, cashier and reclassification corrections** · M · G01
   - **Description:** `corrections/dip.py`, `cashier.py`, `reclassify.py` per design guide 6.8. A dip correction also re-bases the next shift's opening and variance (D22).
   - **Verify (UI):** Correct a dip → new Stock Reconciliation dated at the original time; stock balance updated after reposting; the next shift's tank row and Wetstock Ledger show the corrected opening.
   - **Commit:** `feat(shift): dip, cashier and reclassification corrections`
 
-- [ ] **FMS-G05 · Writing Feature · Whole-shift cancellation (exception)** · S · G01
+- [x] **FMS-G05 · Writing Feature · Whole-shift cancellation (exception)** · S · G01
   - **Description:** Only for the latest shift, System Manager + director approval, cancels generated documents in reverse order (FMS-C503). No FMS role has Cancel on Forecourt Shift.
   - **Verify (UI):** Attempt on an older shift is refused; on the latest shift with approval it succeeds.
   - **Commit:** `feat(shift): exceptional whole-shift cancellation`
 
-- [ ] **FMS-G06 · Writing Test · Correction tests** · M · G02–G05
+- [x] **FMS-G06 · Writing Test · Correction tests** · M · G02–G05
   - **Skills:** `frappe-testing-unit`
   - **Verify:** `bench --site test_fms run-tests --app forecourt --module forecourt.tests.test_corrections` passes, including ledger totals before and after.
   - **Commit:** `test(shift): corrections`
@@ -555,60 +555,60 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
 
 ## H. Reports and workspaces
 
-- [ ] **FMS-H01 · Writing Feature · Daily Station Report** · M · F15
+- [x] **FMS-H01 · Writing Feature · Daily Station Report** · M · F15
   - **Skills:** `frappe-impl-reports`, `frappe-syntax-reports`
   - **Verify (UI):** For one day with two shifts, totals by product and payment type match the shifts.
   - **Commit:** `feat(reports): Daily Station Report`
 
-- [ ] **FMS-H02 · Writing Feature · Sales by Product, Tank, Pump and Nozzle, Shift, Cashier** · L · F15
+- [x] **FMS-H02 · Writing Feature · Sales by Product, Tank, Pump and Nozzle, Shift, Cashier** · L · F15
   - **Skills:** `frappe-impl-reports`, `frappe-syntax-query-builder`
   - **Description:** Five script reports over the Sales and Nozzle Ledgers with the Exact/Attributed basis column.
   - **Verify (UI):** Each report's grand total equals the Daily Station Report for the same period.
   - **Commit:** `feat(reports): sales by product, tank, pump, shift, cashier`
 
-- [ ] **FMS-H03 · Writing Feature · Payment Mix Matrix** · M · H02
+- [x] **FMS-H03 · Writing Feature · Payment Mix Matrix** · M · H02
   - **Verify (UI):** Pivot product × payment type sums to the same total as H02.
   - **Commit:** `feat(reports): payment mix matrix`
 
-- [ ] **FMS-H04 · Writing Feature · Wetstock reports** · L · F15
+- [x] **FMS-H04 · Writing Feature · Wetstock reports** · L · F15
   - **Description:** Tank Stock Position, Wetstock Variance (shift, daily, cumulative %), Delivery Variance, Meter Drift, Run-out Forecast.
   - **Verify (UI):** Cumulative variance % for T1 over the test data matches a manual calculation in a spreadsheet.
   - **Commit:** `feat(reports): wetstock reports`
 
-- [ ] **FMS-H05 · Writing Feature · Cashier and finance reports** · M · F15
+- [x] **FMS-H05 · Writing Feature · Cashier and finance reports** · M · F15
   - **Description:** Cashier Statement, Cashier Variance Ranking, Credit Slips Register (with slip gaps), Clearing Account Ageing, Cash Position by Station.
   - **Verify (UI):** Cashier Statement balance for Amina equals the Staff Shortage Receivable GL balance for her.
   - **Commit:** `feat(reports): cashier and finance reports`
 
-- [ ] **FMS-H06 · Writing Feature · Exception Register, Open Items, Station Comparison** · M · F15, G01
+- [x] **FMS-H06 · Writing Feature · Exception Register, Open Items, Station Comparison** · M · F15, G01
   - **Verify (UI):** A shift with a write-off and a correction appears in the Exception Register.
   - **Commit:** `feat(reports): exceptions, open items, station comparison`
 
-- [ ] **FMS-H07 · Writing Feature · Number cards and charts** · M · H01–H06
+- [x] **FMS-H07 · Writing Feature · Number cards and charts** · M · H01–H06
   - **Skills:** `frappe-impl-reports`, `frappe-impl-workspace`
   - **Description:** Catalogue 13.2 and 13.3, shipped as fixtures.
   - **Verify (UI):** Cards show values for the test station; a station manager sees only their station.
   - **Commit:** `feat(reports): number cards and charts`
 
-- [ ] **FMS-H08 · Writing Feature · Workspaces and sidebar** · M · H07
+- [x] **FMS-H08 · Writing Feature · Workspaces and sidebar** · M · H07
   - **Skills:** `frappe-impl-workspace`
   - **Description:** The seven workspaces in catalogue 14 with `app`, `module`, `roles`, `parent_page`, `sequence_id`; exported to the app.
   - **Verify (UI):** Log in as each role → only the right workspaces appear in the sidebar; shortcuts open the right forms.
   - **Commit:** `feat(setup): workspaces and navigation`
 
-- [ ] **FMS-H09 · Writing Feature · Setup onboarding** · S · H08
+- [x] **FMS-H09 · Writing Feature · Setup onboarding** · S · H08
   - **Skills:** `frappe-impl-workspace`
   - **Description:** Module Onboarding steps for Forecourt Setup (catalogue 14.2).
   - **Verify (UI):** A fresh site shows the onboarding checklist; each step opens the right form.
   - **Commit:** `feat(setup): onboarding`
 
-- [ ] **FMS-H10 · Writing Feature · FMS Health report and daily email** · M · H06
+- [x] **FMS-H10 · Writing Feature · FMS Health report and daily email** · M · H06
   - **Skills:** `frappe-impl-scheduler`, `frappe-core-notifications`
   - **Description:** Design guide 15.4 checks; scheduled daily, emailed to administrators and area managers.
   - **Verify (CLI):** `bench --site fms.localhost execute forecourt.forecourt_setup.report.fms_health.fms_health.send_daily` sends an email visible in the Email Queue.
   - **Commit:** `feat(reports): FMS health check`
 
-- [ ] **FMS-H11 · Writing Test · Report totals tests** · M · H01–H06
+- [x] **FMS-H11 · Writing Test · Report totals tests** · M · H01–H06
   - **Description:** Tests that every report's totals agree with each other and with the GL for the scenario data.
   - **Verify:** Report tests pass.
   - **Commit:** `test(reports): totals agree`
@@ -623,35 +623,35 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
 
 ## I. Approvals, roles and permissions
 
-- [ ] **FMS-I01 · Writing Feature · Role permissions on all DocTypes** · M · F15
+- [x] **FMS-I01 · Writing Feature · Role permissions on all DocTypes** · M · F15
   - **Skills:** `frappe-core-permissions`
   - **Description:** Apply the catalogue permission tables to every DocType JSON.
   - **Verify (UI):** Role Permissions Manager matches the catalogue for five sampled DocTypes.
   - **Commit:** `feat(setup): role permissions`
 
-- [ ] **FMS-I02 · Writing Feature · Station and Station Group user permissions** · M · I01
+- [x] **FMS-I02 · Writing Feature · Station and Station Group user permissions** · M · I01
   - **Skills:** `frappe-core-permissions`, `frappe-errors-permissions`
   - **Description:** `permission_query_conditions` and `has_permission` (returning explicit `True` in v16) expanding Station Group permissions to descendant stations, applied to FMS DocTypes and ledgers.
   - **Verify (UI):** Area manager with permission on *Region Nairobi* sees Westlands and Karen but not Mombasa stations.
   - **Commit:** `feat(setup): station group permissions`
 
-- [ ] **FMS-I03 · Writing Feature · Shift approval workflow** · M · F11
+- [x] **FMS-I03 · Writing Feature · Shift approval workflow** · M · F11
   - **Skills:** `frappe-impl-workflow`, `frappe-core-workflow`
   - **Description:** Workflow *Forecourt Shift Approval* on `approval_state` only (design guide 6.2, D19): the controller sets *Pending Approval* for write-offs above the limit and large variances; the area manager approves or rejects; approver cannot be the preparer; a change after approval resets it to *Pending Approval*. `status` stays controller-driven.
   - **Verify (UI):** A shift with a large write-off shows *Pending Approval*; area manager approves; manager closes; the manager cannot approve their own shift.
   - **Commit:** `feat(shift): approval workflow`
 
-- [ ] **FMS-I04 · Writing Feature · Notifications for approvals** · S · I03
+- [x] **FMS-I04 · Writing Feature · Notifications for approvals** · S · I03
   - **Skills:** `frappe-core-notifications`
   - **Description:** Email and system notifications for shifts awaiting approval, corrections awaiting the director, and price changes awaiting approval.
   - **Verify (UI):** Area manager receives a notification when a shift is sent for approval.
   - **Commit:** `feat(shift): approval notifications`
 
-- [ ] **FMS-I05 · Writing Test · Permission tests** · M · I01–I04
+- [x] **FMS-I05 · Writing Test · Permission tests** · M · I01–I04
   - **Verify:** Tests log in as each role and assert allowed and refused actions.
   - **Commit:** `test(setup): permissions`
 
-- [ ] **FMS-I06 · Review · Security review** · S · I05
+- [x] **FMS-I06 · Review · Security review** · S · I05
   - **Skills:** `frappe-agent-validator`
   - **Description:** Review whitelisted methods for permission checks, `ignore_permissions` use limited to ledger writes, no SQL built from user input.
   - **Verify:** Review report has no errors.
@@ -661,48 +661,48 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
 
 ## J. Payment import and integrations
 
-- [ ] **FMS-J01 · Writing Feature · Payment Import Batch (Phase 1)** · L · F10
+- [x] **FMS-J01 · Writing Feature · Payment Import Batch (Phase 1)** · L · F10
   - **Skills:** `frappe-impl-whitelisted`, `frappe-core-files`
   - **Description:** Catalogue 11.3, and add `Shift Collection.import_batch`. Mapping-driven CSV and Excel parser; creates collection rows on the shift; duplicates skipped by reference; row log. **Import transactions** button on the shift.
   - **Expectation:** Importing a 300-row M-Pesa statement takes under 10 seconds and assigns rows by till.
   - **Verify (UI):** Import a sample statement → rows appear on the right cashiers; re-import creates zero rows.
   - **Commit:** `feat(integrations): payment statement import`
 
-- [ ] **FMS-J02 · Writing Test · Import tests with sample files** · S · J01
+- [x] **FMS-J02 · Writing Test · Import tests with sample files** · S · J01
   - **Deliverables:** Anonymised sample files in `tests/fixtures/` (M-Pesa, EVC Plus, one card terminal batch report).
   - **Verify:** Import tests pass.
   - **Commit:** `test(integrations): statement import`
 
-- [ ] **FMS-J03 · Writing Feature · Integration Inbox** · M · C06
+- [x] **FMS-J03 · Writing Feature · Integration Inbox** · M · C06
   - **Skills:** `frappe-impl-integrations`, `frappe-core-logging`
   - **Description:** Catalogue 11.1 with unique (provider, external_id), processing job with retry and backoff, *Retry* button.
   - **Verify (UI):** A malformed message shows *Failed* with the error; *Retry* after fixing mapping processes it.
   - **Commit:** `feat(integrations): integration inbox`
 
-- [ ] **FMS-J04 · Writing Feature · Payment Feed Entry and shift matching** · M · J03, F10
+- [x] **FMS-J04 · Writing Feature · Payment Feed Entry and shift matching** · M · J03, F10
   - **Description:** Catalogue 11.2, and add `Shift Collection.feed_entry`; at shift creation and refresh, matched feed entries become collection rows; unmatched block close (FMS-S111).
   - **Verify (UI):** A feed entry for the station's till during the shift appears on the cashier automatically.
   - **Commit:** `feat(integrations): payment feed matching`
 
-- [ ] **FMS-J05 · Writing Feature · First mobile money adapter** · L · J04
+- [x] **FMS-J05 · Writing Feature · First mobile money adapter** · L · J04
   - **Skills:** `frappe-impl-integrations`, `frappe-impl-whitelisted`, `frappe-core-api`
   - **Description:** Adapter for the owner's first market (default M-Pesa C2B confirmation callback), validated endpoint, credentials in site config, idempotent.
   - **Verify (CLI):** Posting a sample callback to the endpoint with `curl` creates one inbox row and one feed entry; posting it again creates none.
   - **Commit:** `feat(integrations): M-Pesa adapter`
 
-- [ ] **FMS-J06 · Writing Feature · Bank statement import and reconciliation setup** · M · F13
+- [x] **FMS-J06 · Writing Feature · Bank statement import and reconciliation setup** · M · F13
   - **Skills:** `frappe-impl-integrations`
   - **Description:** Configure ERPNext Bank Statement Import mappings for the owner's banks; document matching per Payment Entry reference in a short guide.
   - **Verify (UI):** Import a sample statement; Bank Reconciliation Tool matches Payment Entries by reference.
   - **Commit:** `docs(finance): bank reconciliation setup`
 
-- [ ] **FMS-J07 · Writing Feature · First fiscal adapter** · L · F13
+- [x] **FMS-J07 · Writing Feature · First fiscal adapter** · L · F13
   - **Skills:** `frappe-impl-integrations`
   - **Description:** Fiscal Adapter interface (`submit`, `status`, `cancel`) and the first country implementation (default Kenya eTIMS) on Sales Invoice submit, via the Integration Inbox (direction Out).
   - **Verify (UI):** Submitting the shift's walk-in invoice in sandbox mode stores the fiscal receipt number on the invoice.
   - **Commit:** `feat(integrations): fiscal adapter`
 
-- [ ] **FMS-J08 · Writing Test · Integration tests with mocked providers** · M · J03–J07
+- [x] **FMS-J08 · Writing Test · Integration tests with mocked providers** · M · J03–J07
   - **Verify:** Integration tests pass without network access.
   - **Commit:** `test(integrations): mocked providers`
 

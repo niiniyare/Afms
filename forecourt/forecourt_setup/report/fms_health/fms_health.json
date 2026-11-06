@@ -1,0 +1,16 @@
+{
+ "add_total_row": 0,
+ "columns": [],
+ "doctype": "Report",
+ "filters": [],
+ "is_standard": "Yes",
+ "module": "Forecourt Setup",
+ "name": "FMS Health",
+ "report_name": "FMS Health",
+ "report_type": "Script Report",
+ "roles": [
+  {"role": "Forecourt Administrator"},
+  {"role": "Area Manager"},
+  {"role": "Forecourt Director"}
+ ]
+}

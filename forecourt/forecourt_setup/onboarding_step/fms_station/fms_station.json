@@ -1,0 +1,16 @@
+{
+ "action": "Create Entry",
+ "action_label": "Create your first Station",
+ "description": "A Station is the physical site. Give it a code (e.g. KE-NBO-WSTL), link it to a company, and set its till accounts.",
+ "doctype": "Onboarding Step",
+ "is_complete": 0,
+ "is_optional": 0,
+ "is_single": 0,
+ "is_skipped": 0,
+ "name": "FMS Station",
+ "reference_document": "Station",
+ "show_form_tour": 0,
+ "show_full_form": 1,
+ "title": "Create your first station",
+ "validate_action": 1
+}

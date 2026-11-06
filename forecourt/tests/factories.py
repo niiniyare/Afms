@@ -12,6 +12,27 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 
 
+def _ensure_test_company() -> str:
+	"""Return a company name, or raise if the site has no companies.
+
+	The CI workflow seeds ERPNext test records (erpnext.setup.utils.before_tests)
+	before running forecourt tests, so at least _Test Company always exists.
+	"""
+	company = frappe.defaults.get_defaults().get("company")
+	if company:
+		return company
+	companies = frappe.get_all("Company", limit=1, pluck="name")
+	if companies:
+		return companies[0]
+	frappe.throw(
+		frappe._(
+			"No company found. Seed ERPNext test records first: "
+			"bench --site test_fms execute "
+			'"from erpnext.setup.utils import before_tests; before_tests()"'
+		)
+	)
+
+
 class FMSTestCase(FrappeTestCase):
 	"""Base class for FMS integration tests. Rolls back after each test."""
 
@@ -24,7 +45,8 @@ def make_station_group(name: str = "KE", **kwargs) -> frappe.Document:
 	doc = frappe.get_doc(
 		{
 			"doctype": "Station Group",
-			"group_name": name,
+			"station_group_name": name,
+			"group_type": "Other",
 			"is_group": 1,
 			"parent_station_group": None,
 			**kwargs,
@@ -44,9 +66,28 @@ def make_station(
 	if frappe.db.exists("Station", code):
 		return frappe.get_doc("Station", code)
 	if not company:
-		company = frappe.defaults.get_defaults().get("company") or frappe.get_all("Company", limit=1)[0].name
+		company = _ensure_test_company()
 	if not group:
 		group = make_station_group().name
+	abbr = frappe.db.get_value("Company", company, "abbr") or "TC"
+	currency = frappe.db.get_value("Company", company, "default_currency") or "USD"
+	cash_account = (
+		frappe.db.get_value(
+			"Account",
+			{"account_type": "Cash", "company": company},
+			"name",
+		)
+		or f"Cash - {abbr}"
+	)
+	cost_center = (
+		frappe.db.get_value("Cost Center", {"company": company, "is_group": 0}, "name")
+		or f"{company} - {abbr}"
+	)
+	warehouse_group = (
+		frappe.db.get_value("Warehouse", {"is_group": 1, "company": company}, "name")
+		or f"All Warehouses - {abbr}"
+	)
+	price_list = frappe.db.get_value("Price List", {"selling": 1, "enabled": 1}, "name") or "Standard Selling"
 	doc = frappe.get_doc(
 		{
 			"doctype": "Station",
@@ -54,6 +95,14 @@ def make_station(
 			"station_name": f"Test Station {code}",
 			"company": company,
 			"station_group": group,
+			"country": "Kenya",
+			"ownership_type": "Company-owned",
+			"timezone": "Africa/Nairobi",
+			"warehouse_group": warehouse_group,
+			"price_list": price_list,
+			"cost_center": cost_center,
+			"safe_account": cash_account,
+			"till_accounts": [{"currency": currency, "account": cash_account}],
 			**kwargs,
 		}
 	)

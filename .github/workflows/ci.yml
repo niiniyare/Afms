@@ -7,15 +7,44 @@ on:
   pull_request:
 
 concurrency:
-  group: main-forecourt-${{ github.event.number }}
+  group: ci-forecourt-${{ github.event.number }}
   cancel-in-progress: true
 
 jobs:
-  tests:
+  # ------------------------------------------------------------------
+  # Pure-Python calc unit tests — no bench, no DB, fast feedback
+  # ------------------------------------------------------------------
+  unit:
+    runs-on: ubuntu-latest
+    name: Calc Unit Tests
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+
+      - name: Install test dependencies
+        run: pip install pytest hypothesis
+
+      - name: Run calc unit tests
+        run: |
+          python -m pytest forecourt/calc/ forecourt/tests/test_calc_properties.py \
+            forecourt/tests/test_calibration.py \
+            forecourt/tests/test_drift.py \
+            forecourt/tests/test_meters.py \
+            forecourt/tests/test_reconciliation.py \
+            -v --tb=short
+
+  # ------------------------------------------------------------------
+  # Full integration tests — bench + MariaDB + Redis
+  # ------------------------------------------------------------------
+  integration:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-    name: Server
+    name: Integration Tests
 
     services:
       redis-cache:
@@ -37,11 +66,6 @@ jobs:
     steps:
       - name: Clone
         uses: actions/checkout@v4
-
-      - name: Find tests
-        run: |
-          echo "Finding tests"
-          grep -rn "def test" > /dev/null
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -80,30 +104,130 @@ jobs:
           sudo apt update
           sudo apt-get install mariadb-client
 
-      - name: Setup
+      - name: Initialise bench
         run: |
           pip install frappe-bench
           bench init --skip-redis-config-generation --skip-assets --python "$(which python)" --frappe-branch version-16 ~/frappe-bench
 
-      - name: Install
+      - name: Install apps
         working-directory: /home/runner/frappe-bench
         run: |
           bench get-app --branch version-16 payments
           bench get-app --branch version-16 erpnext
-          bench get-app forecourt $GITHUB_WORKSPACE
+          # bench get-app reads the app name from the git remote URL, which is
+          # the repo name (Afms), and registers that in apps.txt instead of
+          # the app_name ("forecourt").  Copy first to detach the remote, then
+          # ensure the correct name is in apps.txt after installation.
+          cp -r $GITHUB_WORKSPACE /tmp/forecourt
+          git -C /tmp/forecourt remote remove origin || true
+          bench get-app --skip-assets forecourt /tmp/forecourt
+          # Frappe reads the bench app registry from sites/apps.txt.
+          # Overwrite explicitly to avoid concatenation when the file lacks a
+          # trailing newline (which would produce e.g. "paymentsforecourt").
+          printf 'frappe\npayments\nerpnext\nforecourt\n' > sites/apps.txt
           bench setup requirements --dev
-          bench new-site --db-root-password root --admin-password admin test_site
-          bench --site test_site install-app payments
-          bench --site test_site install-app erpnext
-          bench --site test_site install-app forecourt
-          bench build
+          bench new-site --db-root-password root --admin-password admin test_fms
+          bench --site test_fms install-app payments
+          bench --site test_fms install-app erpnext
+          bench --site test_fms install-app forecourt
+          # Run migrate so that accounting-dimension custom fields (e.g. "station"
+          # on Purchase Receipt) are added to the database schema before tests run.
+          bench --site test_fms migrate
         env:
           CI: 'Yes'
 
-      - name: Run Tests
+      - name: Seed ERPNext test records
         working-directory: /home/runner/frappe-bench
         run: |
-          bench --site test_site set-config allow_tests true
-          bench --site test_site run-tests --app forecourt
+          bench --site test_fms execute \
+            "from erpnext.setup.utils import before_tests; before_tests()"
+        env:
+          CI: 'Yes'
+
+      - name: Run integration tests
+        working-directory: /home/runner/frappe-bench
+        run: |
+          bench --site test_fms set-config allow_tests true
+          bench --site test_fms run-tests --app forecourt --failfast
         env:
           TYPE: server
+
+  # ------------------------------------------------------------------
+  # Upgrade test — installs previous release, migrates to current branch
+  # ------------------------------------------------------------------
+  upgrade:
+    runs-on: ubuntu-latest
+    name: Upgrade Migration Test
+    # Only run on PRs that touch patches.txt, patches/, or DocType JSON
+    if: |
+      github.event_name == 'pull_request' &&
+      contains(github.event.pull_request.changed_files, 'patches')
+
+    services:
+      mariadb:
+        image: mariadb:11.8
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: --health-cmd="mariadb-admin ping" --health-interval=5s --health-timeout=2s --health-retries=3
+      redis-cache:
+        image: redis:alpine
+        ports:
+          - 13000:6379
+      redis-queue:
+        image: redis:alpine
+        ports:
+          - 11000:6379
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install MariaDB Client
+        run: sudo apt update && sudo apt-get install -y mariadb-client
+
+      - name: Install bench and base branch app
+        run: |
+          pip install frappe-bench
+          bench init --skip-redis-config-generation --skip-assets \
+            --python "$(which python)" --frappe-branch version-16 ~/frappe-bench
+
+      - name: Install apps at base branch (main)
+        working-directory: /home/runner/frappe-bench
+        run: |
+          bench get-app --branch version-16 payments
+          bench get-app --branch version-16 erpnext
+          git clone --depth 1 --branch main \
+            https://github.com/${{ github.repository }}.git /tmp/forecourt
+          git -C /tmp/forecourt remote remove origin || true
+          bench get-app --skip-assets forecourt /tmp/forecourt
+          printf 'frappe\npayments\nerpnext\nforecourt\n' > sites/apps.txt
+          bench setup requirements
+          bench new-site --db-root-password root --admin-password admin upgrade_test
+          bench --site upgrade_test install-app payments
+          bench --site upgrade_test install-app erpnext
+          bench --site upgrade_test install-app forecourt
+          bench --site upgrade_test migrate
+        env:
+          CI: 'Yes'
+
+      - name: Upgrade to PR branch and migrate
+        working-directory: /home/runner/frappe-bench
+        run: |
+          # Replace app with PR branch code
+          rm -rf apps/forecourt
+          cp -r $GITHUB_WORKSPACE apps/forecourt
+          bench --site upgrade_test migrate
+          echo "Migration succeeded"
+        env:
+          CI: 'Yes'

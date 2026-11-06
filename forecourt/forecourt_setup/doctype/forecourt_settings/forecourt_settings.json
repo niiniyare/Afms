@@ -33,6 +33,7 @@
  "fields": [
   {
    "default": "Cashier",
+   "description": "Label used for the person responsible for the shift till. Set to ‘Salesperson’ if your stations use that term.",
    "fieldname": "accountable_person_label",
    "fieldtype": "Select",
    "label": "Accountable Person Label",
@@ -82,6 +83,7 @@
   },
   {
    "default": "Depth via calibration chart",
+   "description": "How tank stock is measured at shift close. ‘Depth via calibration chart’ converts a dip-stick reading; ‘Litres entered directly’ skips the chart.",
    "fieldname": "dip_entry_mode",
    "fieldtype": "Select",
    "label": "Dip Entry Mode",
@@ -94,6 +96,7 @@
   },
   {
    "default": "0.5",
+   "description": "Maximum allowable drift between Elec Cash and Elec Meter as a percentage of sales. Drift beyond this threshold requires a reason.",
    "fieldname": "drift_tolerance_pct",
    "fieldtype": "Percent",
    "label": "Drift Tolerance (%)"
@@ -104,12 +107,14 @@
   },
   {
    "default": "2",
+   "description": "Maximum allowable drift in litres (absolute). Both tolerances are checked; the one that allows the larger absolute drift wins.",
    "fieldname": "drift_tolerance_l",
    "fieldtype": "Float",
    "label": "Drift Tolerance (L)"
   },
   {
    "default": "1",
+   "description": "If ticked, shifts with meter drift beyond tolerance cannot close without a reason text.",
    "fieldname": "drift_requires_reason",
    "fieldtype": "Check",
    "label": "Drift Beyond Tolerance Requires Reason"
@@ -121,6 +126,7 @@
   },
   {
    "default": "Latest price with segments",
+   "description": "'Latest price with segments' splits a shift at each price change. 'Between shifts only' uses one price per shift.",
    "fieldname": "price_change_mode",
    "fieldtype": "Select",
    "label": "Price Change Mode",
@@ -130,7 +136,7 @@
    "default": "0",
    "fieldname": "allow_estimated_segments",
    "fieldtype": "Check",
-   "label": "Allow Time-Estimated Segments"
+   "label": "Allow Estimated Segments"
   },
   {
    "fieldname": "sb_shift",
@@ -139,6 +145,7 @@
   },
   {
    "default": "200",
+   "description": "Shifts with more than this many payment rows are closed in a background job rather than in the web request.",
    "fieldname": "background_close_threshold",
    "fieldtype": "Int",
    "label": "Background Close Threshold (payment rows)"
@@ -149,6 +156,7 @@
   },
   {
    "default": "2",
+   "description": "How many calendar days in the past a new shift may be opened. Set to 0 to allow today only.",
    "fieldname": "allow_backdated_shift_days",
    "fieldtype": "Int",
    "label": "Allow Backdated Shift (days)"
@@ -170,6 +178,7 @@
   },
   {
    "default": "1",
+   "description": "If ticked, each expense line requires an uploaded receipt scan before the shift can close.",
    "fieldname": "require_expense_receipt",
    "fieldtype": "Check",
    "label": "Require Expense Receipt"
@@ -185,55 +194,75 @@
  "permissions": [
   {
    "permlevel": 0,
-   "read": 1,
    "role": "System Manager",
+   "read": 1,
    "write": 1
   },
   {
    "permlevel": 0,
-   "read": 1,
    "role": "Forecourt Administrator",
+   "read": 1,
    "write": 1
   },
   {
    "permlevel": 0,
-   "read": 1,
-   "role": "Business Executive"
+   "role": "Business Executive",
+   "read": 1
   },
   {
    "permlevel": 0,
-   "read": 1,
-   "role": "Station Manager"
+   "role": "Station Manager",
+   "read": 1
   },
   {
    "permlevel": 0,
-   "read": 1,
-   "role": "Assistant Station Manager"
+   "role": "Assistant Station Manager",
+   "read": 1
   },
   {
    "permlevel": 0,
-   "read": 1,
-   "role": "Forecourt Supervisor"
+   "role": "Forecourt Supervisor",
+   "read": 1
   },
   {
    "permlevel": 0,
-   "read": 1,
-   "role": "Forecourt Sales Operator"
+   "role": "Forecourt Sales Operator",
+   "read": 1
   },
   {
    "permlevel": 0,
-   "read": 1,
-   "role": "Site Cashier"
+   "role": "Site Cashier",
+   "read": 1
   },
   {
    "permlevel": 0,
-   "read": 1,
-   "role": "Station Accountant"
+   "role": "Station Accountant",
+   "read": 1
   },
   {
    "permlevel": 0,
-   "read": 1,
-   "role": "Integration Service Account"
+   "role": "Integration Service Account",
+   "read": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Area Manager",
+   "read": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Forecourt Accountant",
+   "read": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Forecourt Director",
+   "read": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Forecourt Investor",
+   "read": 1
   }
  ],
  "sort_order": "DESC",

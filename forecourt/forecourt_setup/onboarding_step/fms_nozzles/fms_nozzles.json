@@ -1,0 +1,16 @@
+{
+ "action": "Create Entry",
+ "action_label": "Add a Nozzle",
+ "description": "A Nozzle is the hose on a pump. It draws from one tank and records meter readings every shift.",
+ "doctype": "Onboarding Step",
+ "is_complete": 0,
+ "is_optional": 0,
+ "is_single": 0,
+ "is_skipped": 0,
+ "name": "FMS Nozzles",
+ "reference_document": "Nozzle",
+ "show_form_tour": 0,
+ "show_full_form": 1,
+ "title": "Add nozzles",
+ "validate_action": 1
+}

@@ -128,11 +128,78 @@
  "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
-  {"create": 1, "delete": 1, "submit": 1, "permlevel": 0, "read": 1, "role": "Station Manager", "write": 1},
-  {"create": 1, "submit": 1, "cancel": 1, "amend": 1, "permlevel": 0, "read": 1, "role": "Area Manager", "write": 1},
-  {"permlevel": 0, "read": 1, "role": "Forecourt Administrator"},
-  {"permlevel": 0, "read": 1, "role": "Business Executive"},
-  {"permlevel": 0, "read": 1, "role": "Station Accountant"}
+  {
+   "permlevel": 0,
+   "role": "Station Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "submit": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Area Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "cancel": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Forecourt Administrator",
+   "read": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Business Executive",
+   "read": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Assistant Station Manager",
+   "read": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Forecourt Supervisor",
+   "read": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Forecourt Sales Operator",
+   "read": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Site Cashier",
+   "read": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Station Accountant",
+   "read": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Integration Service Account",
+   "read": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Forecourt Accountant",
+   "read": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Forecourt Director",
+   "read": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Forecourt Investor",
+   "read": 1
+  }
  ],
  "search_fields": "nozzle,station",
  "sort_field": "changed_at",

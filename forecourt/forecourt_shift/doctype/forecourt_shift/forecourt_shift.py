@@ -10,7 +10,13 @@ F07: FMS-S112 gate: every price segment must have meter readings.
 F08: credit sale rates, over-limit flags, FMS-S107 gate.
 F09: POS pull-in into item_sales.
 F10: collection reference uniqueness, expense limits, FMS-S114 gate.
-F12+: remaining before_submit gates (added in later tasks).
+F11: resolution lines; FMS-S105 (cashier resolved) and FMS-S106 (tank variance approved) gates.
+F12: remaining before_submit gates (S101-S104, S108-S111, S115); errors collected and thrown together.
+F13: on_submit posts Sales Invoices and Payment Entries via posting/sales.py and posting/payments.py.
+F14: on_submit also posts JE (expenses + differences) and Stock Reconciliation via posting/journals.py and posting/stock.py.
+F15: on_submit writes four FMS ledgers and updates Nozzle last_* readings via posting/ledgers.py.
+F16: background close via forecourt_shift/close.py; before_submit blocks accidental Submit on "Closing" shifts.
+F17: validate builds posting_summary HTML (Review tab); Shift Report print format at print_format/shift_report/.
 """
 
 from __future__ import annotations
@@ -27,33 +33,333 @@ from forecourt.calc import cashier as calc_cashier
 from forecourt.calc import drift as calc_drift
 from forecourt.calc import meters as calc_meters
 from forecourt.calc import reconciliation as calc_reconciliation
-from forecourt.errors import FMS_S107, FMS_S112, FMS_S113, FMS_S114, FMS_W103
+from forecourt.errors import (
+	FMS_S101,
+	FMS_S102,
+	FMS_S103,
+	FMS_S104,
+	FMS_S105,
+	FMS_S106,
+	FMS_S107,
+	FMS_S108,
+	FMS_S109,
+	FMS_S110,
+	FMS_S111,
+	FMS_S112,
+	FMS_S113,
+	FMS_S114,
+	FMS_S115,
+	FMS_S116,
+	FMS_W103,
+)
 
 
 class ForecourtShift(Document):
-	# ------------------------------------------------------------------ F04 / F06 / F07 / F08 / F10
+	# ------------------------------------------------------------------ F04 / F06 / F07 / F08 / F10 / F11 / F12 / F13 / F16
 	def before_submit(self) -> None:
-		"""Gates: drift reason, no draft own use, segment readings, over-limit, ref uniqueness."""
-		self._gate_drift_reason()
-		self._gate_no_draft_own_use()
-		self._gate_segment_readings()
-		self._gate_credit_over_limit()
-		self._gate_collection_refs()
+		"""Collect all gate failures then throw together (FMS-S101 to S115, W103)."""
+		if self.status == "Closing" and not frappe.flags.fms_background_close:
+			frappe.throw(
+				_("[FMS-F16] Shift {0} is being closed in background. Please wait.").format(self.name)
+			)
+		errors: list[str] = []
+		self._gate_nozzle_readings(errors)
+		self._gate_reading_continuity(errors)
+		self._gate_tank_dips_required(errors)
+		self._gate_nozzle_cashier(errors)
+		self._gate_drift_reason(errors)
+		self._gate_no_draft_own_use(errors)
+		self._gate_segment_readings(errors)
+		self._gate_credit_over_limit(errors)
+		self._gate_credit_volume(errors)
+		self._gate_expenses(errors)
+		self._gate_no_overlap(errors)
+		self._gate_feed_entries(errors)
+		self._gate_collection_refs(errors)
+		self._gate_cashier_resolved(errors)
+		self._gate_tank_variance_approved(errors)
+		self._gate_shift_approval(errors)
+		self._gate_test_volume(errors)
+		if errors:
+			frappe.throw("<br>".join(errors), title=_("Shift Cannot Be Closed"))
 
-	def _gate_drift_reason(self) -> None:
+	# ------------------------------------------------------------------ I04
+	def after_insert(self) -> None:
+		"""Pull matching feed entries into this new shift (J04)."""
+		from forecourt.forecourt_integrations.feed_matcher import match_feeds_to_shift
+
+		created = match_feeds_to_shift(self)
+		if created:
+			self.flags.ignore_validate = True
+			self.save()
+
+	@frappe.whitelist()
+	def refresh_feeds(self) -> dict:
+		"""Pull new Unmatched feed entries into this shift on demand (J04)."""
+		from forecourt.forecourt_integrations.feed_matcher import match_feeds_to_shift
+
+		frappe.has_permission("Forecourt Shift", "write", self, throw=True)
+		created = match_feeds_to_shift(self)
+		if created:
+			self.flags.ignore_validate = True
+			self.save()
+		return {"created": created}
+
+	def on_update(self) -> None:
+		from forecourt.notifications import on_forecourt_shift_update
+
+		on_forecourt_shift_update(self)
+
+	# ------------------------------------------------------------------ F13 / F14
+	def on_submit(self) -> None:
+		"""Post all shift documents: invoices, payments, journals, stock and ledgers."""
+		from forecourt.posting import journals as posting_journals
+		from forecourt.posting import ledgers as posting_ledgers
+		from forecourt.posting import payments as posting_payments
+		from forecourt.posting import sales as posting_sales
+		from forecourt.posting import stock as posting_stock
+
+		# F13: invoices first (stock consumption before tank adjustment)
+		credit_invoices = posting_sales.post_credit_invoices(self)
+		walkin_invoice = posting_sales.post_walkin_invoice(self)
+		posting_payments.post_payment_entries(self, walkin_invoice, credit_invoices)
+
+		# F14: JE for expenses + differences, then stock
+		posting_journals.post_expense_and_difference_je(self)
+		posting_stock.post_stock_reconciliations(self)
+		posting_stock.post_drop_entries(self)
+		posting_stock.post_float_returns(self)
+
+		# F15: FMS ledgers and nozzle last readings
+		posting_ledgers.write_shift_wetstock_ledger(self)
+		posting_ledgers.write_shift_nozzle_ledger(self)
+		posting_ledgers.write_shift_sales_ledger(self)
+		posting_ledgers.write_shift_cashier_ledger(self)
+		posting_ledgers.update_nozzle_last_readings(self)
+
+	# ------------------------------------------------------------------ F12 new gates
+
+	def _gate_nozzle_readings(self, errors: list[str]) -> None:
+		"""FMS-S101: every active nozzle has a closing reading >= opening, or rollover ticked."""
+		problems = []
+		for row in self.meter_readings:
+			if not row.nozzle:
+				continue
+			if row.rec_elec_cash:
+				if not row.closing_elec_cash:
+					problems.append(_("nozzle {0} e-cash (missing closing)").format(row.nozzle))
+				elif flt(row.closing_elec_cash) < flt(row.opening_elec_cash) and not row.rollover_elec_cash:
+					problems.append(_("nozzle {0} e-cash").format(row.nozzle))
+			if row.rec_elec_meter:
+				if not row.closing_elec_meter:
+					problems.append(_("nozzle {0} e-vol (missing closing)").format(row.nozzle))
+				elif (
+					flt(row.closing_elec_meter) < flt(row.opening_elec_meter) and not row.rollover_elec_meter
+				):
+					problems.append(_("nozzle {0} e-vol").format(row.nozzle))
+			if row.rec_man_meter:
+				if not row.closing_man_meter:
+					problems.append(_("nozzle {0} m-vol (missing closing)").format(row.nozzle))
+				elif flt(row.closing_man_meter) < flt(row.opening_man_meter) and not row.rollover_man_meter:
+					problems.append(_("nozzle {0} m-vol").format(row.nozzle))
+		if problems:
+			errors.append(
+				_("{0}: Closing reading below opening on {1}. Correct the reading or tick Rollover.").format(
+					FMS_S101, ", ".join(problems)
+				)
+			)
+
+	def _gate_reading_continuity(self, errors: list[str]) -> None:
+		"""FMS-S102: opening readings must match previous shift's closing readings."""
+		if not self.previous_shift:
+			return
+		prev_readings = frappe.get_all(
+			"Shift Meter Reading",
+			filters={"parent": self.previous_shift},
+			fields=["nozzle", "closing_elec_cash", "closing_elec_meter", "closing_man_meter", "segment_no"],
+			order_by="segment_no desc",
+		)
+		prev_closing: dict[str, object] = {}
+		for r in prev_readings:
+			if r.nozzle not in prev_closing:
+				prev_closing[r.nozzle] = r
+		problems = []
+		for row in self.meter_readings:
+			if int(row.segment_no or 1) != 1 or not row.nozzle:
+				continue
+			prev = prev_closing.get(row.nozzle)
+			if not prev:
+				continue
+			if row.rec_elec_cash and flt(row.opening_elec_cash, 3) != flt(prev.closing_elec_cash, 3):
+				problems.append(_("nozzle {0} e-cash").format(row.nozzle))
+			if row.rec_elec_meter and flt(row.opening_elec_meter, 3) != flt(prev.closing_elec_meter, 3):
+				problems.append(_("nozzle {0} e-vol").format(row.nozzle))
+			if row.rec_man_meter and flt(row.opening_man_meter, 3) != flt(prev.closing_man_meter, 3):
+				problems.append(_("nozzle {0} m-vol").format(row.nozzle))
+		if problems:
+			errors.append(
+				_(
+					"{0}: Opening reading does not match previous closing on {1}. Re-fetch openings or check the previous shift."
+				).format(FMS_S102, ", ".join(problems))
+			)
+
+	def _gate_tank_dips_required(self, errors: list[str]) -> None:
+		"""FMS-S103: every tank requiring a dip has one."""
+		if not self.shift_template:
+			return
+		dips_required = bool(
+			frappe.db.get_value("Forecourt Shift Template", self.shift_template, "dips_required")
+		)
+		if not dips_required:
+			return
+		missing = [row.tank for row in self.tank_dips if not flt(row.dip_l) and not flt(row.dip_mm)]
+		if missing:
+			errors.append(
+				_("{0}: Tanks have no closing dip: {1}. Enter the closing dip.").format(
+					FMS_S103, ", ".join(missing)
+				)
+			)
+
+	def _gate_nozzle_cashier(self, errors: list[str]) -> None:
+		"""FMS-S104: every nozzle reading row must have a cashier assigned."""
+		missing = [row.nozzle for row in self.meter_readings if not row.cashier]
+		if missing:
+			errors.append(
+				_("{0}: Nozzle reading rows have no cashier: {1}. Assign each to a cashier.").format(
+					FMS_S104, ", ".join(missing)
+				)
+			)
+
+	def _gate_credit_volume(self, errors: list[str]) -> None:
+		"""FMS-S108: credit litres per product must not exceed metered litres."""
+		credit_by_item: dict[str, float] = defaultdict(float)
+		for row in self.credit_sales:
+			if row.item:
+				credit_by_item[row.item] += flt(row.qty)
+		metered_by_item: dict[str, float] = defaultdict(float)
+		for row in self.meter_readings:
+			if row.item:
+				metered_by_item[row.item] += flt(row.net_volume_l)
+		problems = []
+		for item, credit_qty in credit_by_item.items():
+			metered = metered_by_item.get(item, 0.0)
+			if flt(credit_qty, 3) > flt(metered, 3):
+				problems.append(
+					_("{0} (credit {1} L, metered {2} L)").format(item, flt(credit_qty, 3), flt(metered, 3))
+				)
+		if problems:
+			errors.append(
+				_("{0}: Credit litres exceed metered litres for {1}. Check slips and meter readings.").format(
+					FMS_S108, "; ".join(problems)
+				)
+			)
+
+	def _gate_expenses(self, errors: list[str]) -> None:
+		"""FMS-S109: expense collections need a type and must be within the per-expense limit."""
+		problems = []
+		for row in self.collections:
+			if row.collection_type != "Expense":
+				continue
+			if not row.expense_type:
+				problems.append(_("Row {0}: missing expense type.").format(row.idx))
+				continue
+			et = frappe.get_cached_doc("Expense Type", row.expense_type)
+			max_per_line = flt(et.max_per_line or 0)
+			if max_per_line and flt(row.amount) > max_per_line:
+				problems.append(
+					_("Row {0}: amount {1} exceeds the {2} limit of {3}.").format(
+						row.idx, flt(row.amount, 2), row.expense_type, max_per_line
+					)
+				)
+		if problems:
+			errors.append(_("{0}: {1}").format(FMS_S109, " ".join(problems)))
+
+	def _gate_no_overlap(self, errors: list[str]) -> None:
+		"""FMS-S110: shift window must not overlap another submitted shift at this station."""
+		if not self.station or not self.shift_start or not self.shift_end:
+			return
+		if self.company and frappe.db.exists("DocType", "Forecourt Company Settings"):
+			allow_overlap = frappe.db.get_value(
+				"Forecourt Company Settings", self.company, "allow_overlapping_shifts"
+			)
+			if allow_overlap:
+				return
+		overlapping = frappe.get_all(
+			"Forecourt Shift",
+			filters={
+				"station": self.station,
+				"docstatus": 1,
+				"name": ["!=", self.name or ""],
+				"shift_start": ["<", self.shift_end],
+				"shift_end": [">", self.shift_start],
+			},
+			fields=["name"],
+			limit=1,
+		)
+		if overlapping:
+			errors.append(
+				_("{0}: Shift window overlaps shift {1} at this station. Fix the date or template.").format(
+					FMS_S110, overlapping[0].name
+				)
+			)
+
+	def _gate_feed_entries(self, errors: list[str]) -> None:
+		"""FMS-S111: all payment feed entries in the shift window must be matched (J04)."""
+		if not frappe.db.exists("DocType", "Payment Feed Entry"):
+			return
+		if not (self.station and self.shift_start and self.shift_end):
+			return
+		unmatched = frappe.db.count(
+			"Payment Feed Entry",
+			{
+				"station": self.station,
+				"status": "Unmatched",
+				"transaction_time": ["between", [self.shift_start, self.shift_end]],
+			},
+		)
+		if unmatched:
+			errors.append(
+				_(
+					"{0}: {1} payment feed entries in the shift window are Unmatched. "
+					"Assign or ignore them before closing."
+				).format(FMS_S111, unmatched)
+			)
+
+	def _gate_test_volume(self, errors: list[str]) -> None:
+		"""FMS-S115: test volume per nozzle must not exceed the nozzle's per-shift limit (D29)."""
+		problems = []
+		for row in self.meter_readings:
+			if not row.nozzle or not flt(row.test_volume_l):
+				continue
+			max_test = flt(frappe.db.get_value("Nozzle", row.nozzle, "max_test_volume_l") or 0)
+			if max_test and flt(row.test_volume_l, 3) > max_test:
+				problems.append(
+					_("nozzle {0} ({1} L > limit {2} L)").format(
+						row.nozzle, flt(row.test_volume_l, 3), max_test
+					)
+				)
+		if problems:
+			errors.append(
+				_("{0}: Test volume exceeds nozzle limit on {1}. Correct the test volume.").format(
+					FMS_S115, "; ".join(problems)
+				)
+			)
+
+	# ------------------------------------------------------------------ F04 / F06 / F07 / F10 / F11 existing gates (refactored to collect)
+
+	def _gate_drift_reason(self, errors: list[str]) -> None:
 		settings = frappe.get_cached_doc("Forecourt Settings")
 		if not getattr(settings, "drift_requires_reason", True):
 			return
 		missing = [row.nozzle for row in self.meter_readings if row.drift_breach and not row.drift_reason]
 		if missing:
-			frappe.throw(
+			errors.append(
 				_("{0}: Drift beyond tolerance on {1} — record the reason before closing.").format(
 					FMS_W103, ", ".join(missing)
-				),
-				title=_("Drift Reason Required"),
+				)
 			)
 
-	def _gate_no_draft_own_use(self) -> None:
+	def _gate_no_draft_own_use(self, errors: list[str]) -> None:
 		"""FMS-S113: no draft Fuel Own Use entry may exist inside the shift window."""
 		if not (self.station and self.shift_start and self.shift_end):
 			return
@@ -77,14 +383,13 @@ class ForecourtShift(Document):
 			if start_dt <= get_datetime(f"{e.posting_date} {e.posting_time or '00:00:00'}") < end_dt
 		]
 		if blocking:
-			frappe.throw(
-				_(
-					"{0}: Draft Fuel Own Use entries exist in the shift window: {1}. Submit or delete them before closing."
-				).format(FMS_S113, ", ".join(blocking)),
-				title=_("Draft Own Use Entry"),
+			errors.append(
+				_("{0}: Draft Fuel Own Use entries in the shift window: {1}. Submit or delete them.").format(
+					FMS_S113, ", ".join(blocking)
+				)
 			)
 
-	def _gate_segment_readings(self) -> None:
+	def _gate_segment_readings(self, errors: list[str]) -> None:
 		"""FMS-S112: every price segment must have closing meter readings."""
 		missing = []
 		for price_row in self.prices:
@@ -99,14 +404,13 @@ class ForecourtShift(Document):
 			if not has_reading:
 				missing.append(f"{item} seg {seg}")
 		if missing:
-			frappe.throw(
-				_(
-					"{0}: Missing meter readings for: {1}. Enter readings for all segments before closing."
-				).format(FMS_S112, ", ".join(missing)),
-				title=_("Incomplete Segments"),
+			errors.append(
+				_("{0}: Missing meter readings for {1}. Enter readings for all segments.").format(
+					FMS_S112, ", ".join(missing)
+				)
 			)
 
-	def _gate_credit_over_limit(self) -> None:
+	def _gate_credit_over_limit(self, errors: list[str]) -> None:
 		"""FMS-S107: over-limit credit sales must be approved."""
 		blocking = [
 			f"{r.customer} slip {r.slip_no}"
@@ -114,39 +418,81 @@ class ForecourtShift(Document):
 			if r.over_limit and not r.over_limit_approved_by
 		]
 		if blocking:
-			frappe.throw(
-				_("{0}: Over-limit credit sales require approval: {1}.").format(
-					FMS_S107, ", ".join(blocking)
-				),
-				title=_("Over-Limit Approval Required"),
+			errors.append(
+				_("{0}: Over-limit credit sales require approval: {1}.").format(FMS_S107, ", ".join(blocking))
 			)
 
-	def _gate_collection_refs(self) -> None:
-		"""FMS-S114: mobile money and card collections require unique references per provider."""
+	def _gate_collection_refs(self, errors: list[str]) -> None:
+		"""FMS-S114: mobile money and card collections require unique references per provider (site-wide)."""
 		seen: dict[str, str] = {}
-		errors = []
+		mobile_card: list[tuple[str, str, int]] = []  # (provider, reference, idx)
+		problems = []
 		for row in self.collections:
 			if row.collection_type not in ("Mobile Money", "Card"):
 				continue
 			if not row.reference:
-				errors.append(
+				problems.append(
 					_("Row {0}: {1} collection missing reference.").format(row.idx, row.collection_type)
 				)
 				continue
 			key = f"{row.provider or ''}:{row.reference}"
 			if key in seen:
-				errors.append(
+				problems.append(
 					_("Row {0}: reference {1} already used in row {2}.").format(
 						row.idx, row.reference, seen[key]
 					)
 				)
 			else:
 				seen[key] = str(row.idx)
-		if errors:
-			frappe.throw(
-				_("{0}: ").format(FMS_S114) + "\n".join(errors),
-				title=_("Duplicate Collection Reference"),
+				mobile_card.append((row.provider or "", row.reference, row.idx))
+
+		# Cross-shift check: reference must be unique per provider across the site
+		if mobile_card:
+			ref_list = [r for _, r, _ in mobile_card]
+			existing = frappe.get_all(
+				"Shift Collection",
+				filters={"parent": ["!=", self.name or ""], "reference": ["in", ref_list]},
+				fields=["parent", "reference", "provider"],
 			)
+			existing_map: dict[tuple, str] = {(e.provider, e.reference): e.parent for e in existing}
+			for provider, ref, idx in mobile_card:
+				other_shift = existing_map.get((provider, ref))
+				if other_shift:
+					problems.append(
+						_("Row {0}: reference {1} is already used in shift {2}.").format(
+							idx, ref, other_shift
+						)
+					)
+
+		if problems:
+			errors.append(_("{0}: {1}").format(FMS_S114, " ".join(problems)))
+
+	def _gate_cashier_resolved(self, errors: list[str]) -> None:
+		"""FMS-S105: every cashier with a non-zero difference must have a resolution line."""
+		unresolved = [
+			row.cashier for row in self.cashiers if flt(row.difference, 2) != 0 and not row.resolved
+		]
+		if unresolved:
+			errors.append(
+				_(
+					"{0}: Unresolved cashier differences for {1}. Add a resolution line before closing."
+				).format(FMS_S105, ", ".join(unresolved))
+			)
+
+	def _gate_tank_variance_approved(self, errors: list[str]) -> None:
+		"""FMS-S106: tank variances outside tolerance need a reason; above approval threshold, approval."""
+		problems = []
+		for row in self.tank_dips:
+			if row.within_tolerance:
+				continue
+			if not row.reason:
+				problems.append(_("Tank {0}: variance outside tolerance has no reason.").format(row.tank))
+			elif row.needs_approval and not row.approved_by:
+				problems.append(
+					_("Tank {0}: variance above approval threshold is not approved.").format(row.tank)
+				)
+		if problems:
+			errors.append(_("{0}: {1}").format(FMS_S106, " ".join(problems)))
 
 	# ------------------------------------------------------------------ F08 helpers
 
@@ -282,7 +628,7 @@ class ForecourtShift(Document):
 						},
 					)
 
-	# ------------------------------------------------------------------ F03 / F05 / F06 / F08 / F09 / F10
+	# ------------------------------------------------------------------ F03 / F05 / F06 / F08 / F09 / F10 / F11 / F17
 	def validate(self) -> None:
 		self._compute_item_sale_amounts()
 		self._pull_own_use_for_nozzles()  # F06
@@ -295,7 +641,187 @@ class ForecourtShift(Document):
 		self._pull_own_use_for_tanks()  # F05
 		self._compute_tank_dip_rows()
 		self._compute_cashier_rows()
+		self._compute_resolution_approval()  # F11
+		self._set_approval_state()  # I03
+		self._update_cashier_resolved()  # F11
 		self._compute_parent_totals()
+		self._build_posting_summary()  # F17
+
+	# ------------------------------------------------------------------ F11 helpers
+
+	def _compute_resolution_approval(self) -> None:
+		"""Set needs_approval on resolution rows based on write-off and variance thresholds."""
+		settings = frappe.get_cached_doc("Forecourt Company Settings", self.company)
+		small_pct = flt(getattr(settings, "small_difference_pct", 0.1) or 0.1) / 100.0
+		small_amt = flt(getattr(settings, "small_difference_amount", 0.0) or 0.0)
+		tol_pct = flt(getattr(settings, "tank_tolerance_pct", 0.5) or 0.5) / 100.0
+		approval_mult = flt(getattr(settings, "approval_multiplier", 2.0) or 2.0)
+
+		cashier_expected: dict[str, float] = {c.cashier: flt(c.expected) for c in self.cashiers}
+		tank_sales: dict[str, float] = {t.tank: flt(t.sales_l) for t in self.tank_dips}
+
+		for row in self.resolutions:
+			row.needs_approval = 0
+			if row.action == "Write off" and flt(row.amount):
+				expected = cashier_expected.get(row.cashier or "", 0.0)
+				limit = max(small_pct * expected, small_amt) if expected else small_amt
+				if flt(row.amount) > limit:
+					row.needs_approval = 1
+			elif row.action == "Accept variance" and row.tank:
+				sales_l = tank_sales.get(row.tank, 0.0)
+				approval_threshold = tol_pct * approval_mult * sales_l
+				if sales_l and abs(flt(row.volume_l)) > approval_threshold:
+					row.needs_approval = 1
+
+	def _update_cashier_resolved(self) -> None:
+		"""Set resolved=1 on cashier rows whose difference is fully covered by resolution lines."""
+		resolved_amount: dict[str, float] = defaultdict(float)
+		for row in self.resolutions:
+			if row.resolution_for == "Cashier" and row.cashier and flt(row.amount):
+				resolved_amount[row.cashier] += flt(row.amount)
+
+		for row in self.cashiers:
+			diff = flt(row.difference, 2)
+			if diff == 0.0:
+				row.resolved = 1
+			elif flt(resolved_amount.get(row.cashier, 0.0), 2) >= abs(diff):
+				row.resolved = 1
+			else:
+				row.resolved = 0
+
+	# ------------------------------------------------------------------ I03
+
+	def _set_approval_state(self) -> None:
+		"""Drive approval_state from resolution rows (design guide 6.2, D19).
+
+		'Not Required' when no resolution needs approval.
+		'Pending Approval' when any does, unless already Approved — in which case reset
+		only if the approval-relevant data changed since last save.
+		"""
+		needs = any(flt(r.needs_approval) for r in self.resolutions)
+		if not needs:
+			self.approval_state = "Not Required"
+			return
+		if self.approval_state == "Approved":
+			old = self.get_doc_before_save()
+			if old and self._approval_data_changed(old):
+				self.approval_state = "Pending Approval"
+		elif self.approval_state not in ("Pending Approval", "Rejected"):
+			self.approval_state = "Pending Approval"
+
+	def _approval_data_changed(self, old: "ForecourtShift") -> bool:
+		"""True if any approval-relevant resolution field changed since last save."""
+		old_rows = {r.name: r for r in old.resolutions}
+		if len(self.resolutions) != len(old.resolutions):
+			return True
+		for row in self.resolutions:
+			o = old_rows.get(row.name)
+			if not o:
+				return True
+			if (
+				flt(row.amount, 2) != flt(o.amount, 2)
+				or flt(row.volume_l, 3) != flt(o.volume_l, 3)
+				or (row.reason or "") != (o.reason or "")
+				or (row.action or "") != (o.action or "")
+			):
+				return True
+		return False
+
+	def _gate_shift_approval(self, errors: list[str]) -> None:
+		"""FMS-S116: shift cannot close while approval_state is Pending Approval or Rejected."""
+		if self.approval_state in ("Pending Approval", "Rejected"):
+			errors.append(
+				_(
+					"{0}: Shift has write-offs or variances that require area manager approval before closing."
+				).format(FMS_S116)
+			)
+
+	# ------------------------------------------------------------------ F17
+
+	def _build_posting_summary(self) -> None:
+		"""Generate HTML for the posting_summary field on the Review tab."""
+		from frappe.utils import fmt_money
+
+		currency = frappe.db.get_value("Company", self.company, "default_currency") if self.company else ""
+
+		def money(v: float) -> str:
+			return fmt_money(v or 0, currency=currency)
+
+		def vol(v: float, p: int = 3) -> str:
+			return f"{flt(v or 0, p):,.{p}f}"
+
+		parts: list[str] = []
+
+		# Cashier balances
+		parts.append(
+			'<h6 style="margin:4px 0 2px;font-weight:bold">Cashier Balances</h6>'
+			'<table class="table table-condensed" style="font-size:0.82em;margin:0 0 6px">'
+			"<thead><tr><th>Cashier</th>"
+			'<th class="text-right">Expected</th>'
+			'<th class="text-right">Accounted</th>'
+			'<th class="text-right">Difference</th></tr></thead><tbody>'
+		)
+		for c in self.cashiers:
+			diff = flt(c.difference, 2)
+			if diff < 0:
+				dcell = f'<b style="color:#c00">{money(diff)}</b>'
+			elif diff > 0:
+				dcell = f'<b style="color:#c47800">{money(diff)}</b>'
+			else:
+				dcell = money(diff)
+			parts.append(
+				f"<tr><td>{frappe.utils.escape_html(c.cashier or '')}</td>"
+				f'<td class="text-right">{money(c.expected)}</td>'
+				f'<td class="text-right">{money(c.accounted)}</td>'
+				f'<td class="text-right">{dcell}</td></tr>'
+			)
+		parts.append("</tbody></table>")
+
+		# Tank reconciliation
+		parts.append(
+			'<h6 style="margin:4px 0 2px;font-weight:bold">Tank Reconciliation</h6>'
+			'<table class="table table-condensed" style="font-size:0.82em;margin:0 0 6px">'
+			"<thead><tr><th>Tank</th>"
+			'<th class="text-right">Expected L</th>'
+			'<th class="text-right">Dip L</th>'
+			'<th class="text-right">Var L</th>'
+			'<th class="text-right">Var%</th>'
+			"<th>Status</th></tr></thead><tbody>"
+		)
+		for t in self.tank_dips:
+			if t.within_tolerance:
+				badge = (
+					'<span style="background:#5cb85c;color:#fff;padding:1px 5px;border-radius:3px">OK</span>'
+				)
+			elif t.reason:
+				badge = '<span style="background:#f0ad4e;color:#fff;padding:1px 5px;border-radius:3px">Explained</span>'
+			else:
+				badge = '<span style="background:#d9534f;color:#fff;padding:1px 5px;border-radius:3px">Review</span>'
+			parts.append(
+				f"<tr><td>{frappe.utils.escape_html(t.tank or '')}</td>"
+				f'<td class="text-right">{vol(t.expected_l)}</td>'
+				f'<td class="text-right">{vol(t.dip_l)}</td>'
+				f'<td class="text-right">{vol(t.variance_l)}</td>'
+				f'<td class="text-right">{flt(t.variance_pct, 2):.2f}%</td>'
+				f"<td>{badge}</td></tr>"
+			)
+		parts.append("</tbody></table>")
+
+		# Grand totals line
+		parts.append(
+			f'<p style="font-size:0.82em;margin:4px 0;line-height:1.8">'
+			f"<b>Fuel:</b> {vol(self.total_fuel_volume)} L / {money(self.total_fuel_amount)}&emsp;"
+			f"<b>Items:</b> {money(self.total_item_amount)}&emsp;"
+			f"<b>Credit:</b> {money(self.total_credit)}&emsp;"
+			f"<b>Mobile:</b> {money(self.total_mobile)}&emsp;"
+			f"<b>Card:</b> {money(self.total_card)}&emsp;"
+			f"<b>Cash:</b> {money(self.total_cash)}&emsp;"
+			f"<b>Expenses:</b> {money(self.total_expenses)}&emsp;"
+			f"<b>Total Difference:</b> {money(self.total_difference)}"
+			f"</p>"
+		)
+
+		self.posting_summary = "\n".join(parts)
 
 	# ------------------------------------------------------------------ F02
 	def before_insert(self) -> None:
@@ -325,7 +851,7 @@ class ForecourtShift(Document):
 					opening=flt(row.opening_elec_cash),
 					closing=flt(row.closing_elec_cash),
 					rollover=bool(row.rollover_elec_cash),
-					rollover_max=flt(frappe.db.get_value("Nozzle", row.nozzle, "ecash_rollover_max") or 0),
+					rollover_max=flt(frappe.db.get_value("Nozzle", row.nozzle, "ecash_max") or 0),
 				)
 				if row.rec_elec_cash and row.closing_elec_cash
 				else None
@@ -335,7 +861,7 @@ class ForecourtShift(Document):
 					opening=flt(row.opening_elec_meter),
 					closing=flt(row.closing_elec_meter),
 					rollover=bool(row.rollover_elec_meter),
-					rollover_max=flt(frappe.db.get_value("Nozzle", row.nozzle, "evol_rollover_max") or 0),
+					rollover_max=flt(frappe.db.get_value("Nozzle", row.nozzle, "evol_max") or 0),
 				)
 				if row.rec_elec_meter and row.closing_elec_meter
 				else None
@@ -345,7 +871,7 @@ class ForecourtShift(Document):
 					opening=flt(row.opening_man_meter),
 					closing=flt(row.closing_man_meter),
 					rollover=bool(row.rollover_man_meter),
-					rollover_max=flt(frappe.db.get_value("Nozzle", row.nozzle, "mvol_rollover_max") or 0),
+					rollover_max=flt(frappe.db.get_value("Nozzle", row.nozzle, "mvol_max") or 0),
 				)
 				if row.rec_man_meter and row.closing_man_meter
 				else None
@@ -372,13 +898,25 @@ class ForecourtShift(Document):
 			row.net_volume_l = flt(result.basis_litres - test_l - own_use_l, 3)
 			row.amount = flt(row.net_volume_l * price, 2)
 
-			# drift
+			# drift — only meaningful when both meters in a pair were recorded
 			ecash_l = result.ecash_litres
 			evol_l = result.evol_litres
 			mvol_l = result.mvol_litres
-			row.drift_ecash_evol_l = flt(calc_drift.ecash_vs_evol(ecash_l, evol_l), 3)
-			row.drift_ecash_mvol_l = flt(calc_drift.ecash_vs_mvol(ecash_l, mvol_l), 3)
-			row.drift_evol_mvol_l = flt(calc_drift.evol_vs_mvol(evol_l, mvol_l), 3)
+			row.drift_ecash_evol_l = (
+				flt(calc_drift.ecash_vs_evol(ecash_l, evol_l), 3)
+				if (ecash is not None and evol is not None)
+				else 0.0
+			)
+			row.drift_ecash_mvol_l = (
+				flt(calc_drift.ecash_vs_mvol(ecash_l, mvol_l), 3)
+				if (ecash is not None and mvol is not None)
+				else 0.0
+			)
+			row.drift_evol_mvol_l = (
+				flt(calc_drift.evol_vs_mvol(evol_l, mvol_l), 3)
+				if (evol is not None and mvol is not None)
+				else 0.0
+			)
 
 			max_drift = max(
 				abs(row.drift_ecash_evol_l),
@@ -739,6 +1277,9 @@ class ForecourtShift(Document):
 			if isinstance(t, str):
 				h, m, s = [*t.split(":"), "0"][:3]
 				t = time(int(h), int(m), int(float(s)))
+			elif isinstance(t, timedelta):
+				total = int(t.total_seconds())
+				t = time(total // 3600, (total % 3600) // 60, total % 60)
 			return datetime(d.year, d.month, d.day, t.hour, t.minute, t.second)
 
 		if not self.shift_start:
@@ -884,6 +1425,60 @@ class ForecourtShift(Document):
 		if self.station and self.shift_template and self.shift_date:
 			station_label = frappe.db.get_value("Station", self.station, "station_name") or self.station
 			self.shift_title = f"{station_label} · {self.shift_template} · {self.shift_date}"
+
+
+@frappe.whitelist()
+def add_resolution(shift_name: str, resolution_for: str, ref: str) -> dict:
+	"""Append a pre-filled resolution row to the shift and save.
+
+	Called by the Resolve button on cashier and tank grid rows.
+	Returns the new row's name so the client can navigate to it.
+	"""
+	shift = frappe.get_doc("Forecourt Shift", shift_name)
+	frappe.has_permission("Forecourt Shift", doc=shift, throw=True)
+
+	cashier = None
+	tank = None
+	action = "Charge to cashier"
+	amount = 0.0
+	volume_l = 0.0
+
+	if resolution_for == "Cashier":
+		cashier_row = next((c for c in shift.cashiers if c.cashier == ref), None)
+		if not cashier_row:
+			frappe.throw(_("Cashier {0} not found in this shift.").format(ref))
+		diff = flt(cashier_row.difference, 2)
+		cashier = ref
+		if diff < 0:
+			action = "Charge to cashier"
+			amount = abs(diff)
+		else:
+			action = "Record excess"
+			amount = diff
+	elif resolution_for == "Tank":
+		tank_row = next((t for t in shift.tank_dips if t.tank == ref), None)
+		if not tank_row:
+			frappe.throw(_("Tank {0} not found in this shift.").format(ref))
+		tank = ref
+		action = "Accept variance"
+		volume_l = flt(tank_row.variance_l, 3)
+	else:
+		frappe.throw(_("Unknown resolution_for value: {0}").format(resolution_for))
+
+	row = shift.append(
+		"resolutions",
+		{
+			"resolution_for": resolution_for,
+			"cashier": cashier,
+			"tank": tank,
+			"action": action,
+			"amount": amount,
+			"volume_l": volume_l,
+		},
+	)
+	shift.flags.ignore_validate = True
+	shift.save(ignore_permissions=True)
+	return {"name": row.name, "action": action, "amount": amount, "volume_l": volume_l}
 
 
 @frappe.whitelist()

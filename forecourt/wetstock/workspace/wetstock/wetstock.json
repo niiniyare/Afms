@@ -1,0 +1,58 @@
+{
+  "app": "forecourt",
+  "charts": [
+    {"chart_name": "FMS - Cumulative Tank Variance", "label": "Cumulative Tank Variance"},
+    {"chart_name": "FMS - Delivery Variance by Supplier", "label": "Delivery Variance by Supplier"}
+  ],
+  "content": "[{\"id\":\"nc1\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"FMS - Tank Variance This Month\",\"col\":6}},{\"id\":\"nc2\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"FMS - Tanks Below Reorder\",\"col\":6}},{\"id\":\"ch1\",\"type\":\"chart\",\"data\":{\"chart_name\":\"FMS - Cumulative Tank Variance\",\"col\":6}},{\"id\":\"ch2\",\"type\":\"chart\",\"data\":{\"chart_name\":\"FMS - Delivery Variance by Supplier\",\"col\":6}}]",
+  "doctype": "Workspace",
+  "icon": "stock",
+  "is_hidden": 0,
+  "label": "Wetstock",
+  "links": [
+    {"type": "Card Break", "label": "Equipment", "hidden": 0, "is_query_report": 0, "link_count": 5, "onboard": 0},
+    {"type": "Link", "label": "Fuel Tank", "link_to": "Fuel Tank", "link_type": "DocType", "hidden": 0, "is_query_report": 0, "onboard": 1, "link_count": 0},
+    {"type": "Link", "label": "Tank Calibration Chart", "link_to": "Tank Calibration Chart", "link_type": "DocType", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Island", "link_to": "Island", "link_type": "DocType", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Pump", "link_to": "Pump", "link_type": "DocType", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Nozzle", "link_to": "Nozzle", "link_type": "DocType", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Card Break", "label": "Movements", "hidden": 0, "is_query_report": 0, "link_count": 5, "onboard": 0},
+    {"type": "Link", "label": "Purchase Receipt", "link_to": "Purchase Receipt", "link_type": "DocType", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Tank Dip", "link_to": "Tank Dip", "link_type": "DocType", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Tank Transfer", "link_to": "Tank Transfer", "link_type": "DocType", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Meter Change", "link_to": "Meter Change", "link_type": "DocType", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Stock Entry", "link_to": "Stock Entry", "link_type": "DocType", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Card Break", "label": "Reports", "hidden": 0, "is_query_report": 0, "link_count": 7, "onboard": 0},
+    {"type": "Link", "label": "Tank Stock Position", "link_to": "Tank Stock Position", "link_type": "Report", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Wetstock Variance", "link_to": "Wetstock Variance", "link_type": "Report", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Delivery Variance", "link_to": "Delivery Variance", "link_type": "Report", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Meter Drift", "link_to": "Meter Drift", "link_type": "Report", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Sales by Tank", "link_to": "Sales by Tank", "link_type": "Report", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Sales by Pump and Nozzle", "link_to": "Sales by Pump and Nozzle", "link_type": "Report", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Run-out Forecast", "link_to": "Run-out Forecast", "link_type": "Report", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0}
+  ],
+  "module": "Wetstock",
+  "name": "Wetstock",
+  "number_cards": [
+    {"number_card_name": "FMS - Tank Variance This Month", "label": "Tank Variance This Month (L)"},
+    {"number_card_name": "FMS - Tanks Below Reorder", "label": "Tanks Below Reorder"}
+  ],
+  "parent_page": "Forecourt",
+  "public": 1,
+  "quick_lists": [],
+  "roles": [
+    {"role": "Station Manager"},
+    {"role": "Area Manager"},
+    {"role": "Forecourt Administrator"}
+  ],
+  "sequence_id": 3.0,
+  "shortcuts": [
+    {"type": "DocType", "label": "New Tank Dip", "link_to": "Tank Dip", "doc_view": "new"},
+    {"type": "DocType", "label": "New GRN", "link_to": "Purchase Receipt", "doc_view": "new"},
+    {"type": "Report", "label": "Tank Stock Position", "link_to": "Tank Stock Position", "is_query_report": 0},
+    {"type": "Report", "label": "Run-out Forecast", "link_to": "Run-out Forecast", "is_query_report": 0}
+  ],
+  "standard": "Yes",
+  "title": "Wetstock",
+  "type": "Dashboard"
+}

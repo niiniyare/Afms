@@ -49,6 +49,7 @@ fixtures = [
 				"name",
 				"in",
 				[
+					# Operational roles
 					"Business Executive",
 					"Station Manager",
 					"Assistant Station Manager",
@@ -57,20 +58,86 @@ fixtures = [
 					"Site Cashier",
 					"Station Accountant",
 					"Integration Service Account",
+					# Management and oversight roles
+					"Area Manager",
+					"Forecourt Administrator",
+					"Forecourt Accountant",
+					"Forecourt Director",
+					"Forecourt Investor",
 				],
 			]
 		],
 	},
 	# Workflow and workflow states/actions for FMS DocTypes
-	{"dt": "Workflow State", "filters": [["name", "like", "FMS %"]]},
-	{"dt": "Workflow Action Master", "filters": [["name", "like", "FMS %"]]},
-	{"dt": "Workflow", "filters": [["document_type", "like", "Forecourt %"]]},
+	{
+		"dt": "Workflow State",
+		"filters": [
+			[
+				"name",
+				"in",
+				[
+					"Draft",
+					"Pending Director Approval",
+					"Approved",
+					"Applied",
+					"Rejected",
+					"Pending Approval",
+					"Not Required",
+				],
+			]
+		],
+	},
+	{
+		"dt": "Workflow Action Master",
+		"filters": [
+			[
+				"name",
+				"in",
+				["Submit for Approval", "Approve", "Apply", "Reject"],
+			]
+		],
+	},
+	{
+		"dt": "Workflow",
+		"filters": [
+			[
+				"name",
+				"in",
+				["Shift Correction Approval", "Forecourt Shift Approval", "Fuel Price Change Approval"],
+			]
+		],
+	},
 	# FMS stock entry types
 	{"dt": "Stock Entry Type", "filters": [["name", "like", "Fuel %"]]},
 	# Station as an accounting dimension
-	{"dt": "Accounting Dimension", "filters": [["document_type", "=", "Forecourt Station"]]},
+	{"dt": "Accounting Dimension", "filters": [["document_type", "=", "Station"]]},
 	# Station Group root seed record
 	{"dt": "Station Group", "filters": [["name", "=", "All Station Groups"]]},
+	# FMS number cards and dashboard charts
+	{"dt": "Number Card", "filters": [["name", "like", "FMS - %"]]},
+	{"dt": "Dashboard Chart", "filters": [["name", "like", "FMS - %"]]},
+	# Reference master seed records (catalogue 4.4)
+	{
+		"dt": "Variance Reason",
+		"filters": [
+			[
+				"name",
+				"in",
+				[
+					"Dip error",
+					"Suspected leak",
+					"Suspected theft",
+					"Meter fault",
+					"Temperature",
+					"Delivery",
+					"Counting error",
+					"Drive-off (cashier)",
+					"Spillage (tank)",
+					"Unknown",
+				],
+			],
+		],
+	},
 ]
 
 # Each item in the list will be shown as an app in the apps page
@@ -217,10 +284,46 @@ app_include_js = "/assets/forecourt/js/station_default.js"
 
 permission_query_conditions = {
 	"Station Group": "forecourt.forecourt_setup.doctype.station_group.station_group.permission_query_conditions",
+	# Station-level row filtering (design guide 14.2)
+	"Station": "forecourt.permissions.station_query",
+	"Fuel Tank": "forecourt.permissions.fuel_tank_query",
+	"Pump": "forecourt.permissions.pump_query",
+	"Island": "forecourt.permissions.island_query",
+	"Nozzle": "forecourt.permissions.nozzle_query",
+	"Tank Calibration Chart": "forecourt.permissions.tank_calibration_chart_query",
+	"Meter Change": "forecourt.permissions.meter_change_query",
+	"Tank Dip": "forecourt.permissions.tank_dip_query",
+	"Tank Transfer": "forecourt.permissions.tank_transfer_query",
+	"Forecourt Shift Template": "forecourt.permissions.forecourt_shift_template_query",
+	"Fuel Price Change": "forecourt.permissions.fuel_price_change_query",
+	"Forecourt Shift": "forecourt.permissions.forecourt_shift_query",
+	"Shift Correction": "forecourt.permissions.shift_correction_query",
+	"Wetstock Ledger Entry": "forecourt.permissions.wetstock_ledger_entry_query",
+	"Nozzle Ledger Entry": "forecourt.permissions.nozzle_ledger_entry_query",
+	"Sales Ledger Entry": "forecourt.permissions.sales_ledger_entry_query",
+	"Cashier Ledger Entry": "forecourt.permissions.cashier_ledger_entry_query",
 }
 
 has_permission = {
 	"Station Group": "forecourt.forecourt_setup.doctype.station_group.station_group.has_permission",
+	# Single generic handler for all station-carrying FMS DocTypes (design guide 14.2)
+	"Station": "forecourt.permissions.has_station_permission",
+	"Fuel Tank": "forecourt.permissions.has_station_permission",
+	"Pump": "forecourt.permissions.has_station_permission",
+	"Island": "forecourt.permissions.has_station_permission",
+	"Nozzle": "forecourt.permissions.has_station_permission",
+	"Tank Calibration Chart": "forecourt.permissions.has_station_permission",
+	"Meter Change": "forecourt.permissions.has_station_permission",
+	"Tank Dip": "forecourt.permissions.has_station_permission",
+	"Tank Transfer": "forecourt.permissions.has_station_permission",
+	"Forecourt Shift Template": "forecourt.permissions.has_station_permission",
+	"Fuel Price Change": "forecourt.permissions.has_station_permission",
+	"Forecourt Shift": "forecourt.permissions.has_station_permission",
+	"Shift Correction": "forecourt.permissions.has_station_permission",
+	"Wetstock Ledger Entry": "forecourt.permissions.has_station_permission",
+	"Nozzle Ledger Entry": "forecourt.permissions.has_station_permission",
+	"Sales Ledger Entry": "forecourt.permissions.has_station_permission",
+	"Cashier Ledger Entry": "forecourt.permissions.has_station_permission",
 }
 
 # Document Events
@@ -239,6 +342,11 @@ doc_events = {
 	},
 	"Sales Invoice": {
 		"validate": "forecourt.forecourt_shift.price_hooks.set_fuel_price_on_invoice",
+		"on_submit": "forecourt.forecourt_integrations.fiscal_hooks.on_submit_sales_invoice",
+		"on_cancel": [
+			"forecourt.forecourt_integrations.fiscal_hooks.on_cancel_sales_invoice",
+			"forecourt.forecourt_shift.cancel_guards.on_cancel_native",
+		],
 	},
 	"POS Invoice": {
 		"validate": "forecourt.forecourt_shift.price_hooks.set_fuel_price_on_invoice",
@@ -265,23 +373,11 @@ doctype_js = {
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"forecourt.tasks.all"
-# 	],
-# 	"daily": [
-# 		"forecourt.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"forecourt.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"forecourt.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"forecourt.tasks.monthly"
-# 	],
-# }
+scheduler_events = {
+	"daily": [
+		"forecourt.forecourt_setup.report.fms_health.fms_health.send_daily",
+	],
+}
 
 # Testing
 # -------

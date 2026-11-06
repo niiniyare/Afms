@@ -69,6 +69,11 @@ class TankDip(Document):
 		)
 		self.book_volume_l = flt((result[0].book or 0.0), 3) if result else 0.0
 
+	def on_submit(self) -> None:
+		from forecourt.posting import ledgers as posting_ledgers
+
+		posting_ledgers.write_spot_dip_wetstock_ledger(self)
+
 	def _compute_difference(self) -> None:
 		net_volume = flt(self.volume_l) - flt(self.water_l)
 		self.difference_l = flt(net_volume - flt(self.book_volume_l), 3)

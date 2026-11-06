@@ -1,0 +1,16 @@
+{
+ "action": "Create Entry",
+ "action_label": "Add an Island",
+ "description": "An Island is a physical plinth of pumps. Create one per forecourt island for reporting.",
+ "doctype": "Onboarding Step",
+ "is_complete": 0,
+ "is_optional": 0,
+ "is_single": 0,
+ "is_skipped": 0,
+ "name": "FMS Islands",
+ "reference_document": "Island",
+ "show_form_tour": 0,
+ "show_full_form": 1,
+ "title": "Add islands",
+ "validate_action": 1
+}

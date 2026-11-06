@@ -1,0 +1,173 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-10-27 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "provider",
+  "direction",
+  "col_break_1",
+  "message_type",
+  "status",
+  "col_break_2",
+  "external_id",
+  "received_at",
+  "col_break_3",
+  "attempts",
+  "section_payload",
+  "payload",
+  "section_result",
+  "error",
+  "col_break_4",
+  "processed_doctype",
+  "processed_name"
+ ],
+ "fields": [
+  {
+   "fieldname": "provider",
+   "fieldtype": "Link",
+   "label": "Provider",
+   "options": "Payment Provider",
+   "reqd": 1,
+   "search_index": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "direction",
+   "fieldtype": "Select",
+   "label": "Direction",
+   "options": "In\nOut",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "col_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "message_type",
+   "fieldtype": "Data",
+   "label": "Message Type",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Received\nProcessed\nFailed\nIgnored",
+   "reqd": 1,
+   "search_index": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "col_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "external_id",
+   "fieldtype": "Data",
+   "label": "External ID",
+   "reqd": 1,
+   "search_index": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "received_at",
+   "fieldtype": "Datetime",
+   "label": "Received At",
+   "reqd": 1,
+   "search_index": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "col_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "attempts",
+   "fieldtype": "Int",
+   "label": "Attempts",
+   "default": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_payload",
+   "fieldtype": "Section Break",
+   "label": "Payload",
+   "collapsible": 0
+  },
+  {
+   "fieldname": "payload",
+   "fieldtype": "JSON",
+   "label": "Payload",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_result",
+   "fieldtype": "Section Break",
+   "label": "Result",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "error",
+   "fieldtype": "Long Text",
+   "label": "Error"
+  },
+  {
+   "fieldname": "col_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "processed_doctype",
+   "fieldtype": "Link",
+   "label": "Processed DocType",
+   "options": "DocType",
+   "read_only": 1
+  },
+  {
+   "fieldname": "processed_name",
+   "fieldtype": "Dynamic Link",
+   "label": "Processed Name",
+   "options": "processed_doctype",
+   "read_only": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-27 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Forecourt Integrations",
+ "name": "Integration Inbox",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "permlevel": 0,
+   "role": "Forecourt Administrator",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Forecourt Accountant",
+   "read": 1,
+   "write": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "delete": 1
+  }
+ ],
+ "sort_field": "received_at",
+ "sort_order": "DESC",
+ "track_changes": 0
+}

@@ -1,0 +1,16 @@
+{
+  "add_total_row": 0,
+  "doctype": "Report",
+  "is_standard": "Yes",
+  "module": "Wetstock",
+  "name": "Meter Drift",
+  "ref_doctype": "Nozzle Ledger Entry",
+  "report_name": "Meter Drift",
+  "report_type": "Script Report",
+  "roles": [
+    {"role": "Station Manager"},
+    {"role": "Area Manager"},
+    {"role": "Forecourt Director"},
+    {"role": "Forecourt Administrator"}
+  ]
+}

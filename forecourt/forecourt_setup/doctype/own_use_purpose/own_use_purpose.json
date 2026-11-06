@@ -53,28 +53,76 @@
  "owner": "Administrator",
  "permissions": [
   {
-   "create": 1,
-   "delete": 1,
    "permlevel": 0,
-   "read": 1,
    "role": "Forecourt Administrator",
-   "write": 1
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
   },
   {
-   "create": 1,
-   "delete": 1,
    "permlevel": 0,
+   "role": "Forecourt Accountant",
    "read": 1,
-   "role": "Station Accountant",
-   "write": 1
+   "write": 1,
+   "create": 1,
+   "delete": 1
   },
-  {"permlevel": 0, "read": 1, "role": "Business Executive"},
-  {"permlevel": 0, "read": 1, "role": "Station Manager"},
-  {"permlevel": 0, "read": 1, "role": "Assistant Station Manager"},
-  {"permlevel": 0, "read": 1, "role": "Forecourt Supervisor"},
-  {"permlevel": 0, "read": 1, "role": "Forecourt Sales Operator"},
-  {"permlevel": 0, "read": 1, "role": "Site Cashier"},
-  {"permlevel": 0, "read": 1, "role": "Integration Service Account"}
+  {
+   "permlevel": 0,
+   "role": "Business Executive",
+   "read": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Station Manager",
+   "read": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Assistant Station Manager",
+   "read": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Forecourt Supervisor",
+   "read": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Forecourt Sales Operator",
+   "read": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Site Cashier",
+   "read": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Station Accountant",
+   "read": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Integration Service Account",
+   "read": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Area Manager",
+   "read": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Forecourt Director",
+   "read": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Forecourt Investor",
+   "read": 1
+  }
  ],
  "sort_field": "purpose",
  "sort_order": "ASC",

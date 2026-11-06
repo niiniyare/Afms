@@ -1,0 +1,16 @@
+{
+ "action": "Create Entry",
+ "action_label": "Create a Shift Template",
+ "description": "A Shift Template defines which cashiers and nozzles participate in a shift, and sets the default shift duration. Create one per station.",
+ "doctype": "Onboarding Step",
+ "is_complete": 0,
+ "is_optional": 0,
+ "is_single": 0,
+ "is_skipped": 0,
+ "name": "FMS Shift Template",
+ "reference_document": "Forecourt Shift Template",
+ "show_form_tour": 0,
+ "show_full_form": 1,
+ "title": "Create a shift template",
+ "validate_action": 1
+}

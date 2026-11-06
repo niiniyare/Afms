@@ -1,8 +1,17 @@
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
+from forecourt.tests.factories import make_fuel_item
+
+_TEST_ITEM = "TEST-FUEL-TANK-UNIT"
+
 
 class TestFuelTank(FrappeTestCase):
+	@classmethod
+	def setUpClass(cls):
+		super().setUpClass()
+		make_fuel_item(_TEST_ITEM)
+
 	def tearDown(self):
 		frappe.db.delete("Fuel Tank", {"tank_code": ["like", "TST%"]})
 
@@ -11,7 +20,7 @@ class TestFuelTank(FrappeTestCase):
 			"doctype": "Fuel Tank",
 			"station": "TS-NBO-TSTL",
 			"tank_code": "TST1",
-			"item": frappe.db.get_value("Item", {"fms_is_fuel": 1}, "name") or "PMS",
+			"item": frappe.db.get_value("Item", {"fms_is_fuel": 1}, "name") or _TEST_ITEM,
 			"capacity_l": 30000.0,
 		}
 		defaults.update(kwargs)

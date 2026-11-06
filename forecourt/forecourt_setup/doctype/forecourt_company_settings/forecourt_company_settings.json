@@ -253,6 +253,48 @@
    "label": "Temperature Compensation",
    "read_only": 1,
    "description": "Reserved for backlog epic P7 (Phase 0–3 record temperature and density only)"
+  },
+  {
+   "fieldname": "fiscal_section",
+   "fieldtype": "Section Break",
+   "label": "Fiscal Integration"
+  },
+  {
+   "fieldname": "fiscal_adapter",
+   "fieldtype": "Select",
+   "label": "Fiscal Adapter",
+   "options": "\neTIMS Kenya",
+   "description": "Leave empty to disable fiscalisation."
+  },
+  {
+   "fieldname": "fiscal_sandbox_mode",
+   "fieldtype": "Check",
+   "label": "Sandbox Mode",
+   "default": "1",
+   "description": "Use the sandbox URL for testing. Uncheck in production."
+  },
+  {
+   "fieldname": "fiscal_device_id",
+   "fieldtype": "Data",
+   "label": "Device / BHF ID",
+   "description": "Branch Head File ID assigned by KRA (eTIMS). Default 00."
+  },
+  {
+   "fieldname": "fiscal_device_serial",
+   "fieldtype": "Data",
+   "label": "Device Serial Number"
+  },
+  {
+   "fieldname": "fiscal_api_url",
+   "fieldtype": "Data",
+   "label": "API Base URL Override",
+   "description": "Leave empty to use the default sandbox or production URL."
+  },
+  {
+   "fieldname": "fiscal_api_key",
+   "fieldtype": "Password",
+   "label": "API Key / Authorization",
+   "description": "Bearer token or API key for the fiscal API."
   }
  ],
  "links": [],
@@ -264,61 +306,73 @@
  "owner": "Administrator",
  "permissions": [
   {
-   "create": 1,
-   "delete": 1,
    "permlevel": 0,
-   "read": 1,
-   "role": "System Manager",
-   "write": 1
-  },
-  {
-   "create": 1,
-   "delete": 1,
-   "permlevel": 0,
-   "read": 1,
    "role": "Forecourt Administrator",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Forecourt Accountant",
+   "read": 1,
    "write": 1
   },
   {
    "permlevel": 0,
-   "read": 1,
+   "role": "Business Executive",
+   "read": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Station Manager",
+   "read": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Assistant Station Manager",
+   "read": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Forecourt Supervisor",
+   "read": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Forecourt Sales Operator",
+   "read": 1
+  },
+  {
+   "permlevel": 0,
+   "role": "Site Cashier",
+   "read": 1
+  },
+  {
+   "permlevel": 0,
    "role": "Station Accountant",
-   "write": 1
+   "read": 1
   },
   {
    "permlevel": 0,
-   "read": 1,
-   "role": "Business Executive"
+   "role": "Integration Service Account",
+   "read": 1
   },
   {
    "permlevel": 0,
-   "read": 1,
-   "role": "Station Manager"
+   "role": "Area Manager",
+   "read": 1
   },
   {
    "permlevel": 0,
-   "read": 1,
-   "role": "Assistant Station Manager"
+   "role": "Forecourt Director",
+   "read": 1
   },
   {
    "permlevel": 0,
-   "read": 1,
-   "role": "Forecourt Supervisor"
-  },
-  {
-   "permlevel": 0,
-   "read": 1,
-   "role": "Forecourt Sales Operator"
-  },
-  {
-   "permlevel": 0,
-   "read": 1,
-   "role": "Site Cashier"
-  },
-  {
-   "permlevel": 0,
-   "read": 1,
-   "role": "Integration Service Account"
+   "role": "Forecourt Investor",
+   "read": 1
   }
  ],
  "sort_field": "company",

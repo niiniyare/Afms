@@ -1,0 +1,16 @@
+{
+ "action": "Create Entry",
+ "action_label": "Add Tank Calibration Chart",
+ "description": "Upload the tank's dip-to-litre table from the calibration certificate. The FMS uses it to convert dip readings to litres.",
+ "doctype": "Onboarding Step",
+ "is_complete": 0,
+ "is_optional": 1,
+ "is_single": 0,
+ "is_skipped": 0,
+ "name": "FMS Calibration Charts",
+ "reference_document": "Tank Calibration Chart",
+ "show_form_tour": 0,
+ "show_full_form": 1,
+ "title": "Upload calibration charts",
+ "validate_action": 1
+}

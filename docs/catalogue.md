@@ -201,7 +201,7 @@ Global defaults for the whole site. Company-specific values live in Forecourt Co
 | autoname | `field:company` |
 | title_field | company |
 | track_changes | 1 |
-| Permissions | Forecourt Administrator: R W C D · Forecourt Accountant: R W · others: R |
+| Permissions | Forecourt Administrator: R W C D · Station Accountant: R W · others: R |
 
 | Fieldname | Type | Options | Flags | Notes |
 |---|---|---|---|---|
@@ -278,7 +278,7 @@ Global defaults for the whole site. Company-specific values live in Forecourt Co
 |---|---|
 | module | Forecourt Setup |
 | autoname | `field:expense_type` |
-| Permissions | Forecourt Administrator, Forecourt Accountant: R W C D · others: R |
+| Permissions | Forecourt Administrator, Station Accountant: R W C D · others: R |
 
 | Fieldname | Type | Options | Flags | Notes |
 |---|---|---|---|---|
@@ -296,7 +296,7 @@ Global defaults for the whole site. Company-specific values live in Forecourt Co
 |---|---|
 | module | Forecourt Setup |
 | autoname | `field:purpose` |
-| Permissions | Forecourt Administrator, Forecourt Accountant: R W C D · others: R |
+| Permissions | Forecourt Administrator, Station Accountant: R W C D · others: R |
 
 | Fieldname | Type | Options | Flags | Notes |
 |---|---|---|---|---|
@@ -313,7 +313,7 @@ Global defaults for the whole site. Company-specific values live in Forecourt Co
 |---|---|
 | module | Forecourt Integrations |
 | autoname | `field:provider_name` |
-| Permissions | Forecourt Administrator: R W C D · Forecourt Accountant: R W · others: R |
+| Permissions | Forecourt Administrator: R W C D · Station Accountant: R W · others: R |
 
 | Fieldname | Type | Options | Flags | Notes |
 |---|---|---|---|---|
@@ -1009,7 +1009,7 @@ Composite index: (`cashier`, `posting_date`).
 | autoname | `hash` |
 | in_create | 1 |
 | track_changes | 0 |
-| Permissions | Forecourt Administrator, Forecourt Accountant: R W (retry button) · System Manager: R W D |
+| Permissions | Forecourt Administrator, Station Accountant: R W (retry button) · System Manager: R W D |
 
 | Fieldname | Type | Options | Flags | Notes |
 |---|---|---|---|---|
@@ -1080,7 +1080,7 @@ All shipped as fixtures (`Custom Field`, `Property Setter`) filtered by `module 
 | Item | `fms_is_fuel` (Check, I) | Fuel items |
 | Employee | `fms_is_forecourt_cashier` (Check, I), `fms_default_station` (Link Station) | Cashier selection |
 | Customer | `fms_is_walk_in` (Check), `fms_station` (Link Station) | Walk-in customer per station |
-| Sales Invoice | `fms_forecourt_shift` (Link, I, RO), `fms_cashier` (Link Employee, I) | Generated invoices, and POS sales when POS creates Sales Invoices |
+| Sales Invoice | `fms_forecourt_shift` (Link, I, RO), `fms_cashier` (Link Employee, I), `fms_fiscal_status` (Select: Pending/Submitted/Failed/Cancelled, RO), `fms_fiscal_receipt_no` (Data, RO), `fms_fiscal_signature` (Small Text, RO), `fms_fiscal_qr` (Small Text, Hidden, RO) | Generated invoices, and POS sales when POS creates Sales Invoices; fiscal fields store eTIMS / KRA receipt data |
 | Delivery Note | `fms_forecourt_shift` (Link, I, RO), `fms_cashier` (Link Employee) | Credit sales when the company invoices monthly (design guide D26) |
 | POS Invoice | `fms_forecourt_shift` (Link, I), `fms_cashier` (Link Employee, I) | Pulling shop sales |
 | Payment Entry | `fms_forecourt_shift` (Link, I, RO), `fms_cashier` (Link Employee), `fms_provider` (Link Payment Provider), `fms_till_or_terminal` (Data), `fms_transaction_time` (Datetime) | Per-transaction reconciliation; `reference_no` and `reference_date` are standard |
@@ -1110,6 +1110,8 @@ All shipped as fixtures (`Custom Field`, `Property Setter`) filtered by `module 
 | Stock Entry | `on_cancel` | Block if a closed shift used it |
 | Payment Entry, Sales Invoice, Delivery Note, Journal Entry, Stock Reconciliation | `on_cancel` | Block when `fms_forecourt_shift` is set, unless the cancel comes from a Shift Correction (`frappe.flags.fms_correction`) (FMS-C502) |
 | POS Invoice, Sales Invoice | `validate` | For fuel items at a station: set the rate from the Fuel Price Change in force at the posting date and time (design guide D24). For POS sales: default `fms_cashier` from the Employee whose `user_id` is the POS user |
+| Sales Invoice | `on_submit` | If `Forecourt Company Settings.fiscal_adapter` is set, enqueue an outbound Integration Inbox row (`fiscal_submit`) which the background worker sends to the fiscal adapter (eTIMS, ZATCA, etc.) and stores `fms_fiscal_receipt_no`, `fms_fiscal_signature`, `fms_fiscal_qr` on the invoice |
+| Sales Invoice | `on_cancel` (fiscal) | If the invoice was fiscalised, enqueue `fiscal_cancel` via Integration Inbox to reverse the fiscal record |
 
 ---
 
@@ -1214,7 +1216,7 @@ Forecourt                      (parent, Station Manager home)
 | Chart | Cumulative tank variance % · Delivery variance by supplier |
 | Link cards | *Equipment*: Fuel Tank, Tank Calibration Chart, Island, Pump, Nozzle · *Movements*: Purchase Receipt (fuel), Tank Dip, Tank Transfer, Meter Change, Stock Entry (Fuel Own Use) · *Reports*: Tank Stock Position, Wetstock Variance, Delivery Variance, Meter Drift, Sales by Tank, Sales by Pump and Nozzle, Run-out Forecast |
 
-**Forecourt Finance** (module Forecourt Finance; roles Forecourt Accountant, Area Manager, Station Manager read)
+**Forecourt Finance** (module Forecourt Finance; roles Station Accountant, Area Manager, Station Manager read)
 
 | Block | Content |
 |---|---|

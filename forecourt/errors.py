@@ -53,6 +53,7 @@ FMS_S112 = "FMS-S112"  # Price segment has no meter readings
 FMS_S113 = "FMS-S113"  # Draft Fuel Own Use entry in shift window
 FMS_S114 = "FMS-S114"  # Duplicate mobile money / card reference
 FMS_S115 = "FMS-S115"  # Test volume above nozzle per-shift limit (D29, proposed)
+FMS_S116 = "FMS-S116"  # Shift has resolutions/variances requiring area manager approval
 
 # ---------------------------------------------------------------------------
 # FMS-W1xx  Meters and drift
@@ -104,4 +105,7 @@ FMS_M604 = "FMS-M604"  # Tank capacity or safe fill invalid
 FMS_M605 = "FMS-M605"  # Calibration chart depths/volumes not strictly increasing
 FMS_M606 = "FMS-M606"  # Nozzle tank belongs to another station
 FMS_M607 = "FMS-M607"  # Last nozzle readings can only be changed by a shift or Meter Change
+FMS_M608 = "FMS-M608"  # Fuel Tank cannot be deleted: it has stock history
+FMS_M609 = "FMS-M609"  # Nozzle opening readings cannot be changed after a shift references this nozzle
+FMS_M610 = "FMS-M610"  # Fuel Tank opening dip cannot be changed after stock has been recorded
 FMS_M630 = "FMS-M630"  # Station Group has children — cannot unset Is Group

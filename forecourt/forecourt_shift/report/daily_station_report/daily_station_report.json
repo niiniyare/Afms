@@ -1,0 +1,19 @@
+{
+  "add_total_row": 1,
+  "columns": [],
+  "doctype": "Report",
+  "filters": [],
+  "is_standard": "Yes",
+  "module": "Forecourt Shift",
+  "name": "Daily Station Report",
+  "ref_doctype": "Forecourt Shift",
+  "report_name": "Daily Station Report",
+  "report_type": "Script Report",
+  "roles": [
+    {"role": "Station Manager"},
+    {"role": "Area Manager"},
+    {"role": "Forecourt Director"},
+    {"role": "Forecourt Accountant"},
+    {"role": "Forecourt Administrator"}
+  ]
+}

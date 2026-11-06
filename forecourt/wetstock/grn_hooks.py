@@ -17,7 +17,12 @@ def _get_station(doc) -> str | None:
 	station = getattr(doc, "station", None)
 	if station:
 		return station
-	if doc.name:
+	# Only query the DB if the accounting-dimension field has been registered
+	# in the DocType metadata and migrated into the schema.  During a fresh
+	# bench install the AccountingDimension fixture fires after_insert while
+	# frappe.flags.in_install is set, so ERPNext skips custom-field creation.
+	# The column therefore does not exist until the site owner runs migrate.
+	if doc.name and frappe.get_meta("Purchase Receipt").has_field("station"):
 		return frappe.db.get_value("Purchase Receipt", doc.name, "station")
 	return None
 
@@ -116,8 +121,10 @@ def _check_tolerance(row) -> None:
 
 
 def on_submit_purchase_receipt(doc, method=None) -> None:
-	"""Placeholder: Wetstock Ledger Entry (Delivery) wired in FMS-F15."""
-	pass
+	"""Write Wetstock Ledger Entry (Delivery) for each delivery dip row."""
+	from forecourt.posting import ledgers as posting_ledgers
+
+	posting_ledgers.write_delivery_wetstock_ledger(doc)
 
 
 def on_cancel_purchase_receipt(doc, method=None) -> None:
