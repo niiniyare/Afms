@@ -1,7 +1,7 @@
 {
   "app": "forecourt",
   "charts": [],
-  "content": "[]",
+  "content": "[{\"id\":\"sc1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Forecourt Settings\",\"col\":4}},{\"id\":\"sc2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Station\",\"col\":4}},{\"id\":\"sc3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Station Groups\",\"col\":4}},{\"id\":\"cd1\",\"type\":\"card\",\"data\":{\"card_name\":\"Settings\",\"col\":6}},{\"id\":\"cd2\",\"type\":\"card\",\"data\":{\"card_name\":\"Network\",\"col\":6}},{\"id\":\"cd3\",\"type\":\"card\",\"data\":{\"card_name\":\"Masters\",\"col\":6}},{\"id\":\"cd4\",\"type\":\"card\",\"data\":{\"card_name\":\"Integrations\",\"col\":6}},{\"id\":\"cd5\",\"type\":\"card\",\"data\":{\"card_name\":\"Health\",\"col\":6}}]",
   "doctype": "Workspace",
   "icon": "settings",
   "is_hidden": 0,
@@ -36,7 +36,11 @@
   "sequence_id": 7.0,
   "shortcuts": [
     {"type": "DocType", "label": "Forecourt Settings", "link_to": "Forecourt Settings", "doc_view": ""},
-    {"type": "DocType", "label": "New Station", "link_to": "Station", "doc_view": "new"},
+    {
+      "type": "URL",
+      "label": "New Station",
+      "url": "/app/station/new-station-1"
+    },
     {"type": "DocType", "label": "Station Groups", "link_to": "Station Group", "doc_view": "list"}
   ],
   "onboarding": "Forecourt Setup Onboarding",

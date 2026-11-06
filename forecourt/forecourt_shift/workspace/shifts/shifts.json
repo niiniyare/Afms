@@ -1,7 +1,7 @@
 {
   "app": "forecourt",
   "charts": [],
-  "content": "[]",
+  "content": "[{\"id\":\"sc1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Shift\",\"col\":3}},{\"id\":\"sc2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Shifts Awaiting Approval\",\"col\":3}},{\"id\":\"sc3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Fuel Price Change\",\"col\":3}},{\"id\":\"sc4\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Shift Correction\",\"col\":3}},{\"id\":\"cd1\",\"type\":\"card\",\"data\":{\"card_name\":\"Shift\",\"col\":6}},{\"id\":\"cd2\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":6}}]",
   "doctype": "Workspace",
   "icon": "timesheet",
   "is_hidden": 0,
@@ -29,10 +29,23 @@
   ],
   "sequence_id": 2.0,
   "shortcuts": [
-    {"type": "DocType", "label": "New Shift", "link_to": "Forecourt Shift", "doc_view": "new"},
+    {
+      "type": "URL",
+      "label": "New Shift",
+      "url": "/app/forecourt-shift/new-forecourt-shift-1",
+      "color": "green"
+    },
     {"type": "DocType", "label": "Shifts Awaiting Approval", "link_to": "Forecourt Shift", "doc_view": "list"},
-    {"type": "DocType", "label": "Fuel Price Change", "link_to": "Fuel Price Change", "doc_view": "new"},
-    {"type": "DocType", "label": "Shift Correction", "link_to": "Shift Correction", "doc_view": "new"}
+    {
+      "type": "URL",
+      "label": "Fuel Price Change",
+      "url": "/app/fuel-price-change/new-fuel-price-change-1"
+    },
+    {
+      "type": "URL",
+      "label": "Shift Correction",
+      "url": "/app/shift-correction/new-shift-correction-1"
+    }
   ],
   "standard": "Yes",
   "title": "Shifts",
