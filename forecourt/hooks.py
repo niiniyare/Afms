@@ -113,9 +113,10 @@ fixtures = [
 	{"dt": "Accounting Dimension", "filters": [["document_type", "=", "Station"]]},
 	# Station Group root seed record
 	{"dt": "Station Group", "filters": [["name", "=", "All Station Groups"]]},
-	# FMS number cards and dashboard charts
+	# FMS number cards, dashboard charts and workspaces
 	{"dt": "Number Card", "filters": [["name", "like", "FMS - %"]]},
 	{"dt": "Dashboard Chart", "filters": [["name", "like", "FMS - %"]]},
+	{"dt": "Workspace", "filters": [["name", "=", "Forecourt"]]},
 	# Reference master seed records (catalogue 4.4)
 	{
 		"dt": "Variance Reason",

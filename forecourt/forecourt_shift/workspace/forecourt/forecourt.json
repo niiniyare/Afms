@@ -12,10 +12,11 @@
     {"type": "Card Break", "label": "Today", "hidden": 0, "is_query_report": 0, "link_count": 4, "onboard": 0},
     {"type": "Link", "label": "Forecourt Shift", "link_to": "Forecourt Shift", "link_type": "DocType", "hidden": 0, "is_query_report": 0, "onboard": 1, "link_count": 0},
     {"type": "Link", "label": "Purchase Receipt", "link_to": "Purchase Receipt", "link_type": "DocType", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
-    {"type": "Link", "label": "Stock Entry", "link_to": "Stock Entry", "link_type": "DocType", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Fuel Own Use", "link_to": "Stock Entry", "link_type": "DocType", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Payment Import Batch", "link_to": "Payment Import Batch", "link_type": "DocType", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
     {"type": "Card Break", "label": "Reports", "hidden": 0, "is_query_report": 0, "link_count": 3, "onboard": 0},
-    {"type": "Link", "label": "Daily Station Report", "link_to": "Daily Station Report", "link_type": "Report", "hidden": 0, "is_query_report": 1, "onboard": 1, "link_count": 0},
-    {"type": "Link", "label": "Shift Report", "link_to": "Shift Report", "link_type": "Report", "hidden": 0, "is_query_report": 0, "onboard": 0, "link_count": 0},
+    {"type": "Link", "label": "Shift Report", "link_to": "Shift Report", "link_type": "Report", "hidden": 0, "is_query_report": 1, "onboard": 1, "link_count": 0},
+    {"type": "Link", "label": "Daily Station Report", "link_to": "Daily Station Report", "link_type": "Report", "hidden": 0, "is_query_report": 1, "onboard": 0, "link_count": 0},
     {"type": "Link", "label": "Open Items", "link_to": "Open Items", "link_type": "Report", "hidden": 0, "is_query_report": 1, "onboard": 0, "link_count": 0}
   ],
   "module": "Forecourt Shift",
@@ -38,11 +39,46 @@
   ],
   "sequence_id": 1.0,
   "shortcuts": [
-    {"type": "DocType", "label": "New Shift", "link_to": "Forecourt Shift", "doc_view": "new"},
-    {"type": "DocType", "label": "Open Shifts", "link_to": "Forecourt Shift", "doc_view": "list"},
-    {"type": "DocType", "label": "New GRN", "link_to": "Purchase Receipt", "doc_view": "new"},
-    {"type": "DocType", "label": "Spot Dip", "link_to": "Tank Dip", "doc_view": "new"},
-    {"type": "Report", "label": "Daily Station Report", "link_to": "Daily Station Report", "is_query_report": 1}
+    {
+      "type": "DocType",
+      "label": "New Shift",
+      "link_to": "Forecourt Shift",
+      "doc_view": "new",
+      "color": "green"
+    },
+    {
+      "type": "DocType",
+      "label": "Open Shifts",
+      "link_to": "Forecourt Shift",
+      "doc_view": "list",
+      "stats_filter": "[[\"docstatus\",\"=\",0]]",
+      "color": "blue"
+    },
+    {
+      "type": "DocType",
+      "label": "New GRN",
+      "link_to": "Purchase Receipt",
+      "doc_view": "new",
+      "stats_filter": "[[\"docstatus\",\"=\",0]]"
+    },
+    {
+      "type": "DocType",
+      "label": "Fuel Own Use",
+      "link_to": "Stock Entry",
+      "doc_view": "new"
+    },
+    {
+      "type": "DocType",
+      "label": "Spot Dip",
+      "link_to": "Tank Dip",
+      "doc_view": "new"
+    },
+    {
+      "type": "Report",
+      "label": "Daily Station Report",
+      "link_to": "Daily Station Report",
+      "is_query_report": 1
+    }
   ],
   "standard": "Yes",
   "title": "Forecourt",
