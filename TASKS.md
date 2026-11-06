@@ -864,7 +864,7 @@ Decisions UX-01 and Q-11 confirmed 2026-11-06. FMS-U01 gap audit complete (2026-
 | Task | Size | Depends on | Scope |
 |---|---|---|---|
 | ~~FMS-U01~~ ✓ | S | — | Gap audit done 2026-11-06; gap table appended to `docs/ui-ux-design-guide.md` §24.1 |
-| FMS-U02 | M | U01 | One Forecourt workspace: blocks, shortcuts with live counts, KPI cards; patch removing the 7 old workspaces (keep 7 until satisfied with new design) |
+| ~~FMS-U02~~ ✓ | M | U01 | Forecourt workspace: Fuel Own Use shortcut added, Open Shifts + New GRN stats_filter live counts, Payment Import Batch link card, Workspace added to fixtures; retire_old_workspaces.py patch created (not registered — apply when owner confirms) — 2026-11-06 |
 | ~~FMS-U03~~ ✓ | S | U01 | Shift form: `tab_prices`→`tab_overview` (label "Overview"), `tab_items`→`tab_shop` (label "Shop") in DocType JSON — both copies updated 2026-11-06 |
 | ~~FMS-U04~~ ✓ | M | U03 | Grid standards: column widths (10 units), flag column, row order, *Show all meters* toggle, *History* row button — meter_reading(10 col) and tank_dip(9 col) JSON updated; flag Data fields added; cannot_add/delete_rows on system grids; tank order_by name; JS: _set_meter_flag, _set_tank_dip_flag, _color_grid_flags, _setup_meters_toggle (frappe.meta toggle), _add_meter_history_button — 2026-11-06 |
 | ~~FMS-U05~~ ✓ | S | U03 | *New Shift* dialog + next-shift prompt + error codes S116–S119 in `errors.py` — `create.py` + form/list JS 2026-11-06 |
