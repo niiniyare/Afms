@@ -40,10 +40,9 @@
   "sequence_id": 1.0,
   "shortcuts": [
     {
-      "type": "DocType",
+      "type": "URL",
       "label": "New Shift",
-      "link_to": "Forecourt Shift",
-      "doc_view": "new",
+      "url": "/app/forecourt-shift/new-forecourt-shift-1",
       "color": "green"
     },
     {
@@ -62,16 +61,14 @@
       "stats_filter": "[[\"docstatus\",\"=\",0]]"
     },
     {
-      "type": "DocType",
+      "type": "URL",
       "label": "Fuel Own Use",
-      "link_to": "Stock Entry",
-      "doc_view": "new"
+      "url": "/app/stock-entry/new-stock-entry-1"
     },
     {
-      "type": "DocType",
+      "type": "URL",
       "label": "Spot Dip",
-      "link_to": "Tank Dip",
-      "doc_view": "new"
+      "url": "/app/tank-dip/new-tank-dip-1"
     },
     {
       "type": "Report",

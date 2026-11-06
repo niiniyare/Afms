@@ -276,17 +276,16 @@ def _check_calibration_charts(today, station_filter) -> list[dict]:
 	if not frappe.db.table_exists("Tank Calibration Chart") or not frappe.db.table_exists("Fuel Tank"):
 		return []
 
-	warn_days = 30
-	warn_date = add_days(today, warn_days)
-
 	tank_filter = {}
 	if station_filter:
 		tank_filter["station"] = station_filter
 	tanks = frappe.get_all("Fuel Tank", filters=tank_filter, fields=["name", "station"])
 
+	# Most recent chart per tank (Tank Calibration Chart has valid_from only, no valid_to)
 	charts = frappe.get_all(
 		"Tank Calibration Chart",
-		fields=["name", "tank", "valid_to"],
+		fields=["name", "tank", "valid_from"],
+		order_by="valid_from desc",
 	)
 	chart_map: dict[str, dict] = {}
 	for c in charts:
@@ -296,8 +295,7 @@ def _check_calibration_charts(today, station_filter) -> list[dict]:
 
 	rows = []
 	for t in tanks:
-		chart = chart_map.get(t.name)
-		if not chart:
+		if t.name not in chart_map:
 			rows.append(
 				{
 					"category": _("Missing Calibration"),
@@ -306,18 +304,6 @@ def _check_calibration_charts(today, station_filter) -> list[dict]:
 					"document": t.name,
 					"doctype": "Fuel Tank",
 					"age_days": 0,
-				}
-			)
-		elif chart.get("valid_to") and getdate(chart["valid_to"]) <= getdate(warn_date):
-			days_left = (getdate(chart["valid_to"]) - today).days
-			rows.append(
-				{
-					"category": _("Chart Expiring"),
-					"station": t.station,
-					"issue": _("Calibration chart for {0} expires in {1} days").format(t.name, days_left),
-					"document": chart["name"],
-					"doctype": "Tank Calibration Chart",
-					"age_days": max(0, -days_left),
 				}
 			)
 	return rows
