@@ -22,7 +22,7 @@ def _get_station(doc) -> str | None:
 	# bench install the AccountingDimension fixture fires after_insert while
 	# frappe.flags.in_install is set, so ERPNext skips custom-field creation.
 	# The column therefore does not exist until the site owner runs migrate.
-	if doc.name and frappe.meta.has_field("Purchase Receipt", "station"):
+	if doc.name and frappe.get_meta("Purchase Receipt").has_field("station"):
 		return frappe.db.get_value("Purchase Receipt", doc.name, "station")
 	return None
 

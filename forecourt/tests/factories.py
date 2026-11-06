@@ -11,6 +11,30 @@ from __future__ import annotations
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
+_FMS_TEST_COMPANY = "_Test FMS Company"
+
+
+def _ensure_test_company() -> str:
+	"""Return a company name, creating a minimal one if none exists."""
+	company = frappe.defaults.get_defaults().get("company")
+	if company:
+		return company
+	companies = frappe.get_all("Company", limit=1, pluck="name")
+	if companies:
+		return companies[0]
+	doc = frappe.get_doc(
+		{
+			"doctype": "Company",
+			"company_name": _FMS_TEST_COMPANY,
+			"abbr": "TFC",
+			"default_currency": frappe.db.get_default("currency") or "USD",
+			"country": "Kenya",
+		}
+	)
+	doc.flags.ignore_permissions = True
+	doc.insert()
+	return doc.name
+
 
 class FMSTestCase(FrappeTestCase):
 	"""Base class for FMS integration tests. Rolls back after each test."""
@@ -45,7 +69,7 @@ def make_station(
 	if frappe.db.exists("Station", code):
 		return frappe.get_doc("Station", code)
 	if not company:
-		company = frappe.defaults.get_defaults().get("company") or frappe.get_all("Company", limit=1)[0].name
+		company = _ensure_test_company()
 	if not group:
 		group = make_station_group().name
 	abbr = frappe.db.get_value("Company", company, "abbr") or "TC"
