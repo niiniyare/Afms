@@ -61,11 +61,11 @@ def _data(filters):
 		tills = frappe.get_all(
 			"Station Till Account",
 			filters={"parent": s.name},
-			fields=["till_account"],
+			fields=["account"],
 		)
 		for t in tills:
-			if t.till_account:
-				till_accounts.append({"station": s.name, "company": s.company, "account": t.till_account})
+			if t.account:
+				till_accounts.append({"station": s.name, "company": s.company, "account": t.account})
 
 	if not till_accounts:
 		return []

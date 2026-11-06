@@ -216,16 +216,15 @@ def _check_old_clearing_items(today, station_filter) -> list[dict]:
 	f = {
 		"docstatus": 1,
 		"payment_type": "Receive",
-		"bank_cleared_on": ["is", "not set"],
+		"clearance_date": ["is", "not set"],
 		"posting_date": ["<", cutoff],
 	}
-	if station_filter:
-		f["fms_station"] = station_filter
+	# Payment Entry has no station custom field; station_filter not applied here
 
 	entries = frappe.get_all(
 		"Payment Entry",
 		filters=f,
-		fields=["name", "fms_station", "posting_date"],
+		fields=["name", "posting_date"],
 	)
 	rows = []
 	for e in entries:
@@ -233,7 +232,7 @@ def _check_old_clearing_items(today, station_filter) -> list[dict]:
 		rows.append(
 			{
 				"category": _("Uncleared Payment"),
-				"station": e.get("fms_station"),
+				"station": None,
 				"issue": _("Payment Entry {0} not bank-cleared ({1} days old)").format(e.name, age),
 				"document": e.name,
 				"doctype": "Payment Entry",
