@@ -47,6 +47,13 @@ frappe.ui.form.on("Forecourt Shift", {
 	refresh(frm) {
 		_set_status_indicator(frm);
 
+		// U06: readiness panel on Overview tab for active draft shifts.
+		if (frm.doc.docstatus === 0 && ["Counting", "Reconciled", "Pending Approval"].includes(frm.doc.status)) {
+			_load_readiness_panel(frm);
+		} else if (frm.fields_dict.readiness_html) {
+			frm.fields_dict.readiness_html.$wrapper.html("");
+		}
+
 		if (frm.doc.docstatus === 0 && frm.doc.status === "Reconciled") {
 			frm.add_custom_button(__("Close"), function () {
 				frappe.confirm(
@@ -394,6 +401,89 @@ function _after_close_prompt(frm) {
 		},
 	});
 	d.show();
+}
+
+// FMS-U06: Close Readiness Panel ————————————————————————————————————————————
+
+function _load_readiness_panel(frm) {
+	const $html = frm.fields_dict.readiness_html && frm.fields_dict.readiness_html.$wrapper;
+	if (!$html) return;
+	$html.html(
+		`<p class="text-muted small" style="margin:4px 0">${__("Checking…")}</p>`
+	);
+	frappe.call({
+		method: "forecourt.forecourt_shift.readiness.get_close_readiness",
+		args: { shift_name: frm.docname },
+		callback(r) {
+			if (r.exc || !r.message) {
+				$html.html("");
+				return;
+			}
+			_render_readiness_panel(frm, r.message);
+		},
+	});
+}
+
+function _render_readiness_panel(frm, data) {
+	const STATE_COLOR = {
+		Blocked: "#d9534f",
+		Waiting: "#f0ad4e",
+		Attention: "#e67e22",
+		Ready: "#5cb85c",
+	};
+	const STATE_LABEL = {
+		Blocked: __("Blocked — issues must be resolved before closing"),
+		Waiting: __("Waiting for Approval"),
+		Attention: __("Attention — drift reasons required"),
+		Ready: __("Ready to Close"),
+	};
+
+	const color = STATE_COLOR[data.state] || "#888";
+	const label = STATE_LABEL[data.state] || data.state;
+
+	let html =
+		`<div style="margin:6px 0 8px;display:flex;align-items:center;gap:8px">` +
+		`<span style="display:inline-block;padding:3px 10px;border-radius:3px;` +
+		`background:${color};color:#fff;font-weight:bold;font-size:0.88em">${label}</span>` +
+		`<button class="btn btn-xs btn-default fms-readiness-refresh">${__("Check again")}</button>` +
+		`</div>`;
+
+	if (data.items && data.items.length) {
+		const SEV_COLOR = { blocking: "#d9534f", waiting: "#f0ad4e", attention: "#e67e22" };
+		html +=
+			`<table class="table table-condensed" style="font-size:0.82em;margin:0 0 4px">` +
+			`<thead><tr>` +
+			`<th style="width:90px">${__("Code")}</th>` +
+			`<th style="width:100px">${__("Area")}</th>` +
+			`<th>${__("Issue")}</th>` +
+			`<th>${__("Fix")}</th>` +
+			`</tr></thead><tbody>`;
+		for (const item of data.items) {
+			const sc = SEV_COLOR[item.severity] || "#888";
+			// Strip the [FMS-Sxxx] prefix from message for the table cell; it's shown in Code column.
+			const msg = frappe.utils.escape_html(item.message.replace(/^\[.*?\]\s*/, ""));
+			html +=
+				`<tr>` +
+				`<td><code style="color:${sc}">${frappe.utils.escape_html(item.code)}</code></td>` +
+				`<td>${frappe.utils.escape_html(item.area)}</td>` +
+				`<td>${msg}</td>` +
+				`<td><em>${frappe.utils.escape_html(item.fix)}</em></td>` +
+				`</tr>`;
+		}
+		html += `</tbody></table>`;
+	} else {
+		html +=
+			`<p class="text-muted small" style="margin:0">` +
+			`${__("All checks passed. Click Close to submit the shift.")}` +
+			`</p>`;
+	}
+
+	const $html = frm.fields_dict.readiness_html && frm.fields_dict.readiness_html.$wrapper;
+	if (!$html) return;
+	$html.html(html);
+	$html.find(".fms-readiness-refresh").on("click", function () {
+		_load_readiness_panel(frm);
+	});
 }
 
 // ————————————————————————————————————————————————————————————————————————————

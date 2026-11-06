@@ -235,6 +235,11 @@
    "label": "Overview"
   },
   {
+   "fieldname": "readiness_html",
+   "fieldtype": "HTML",
+   "label": "Close Readiness"
+  },
+  {
    "fieldname": "prices",
    "fieldtype": "Table",
    "label": "Price Segments",

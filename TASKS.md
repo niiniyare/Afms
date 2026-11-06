@@ -868,7 +868,7 @@ Decisions UX-01 and Q-11 confirmed 2026-11-06. FMS-U01 gap audit complete (2026-
 | ~~FMS-U03~~ ✓ | S | U01 | Shift form: `tab_prices`→`tab_overview` (label "Overview"), `tab_items`→`tab_shop` (label "Shop") in DocType JSON — both copies updated 2026-11-06 |
 | FMS-U04 | M | U03 | Grid standards: column widths (10 units), flag column, row order, *Show all meters* toggle, *History* row button |
 | ~~FMS-U05~~ ✓ | S | U03 | *New Shift* dialog + next-shift prompt + error codes S116–S119 in `errors.py` — `create.py` + form/list JS 2026-11-06 |
-| FMS-U06 | M | U03 | `get_close_readiness` whitelisted method; refactor gates to collect mode with targets; readiness panel HTML |
+| ~~FMS-U06~~ ✓ | M | U03 | `get_close_readiness` whitelisted method; gates refactored to structured items; readiness panel HTML on Overview tab — 2026-11-06 |
 | FMS-U07 | S | U06 | *Close Shift* primary action, confirm summary, duplicate protection, error code S120 |
 | FMS-U08 | L | U01 | 5 new reports: Meter Movement (MTR-01), Tank Stock Movement (WET-02), Shift Reconciliation (SHF-04), Payment Reconciliation (PAY-01), Cash Collection (CSH-03); extend Cashier Performance (CSH-02) and Pump Performance (MTR-03) |
 | FMS-U09 | M | U08 | 4 dashboards (Station, Operations, Finance, Group) + KPI Number Cards per decisions.md UX-01 |

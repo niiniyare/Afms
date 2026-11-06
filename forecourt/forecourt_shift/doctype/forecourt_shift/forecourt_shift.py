@@ -57,31 +57,34 @@ from forecourt.errors import (
 class ForecourtShift(Document):
 	# ------------------------------------------------------------------ F04 / F06 / F07 / F08 / F10 / F11 / F12 / F13 / F16
 	def before_submit(self) -> None:
-		"""Collect all gate failures then throw together (FMS-S101 to S115, W103)."""
+		"""Collect all gate failures then throw together (FMS-S101 to S116, W103)."""
 		if self.status == "Closing" and not frappe.flags.fms_background_close:
 			frappe.throw(
 				_("[FMS-F16] Shift {0} is being closed in background. Please wait.").format(self.name)
 			)
-		errors: list[str] = []
-		self._gate_nozzle_readings(errors)
-		self._gate_reading_continuity(errors)
-		self._gate_tank_dips_required(errors)
-		self._gate_nozzle_cashier(errors)
-		self._gate_drift_reason(errors)
-		self._gate_no_draft_own_use(errors)
-		self._gate_segment_readings(errors)
-		self._gate_credit_over_limit(errors)
-		self._gate_credit_volume(errors)
-		self._gate_expenses(errors)
-		self._gate_no_overlap(errors)
-		self._gate_feed_entries(errors)
-		self._gate_collection_refs(errors)
-		self._gate_cashier_resolved(errors)
-		self._gate_tank_variance_approved(errors)
-		self._gate_shift_approval(errors)
-		self._gate_test_volume(errors)
-		if errors:
-			frappe.throw("<br>".join(errors), title=_("Shift Cannot Be Closed"))
+		items: list[dict] = []
+		self._gate_nozzle_readings(items)
+		self._gate_reading_continuity(items)
+		self._gate_tank_dips_required(items)
+		self._gate_nozzle_cashier(items)
+		self._gate_drift_reason(items)
+		self._gate_no_draft_own_use(items)
+		self._gate_segment_readings(items)
+		self._gate_credit_over_limit(items)
+		self._gate_credit_volume(items)
+		self._gate_expenses(items)
+		self._gate_no_overlap(items)
+		self._gate_feed_entries(items)
+		self._gate_collection_refs(items)
+		self._gate_cashier_resolved(items)
+		self._gate_tank_variance_approved(items)
+		self._gate_shift_approval(items)
+		self._gate_test_volume(items)
+		if items:
+			frappe.throw(
+				"<br>".join(f"{i['message']} {i['fix']}" for i in items),
+				title=_("Shift Cannot Be Closed"),
+			)
 
 	# ------------------------------------------------------------------ I04
 	def after_insert(self) -> None:
@@ -139,9 +142,15 @@ class ForecourtShift(Document):
 
 		frappe.db.set_value(self.doctype, self.name, "status", "Closed", update_modified=False)
 
-	# ------------------------------------------------------------------ F12 new gates
+	# ------------------------------------------------------------------ F12 / U06 gates (emit structured readiness items)
+	#
+	# Each gate appends to `items: list[dict]` with keys:
+	#   code, severity ("blocking"|"waiting"|"attention"), area, message, fix, tab, table
+	#
+	# before_submit and get_reconcile_blockers call these and format the output.
+	# get_close_readiness (U06) returns the full structured list.
 
-	def _gate_nozzle_readings(self, errors: list[str]) -> None:
+	def _gate_nozzle_readings(self, items: list[dict]) -> None:
 		"""FMS-S101: every active nozzle has a closing reading >= opening, or rollover ticked."""
 		problems = []
 		for row in self.meter_readings:
@@ -165,13 +174,21 @@ class ForecourtShift(Document):
 				elif flt(row.closing_man_meter) < flt(row.opening_man_meter) and not row.rollover_man_meter:
 					problems.append(_("nozzle {0} m-vol").format(row.nozzle))
 		if problems:
-			errors.append(
-				_("{0}: Closing reading below opening on {1}. Correct the reading or tick Rollover.").format(
-					FMS_S101, ", ".join(problems)
-				)
+			items.append(
+				{
+					"code": FMS_S101,
+					"severity": "blocking",
+					"area": _("Meters"),
+					"message": _("[{0}] Closing reading below opening on {1}.").format(
+						FMS_S101, ", ".join(problems)
+					),
+					"fix": _("Correct the reading or tick Rollover."),
+					"tab": "tab_meters",
+					"table": "meter_readings",
+				}
 			)
 
-	def _gate_reading_continuity(self, errors: list[str]) -> None:
+	def _gate_reading_continuity(self, items: list[dict]) -> None:
 		"""FMS-S102: opening readings must match previous shift's closing readings."""
 		if not self.previous_shift:
 			return
@@ -199,13 +216,21 @@ class ForecourtShift(Document):
 			if row.rec_man_meter and flt(row.opening_man_meter, 3) != flt(prev.closing_man_meter, 3):
 				problems.append(_("nozzle {0} m-vol").format(row.nozzle))
 		if problems:
-			errors.append(
-				_(
-					"{0}: Opening reading does not match previous closing on {1}. Re-fetch openings or check the previous shift."
-				).format(FMS_S102, ", ".join(problems))
+			items.append(
+				{
+					"code": FMS_S102,
+					"severity": "blocking",
+					"area": _("Meters"),
+					"message": _("[{0}] Opening reading does not match previous closing on {1}.").format(
+						FMS_S102, ", ".join(problems)
+					),
+					"fix": _("Re-fetch openings or check the previous shift."),
+					"tab": "tab_meters",
+					"table": "meter_readings",
+				}
 			)
 
-	def _gate_tank_dips_required(self, errors: list[str]) -> None:
+	def _gate_tank_dips_required(self, items: list[dict]) -> None:
 		"""FMS-S103: every tank requiring a dip has one."""
 		if not self.shift_template:
 			return
@@ -216,23 +241,39 @@ class ForecourtShift(Document):
 			return
 		missing = [row.tank for row in self.tank_dips if not flt(row.dip_l) and not flt(row.dip_mm)]
 		if missing:
-			errors.append(
-				_("{0}: Tanks have no closing dip: {1}. Enter the closing dip.").format(
-					FMS_S103, ", ".join(missing)
-				)
+			items.append(
+				{
+					"code": FMS_S103,
+					"severity": "blocking",
+					"area": _("Tanks"),
+					"message": _("[{0}] Tanks have no closing dip: {1}.").format(
+						FMS_S103, ", ".join(missing)
+					),
+					"fix": _("Enter the closing dip."),
+					"tab": "tab_tanks",
+					"table": "tank_dips",
+				}
 			)
 
-	def _gate_nozzle_cashier(self, errors: list[str]) -> None:
+	def _gate_nozzle_cashier(self, items: list[dict]) -> None:
 		"""FMS-S104: every nozzle reading row must have a cashier assigned."""
 		missing = [row.nozzle for row in self.meter_readings if not row.cashier]
 		if missing:
-			errors.append(
-				_("{0}: Nozzle reading rows have no cashier: {1}. Assign each to a cashier.").format(
-					FMS_S104, ", ".join(missing)
-				)
+			items.append(
+				{
+					"code": FMS_S104,
+					"severity": "blocking",
+					"area": _("Meters"),
+					"message": _("[{0}] Nozzle reading rows have no cashier: {1}.").format(
+						FMS_S104, ", ".join(missing)
+					),
+					"fix": _("Assign each reading row to a cashier."),
+					"tab": "tab_meters",
+					"table": "meter_readings",
+				}
 			)
 
-	def _gate_credit_volume(self, errors: list[str]) -> None:
+	def _gate_credit_volume(self, items: list[dict]) -> None:
 		"""FMS-S108: credit litres per product must not exceed metered litres."""
 		credit_by_item: dict[str, float] = defaultdict(float)
 		for row in self.credit_sales:
@@ -250,13 +291,21 @@ class ForecourtShift(Document):
 					_("{0} (credit {1} L, metered {2} L)").format(item, flt(credit_qty, 3), flt(metered, 3))
 				)
 		if problems:
-			errors.append(
-				_("{0}: Credit litres exceed metered litres for {1}. Check slips and meter readings.").format(
-					FMS_S108, "; ".join(problems)
-				)
+			items.append(
+				{
+					"code": FMS_S108,
+					"severity": "blocking",
+					"area": _("Credit"),
+					"message": _("[{0}] Credit litres exceed metered litres for {1}.").format(
+						FMS_S108, "; ".join(problems)
+					),
+					"fix": _("Check slips and meter readings."),
+					"tab": "tab_credit",
+					"table": "credit_sales",
+				}
 			)
 
-	def _gate_expenses(self, errors: list[str]) -> None:
+	def _gate_expenses(self, items: list[dict]) -> None:
 		"""FMS-S109: expense collections need a type and must be within the per-expense limit."""
 		problems = []
 		for row in self.collections:
@@ -274,9 +323,19 @@ class ForecourtShift(Document):
 					)
 				)
 		if problems:
-			errors.append(_("{0}: {1}").format(FMS_S109, " ".join(problems)))
+			items.append(
+				{
+					"code": FMS_S109,
+					"severity": "blocking",
+					"area": _("Cash"),
+					"message": _("[{0}] {1}").format(FMS_S109, " ".join(problems)),
+					"fix": _("Add expense type or reduce amount to within the limit."),
+					"tab": "tab_cashiers",
+					"table": "collections",
+				}
+			)
 
-	def _gate_no_overlap(self, errors: list[str]) -> None:
+	def _gate_no_overlap(self, items: list[dict]) -> None:
 		"""FMS-S110: shift window must not overlap another submitted shift at this station."""
 		if not self.station or not self.shift_start or not self.shift_end:
 			return
@@ -299,13 +358,21 @@ class ForecourtShift(Document):
 			limit=1,
 		)
 		if overlapping:
-			errors.append(
-				_("{0}: Shift window overlaps shift {1} at this station. Fix the date or template.").format(
-					FMS_S110, overlapping[0].name
-				)
+			items.append(
+				{
+					"code": FMS_S110,
+					"severity": "blocking",
+					"area": _("Shift"),
+					"message": _("[{0}] Shift window overlaps shift {1} at this station.").format(
+						FMS_S110, overlapping[0].name
+					),
+					"fix": _("Fix the date or template."),
+					"tab": None,
+					"table": None,
+				}
 			)
 
-	def _gate_feed_entries(self, errors: list[str]) -> None:
+	def _gate_feed_entries(self, items: list[dict]) -> None:
 		"""FMS-S111: all payment feed entries in the shift window must be matched (J04)."""
 		if not frappe.db.exists("DocType", "Payment Feed Entry"):
 			return
@@ -320,14 +387,21 @@ class ForecourtShift(Document):
 			},
 		)
 		if unmatched:
-			errors.append(
-				_(
-					"{0}: {1} payment feed entries in the shift window are Unmatched. "
-					"Assign or ignore them before closing."
-				).format(FMS_S111, unmatched)
+			items.append(
+				{
+					"code": FMS_S111,
+					"severity": "blocking",
+					"area": _("Collections"),
+					"message": _("[{0}] {1} payment feed entries in the shift window are Unmatched.").format(
+						FMS_S111, unmatched
+					),
+					"fix": _("Assign or ignore them before closing."),
+					"tab": "tab_cashiers",
+					"table": "collections",
+				}
 			)
 
-	def _gate_test_volume(self, errors: list[str]) -> None:
+	def _gate_test_volume(self, items: list[dict]) -> None:
 		"""FMS-S115: test volume per nozzle must not exceed the nozzle's per-shift limit (D29)."""
 		problems = []
 		for row in self.meter_readings:
@@ -341,27 +415,43 @@ class ForecourtShift(Document):
 					)
 				)
 		if problems:
-			errors.append(
-				_("{0}: Test volume exceeds nozzle limit on {1}. Correct the test volume.").format(
-					FMS_S115, "; ".join(problems)
-				)
+			items.append(
+				{
+					"code": FMS_S115,
+					"severity": "blocking",
+					"area": _("Meters"),
+					"message": _("[{0}] Test volume exceeds nozzle limit on {1}.").format(
+						FMS_S115, "; ".join(problems)
+					),
+					"fix": _("Correct the test volume."),
+					"tab": "tab_meters",
+					"table": "meter_readings",
+				}
 			)
 
-	# ------------------------------------------------------------------ F04 / F06 / F07 / F10 / F11 existing gates (refactored to collect)
+	# ------------------------------------------------------------------ F04 / F06 / F07 / F10 / F11 existing gates (structured)
 
-	def _gate_drift_reason(self, errors: list[str]) -> None:
+	def _gate_drift_reason(self, items: list[dict]) -> None:
 		settings = frappe.get_cached_doc("Forecourt Settings")
 		if not getattr(settings, "drift_requires_reason", True):
 			return
 		missing = [row.nozzle for row in self.meter_readings if row.drift_breach and not row.drift_reason]
 		if missing:
-			errors.append(
-				_("{0}: Drift beyond tolerance on {1} — record the reason before closing.").format(
-					FMS_W103, ", ".join(missing)
-				)
+			items.append(
+				{
+					"code": FMS_W103,
+					"severity": "attention",
+					"area": _("Meters"),
+					"message": _("[{0}] Drift beyond tolerance on {1}.").format(
+						FMS_W103, ", ".join(missing)
+					),
+					"fix": _("Record the drift reason before closing."),
+					"tab": "tab_meters",
+					"table": "meter_readings",
+				}
 			)
 
-	def _gate_no_draft_own_use(self, errors: list[str]) -> None:
+	def _gate_no_draft_own_use(self, items: list[dict]) -> None:
 		"""FMS-S113: no draft Fuel Own Use entry may exist inside the shift window."""
 		if not (self.station and self.shift_start and self.shift_end):
 			return
@@ -385,13 +475,21 @@ class ForecourtShift(Document):
 			if start_dt <= get_datetime(f"{e.posting_date} {e.posting_time or '00:00:00'}") < end_dt
 		]
 		if blocking:
-			errors.append(
-				_("{0}: Draft Fuel Own Use entries in the shift window: {1}. Submit or delete them.").format(
-					FMS_S113, ", ".join(blocking)
-				)
+			items.append(
+				{
+					"code": FMS_S113,
+					"severity": "blocking",
+					"area": _("Tanks"),
+					"message": _("[{0}] Draft Fuel Own Use entries in the shift window: {1}.").format(
+						FMS_S113, ", ".join(blocking)
+					),
+					"fix": _("Submit or delete them."),
+					"tab": "tab_tanks",
+					"table": None,
+				}
 			)
 
-	def _gate_segment_readings(self, errors: list[str]) -> None:
+	def _gate_segment_readings(self, items: list[dict]) -> None:
 		"""FMS-S112: every price segment must have closing meter readings."""
 		missing = []
 		for price_row in self.prices:
@@ -406,13 +504,21 @@ class ForecourtShift(Document):
 			if not has_reading:
 				missing.append(f"{item} seg {seg}")
 		if missing:
-			errors.append(
-				_("{0}: Missing meter readings for {1}. Enter readings for all segments.").format(
-					FMS_S112, ", ".join(missing)
-				)
+			items.append(
+				{
+					"code": FMS_S112,
+					"severity": "blocking",
+					"area": _("Meters"),
+					"message": _("[{0}] Missing meter readings for {1}.").format(
+						FMS_S112, ", ".join(missing)
+					),
+					"fix": _("Enter readings for all price segments."),
+					"tab": "tab_meters",
+					"table": "meter_readings",
+				}
 			)
 
-	def _gate_credit_over_limit(self, errors: list[str]) -> None:
+	def _gate_credit_over_limit(self, items: list[dict]) -> None:
 		"""FMS-S107: over-limit credit sales must be approved."""
 		blocking = [
 			f"{r.customer} slip {r.slip_no}"
@@ -420,11 +526,21 @@ class ForecourtShift(Document):
 			if r.over_limit and not r.over_limit_approved_by
 		]
 		if blocking:
-			errors.append(
-				_("{0}: Over-limit credit sales require approval: {1}.").format(FMS_S107, ", ".join(blocking))
+			items.append(
+				{
+					"code": FMS_S107,
+					"severity": "blocking",
+					"area": _("Credit"),
+					"message": _("[{0}] Over-limit credit sales require approval: {1}.").format(
+						FMS_S107, ", ".join(blocking)
+					),
+					"fix": _("Get over-limit approval."),
+					"tab": "tab_credit",
+					"table": "credit_sales",
+				}
 			)
 
-	def _gate_collection_refs(self, errors: list[str]) -> None:
+	def _gate_collection_refs(self, items: list[dict]) -> None:
 		"""FMS-S114: mobile money and card collections require unique references per provider (site-wide)."""
 		seen: dict[str, str] = {}
 		mobile_card: list[tuple[str, str, int]] = []  # (provider, reference, idx)
@@ -467,21 +583,39 @@ class ForecourtShift(Document):
 					)
 
 		if problems:
-			errors.append(_("{0}: {1}").format(FMS_S114, " ".join(problems)))
+			items.append(
+				{
+					"code": FMS_S114,
+					"severity": "blocking",
+					"area": _("Collections"),
+					"message": _("[{0}] {1}").format(FMS_S114, " ".join(problems)),
+					"fix": _("Remove duplicate references."),
+					"tab": "tab_cashiers",
+					"table": "collections",
+				}
+			)
 
-	def _gate_cashier_resolved(self, errors: list[str]) -> None:
+	def _gate_cashier_resolved(self, items: list[dict]) -> None:
 		"""FMS-S105: every cashier with a non-zero difference must have a resolution line."""
 		unresolved = [
 			row.cashier for row in self.cashiers if flt(row.difference, 2) != 0 and not row.resolved
 		]
 		if unresolved:
-			errors.append(
-				_(
-					"{0}: Unresolved cashier differences for {1}. Add a resolution line before closing."
-				).format(FMS_S105, ", ".join(unresolved))
+			items.append(
+				{
+					"code": FMS_S105,
+					"severity": "blocking",
+					"area": _("Cashiers"),
+					"message": _("[{0}] Unresolved cashier differences for {1}.").format(
+						FMS_S105, ", ".join(unresolved)
+					),
+					"fix": _("Add a resolution line before closing."),
+					"tab": "tab_cashiers",
+					"table": "cashiers",
+				}
 			)
 
-	def _gate_tank_variance_approved(self, errors: list[str]) -> None:
+	def _gate_tank_variance_approved(self, items: list[dict]) -> None:
 		"""FMS-S106: tank variances outside tolerance need a reason; above approval threshold, approval."""
 		problems = []
 		for row in self.tank_dips:
@@ -494,7 +628,17 @@ class ForecourtShift(Document):
 					_("Tank {0}: variance above approval threshold is not approved.").format(row.tank)
 				)
 		if problems:
-			errors.append(_("{0}: {1}").format(FMS_S106, " ".join(problems)))
+			items.append(
+				{
+					"code": FMS_S106,
+					"severity": "blocking",
+					"area": _("Tanks"),
+					"message": _("[{0}] {1}").format(FMS_S106, " ".join(problems)),
+					"fix": _("Add a resolution line or get approval."),
+					"tab": "tab_tanks",
+					"table": "tank_dips",
+				}
+			)
 
 	# ------------------------------------------------------------------ F08 helpers
 
@@ -743,26 +887,87 @@ class ForecourtShift(Document):
 		if has_closing and self.cash_counts:
 			self.status = "Counting"
 
-	def _gate_tank_dips_explained(self, errors: list[str]) -> None:
+	def _gate_tank_dips_explained(self, items: list[dict]) -> None:
 		"""Reconcile gate: tank variances outside tolerance need a reason. Approval pending is OK."""
 		missing = [row.tank for row in self.tank_dips if not row.within_tolerance and not row.reason]
 		if missing:
-			errors.append(
-				_(
-					"{0}: Tank {1} has variance outside tolerance with no reason. Add a resolution line."
-				).format(FMS_S106, ", ".join(missing))
+			items.append(
+				{
+					"code": FMS_S106,
+					"severity": "blocking",
+					"area": _("Tanks"),
+					"message": _("[{0}] Tank {1} has variance outside tolerance with no reason.").format(
+						FMS_S106, ", ".join(missing)
+					),
+					"fix": _("Add a resolution line."),
+					"tab": "tab_tanks",
+					"table": "tank_dips",
+				}
 			)
 
 	def get_reconcile_blockers(self) -> list[str]:
 		"""Return blocker list for reconcile. Approval-pending resolutions are NOT blockers here."""
-		errors: list[str] = []
-		self._gate_nozzle_readings(errors)
-		self._gate_cashier_resolved(errors)
-		self._gate_tank_dips_required(errors)
-		self._gate_drift_reason(errors)
-		self._gate_credit_over_limit(errors)
-		self._gate_tank_dips_explained(errors)
-		return errors
+		items: list[dict] = []
+		self._gate_nozzle_readings(items)
+		self._gate_cashier_resolved(items)
+		self._gate_tank_dips_required(items)
+		self._gate_drift_reason(items)
+		self._gate_credit_over_limit(items)
+		self._gate_tank_dips_explained(items)
+		return [f"{i['message']} {i['fix']}".strip() for i in items]
+
+	def get_close_readiness(self) -> dict:
+		"""Return structured close-readiness (FMS-U06).
+
+		Returns::
+
+		    {
+		        "state": "Blocked" | "Waiting" | "Attention" | "Ready",
+		        "items": [
+		            {
+		                "code":     str,         # e.g. "FMS-S101"
+		                "severity": str,         # "blocking" | "waiting" | "attention"
+		                "area":     str,         # translated area label
+		                "message":  str,         # human-readable with code prefix
+		                "fix":      str,         # actionable instruction
+		                "tab":      str | None,  # fieldname of the tab to navigate to
+		                "table":    str | None,  # fieldname of the child table
+		            },
+		            ...
+		        ],
+		    }
+		"""
+		items: list[dict] = []
+		self._gate_nozzle_readings(items)
+		self._gate_reading_continuity(items)
+		self._gate_tank_dips_required(items)
+		self._gate_nozzle_cashier(items)
+		self._gate_drift_reason(items)
+		self._gate_no_draft_own_use(items)
+		self._gate_segment_readings(items)
+		self._gate_credit_over_limit(items)
+		self._gate_credit_volume(items)
+		self._gate_expenses(items)
+		self._gate_no_overlap(items)
+		self._gate_feed_entries(items)
+		self._gate_collection_refs(items)
+		self._gate_cashier_resolved(items)
+		self._gate_tank_variance_approved(items)
+		self._gate_shift_approval(items)
+		self._gate_test_volume(items)
+
+		state = "Ready"
+		for item in items:
+			sev = item["severity"]
+			if sev == "blocking":
+				state = "Blocked"
+				break
+			if sev == "waiting" and state != "Blocked":
+				state = "Waiting"
+			if sev == "attention" and state not in ("Blocked", "Waiting"):
+				state = "Attention"
+
+		return {"state": state, "items": items}
 
 	def reconcile(self) -> str:
 		"""Run reconcile checks; set status to Reconciled or Pending Approval.
@@ -789,13 +994,21 @@ class ForecourtShift(Document):
 		self.save()
 		return self.status
 
-	def _gate_shift_approval(self, errors: list[str]) -> None:
+	def _gate_shift_approval(self, items: list[dict]) -> None:
 		"""FMS-S116: shift cannot close while approval_state is Pending Approval or Rejected."""
 		if self.approval_state in ("Pending Approval", "Rejected"):
-			errors.append(
-				_(
-					"{0}: Shift has write-offs or variances that require area manager approval before closing."
-				).format(FMS_S116)
+			items.append(
+				{
+					"code": FMS_S116,
+					"severity": "waiting",
+					"area": _("Approvals"),
+					"message": _(
+						"[{0}] Shift has write-offs or variances requiring area manager approval."
+					).format(FMS_S116),
+					"fix": _("Get approval before closing."),
+					"tab": "tab_review",
+					"table": "resolutions",
+				}
 			)
 
 	# ------------------------------------------------------------------ F17
