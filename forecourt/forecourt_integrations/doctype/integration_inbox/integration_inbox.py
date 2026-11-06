@@ -38,4 +38,5 @@ class IntegrationInbox(Document):
 			queue="default",
 			timeout=120,
 			now=frappe.flags.in_test,
+			enqueue_after_commit=True,
 		)

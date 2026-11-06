@@ -60,6 +60,7 @@ def retry(inbox_name: str) -> str:
 		queue="default",
 		timeout=120,
 		now=frappe.flags.in_test,
+		enqueue_after_commit=True,
 	)
 	return "enqueued"
 

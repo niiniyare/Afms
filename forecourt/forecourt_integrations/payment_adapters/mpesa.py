@@ -36,7 +36,7 @@ from frappe import _
 from frappe.utils import get_datetime, now_datetime
 
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist(allow_guest=True, methods=["POST"])
 def c2b_callback(**kwargs) -> dict:
 	"""Receive M-Pesa C2B confirmation and create Integration Inbox row."""
 	try:

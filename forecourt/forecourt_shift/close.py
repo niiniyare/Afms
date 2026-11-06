@@ -66,7 +66,6 @@ def close_shift_in_background(shift_name: str) -> None:
 			)
 		except Exception:
 			pass
-		frappe.db.commit()
 		frappe.publish_realtime(
 			"shift_closed",
 			{"shift": shift_name, "status": "Reconciled", "error": True},

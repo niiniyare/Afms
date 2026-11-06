@@ -9,6 +9,7 @@ Never leave persistent state — use FMSTestCase which rolls back.
 from __future__ import annotations
 
 import frappe
+import frappe.test_runner
 from frappe.tests.utils import FrappeTestCase
 
 
