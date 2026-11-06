@@ -857,6 +857,96 @@ No Frappe imports in `forecourt/calc/`. Tests use `UnitTestCase` (or plain pytes
 
 ---
 
+## Q. UI/UX improvements (from ui-ux-design-guide.md)
+
+Decisions UX-01 and Q-11 confirmed 2026-11-06. All tasks here are **Proposed** until FMS-U01 (gap audit) is done.
+
+| Task | Size | Depends on | Scope |
+|---|---|---|---|
+| FMS-U01 | S | — | Gap audit: read built DocType JSON, workspace JSON, client scripts and reports; list what differs from the guide sections 5, 6, 10, 14, 16, 18 |
+| FMS-U02 | M | U01 | One Forecourt workspace: blocks, shortcuts with live counts, KPI cards; patch removing the 7 old workspaces (keep 7 until satisfied with new design) |
+| FMS-U03 | S | U01 | Shift form: Overview tab first, Prices section, Shop label (rename Items→Shop), settings section collapsed |
+| FMS-U04 | M | U03 | Grid standards: column widths (10 units), flag column, row order, *Show all meters* toggle, *History* row button |
+| FMS-U05 | S | U03 | *New Shift* dialog + next-shift prompt + error codes S116–S119 in `errors.py` |
+| FMS-U06 | M | U03 | `get_close_readiness` whitelisted method; refactor gates to collect mode with targets; readiness panel HTML |
+| FMS-U07 | S | U06 | *Close Shift* primary action, confirm summary, duplicate protection, error code S120 |
+| FMS-U08 | L | U01 | 5 new reports: Meter Movement (MTR-01), Tank Stock Movement (WET-02), Shift Reconciliation (SHF-04), Payment Reconciliation (PAY-01), Cash Collection (CSH-03); extend Cashier Performance (CSH-02) and Pump Performance (MTR-03) |
+| FMS-U09 | M | U08 | 4 dashboards (Station, Operations, Finance, Group) + KPI Number Cards per decisions.md UX-01 |
+| FMS-U10 | S | U01 | FMS-P399 error wrapper on close job and whitelisted methods; message wording pass on `errors.py` |
+| FMS-U11 | S | U01 | Status colour mapping in list indicators and form header; label pass (rename Cashier Variance Ranking → Cashier Performance, etc.); field descriptions on key fields |
+| FMS-U12 | S | U02–U11 | Usability walk-through: 10-min close on tablet, 3-click daily task check; findings into bug log |
+
+**Q-11 permission rules (confirmed 2026-11-06):**
+- Close shift: Supervisor, Station Manager, Assistant Station Manager, Forecourt Director
+- Approve write-offs: Station Manager, Forecourt Director only
+
+**Colour scheme (UX-23):** deferred. Add a review task when the pilot delivers feedback.
+
+---
+
+## R. Reporting framework and new reports (from reporting-catalogue.md)
+
+The catalogue is at `docs/reporting-catalogue.md`. These tasks follow sections 32 (build plan) and 27 (permissions). Depends on FMS-R02 (shared framework) before any new report.
+
+| Task | Size | Depends on | Scope |
+|---|---|---|---|
+| FMS-R01 | M | — | Audit the 22 built reports against the catalogue; list name, filter, column and totals differences |
+| FMS-R02 | L | R01 | `forecourt/reports/common.py` (permitted_stations, permitted_companies, totals profiles T-ADD/WTD/BAL/REG/RANK/PIVOT, tree rows) + `report_filters.js` (standard filter order, dependent filters, comparison presets) |
+| FMS-R03 | L | R02 | Migrate built reports onto the framework; apply (ext.) changes: SHF-02, SHF-03, SAL-01, SAL-03, MTR-03, WET-03, DLV-02, CSH-02, CRD-01, CTL-01, FIN-03, FCS-01 |
+| FMS-R04 | L | R02 | Shift and cash: SHF-04 Shift Reconciliation, SHF-06 Late Closes, SHF-07 Monthly Station Report, CSH-03 Cash Collection, CSH-05 Banking Register, CSH-06 Shortage Recovery, CSH-07 Cash Count by Currency |
+| FMS-R05 | L | R02 | Meters and wetstock: MTR-01 Meter Movement, MTR-04 Meter Change Register, MTR-05 Nozzle Idle Analysis, WET-02 Tank Stock Movement, WET-04 Leak Indicator, WET-05 Water-in-Tank, WET-06 Delivery Accuracy, WET-07 Tank Calibration Status, WET-08 Inventory Value |
+| FMS-R06 | M | R02 | Deliveries and purchases: DLV-01 Delivery Register, DLV-03 Driver and Transporter, DLV-04 Delivery Delay, PUR-01 Fuel Purchase Register, PUR-02 Receipts Awaiting Invoice, PUR-03 Supplier Advances, PUR-05 Landed Cost Summary |
+| FMS-R07 | M | R02 | Prices and margins: PRC-01 Price History, PRC-02 Price Change Register, PRC-03 Margin by Station, PRC-04 Margin by Product, PRC-05 Price Variance Register (after Q-08) |
+| FMS-R08 | L | R02 | Payments and credit: PAY-01 Payment Reconciliation, PAY-03 Mobile Money Register, PAY-04 Card Settlement, PAY-05 Payment Import Log, PAY-06 Debt Receipts Register, CRD-02 Customer Fuel Statement, CRD-03 Fleet Vehicle Consumption, CRD-04 Credit Limits, CRD-05 Unbilled Credit Deliveries |
+| FMS-R09 | S | R02 | Sales extras: SAL-05 Sales Mix by Payment Type, SAL-06 Multi-Station Sales, SAL-07 Shift Comparison |
+| FMS-R10 | M | R02 | Expenses and staff: EXP-01 Station Expense Register, EXP-02 Expense Trend, EXP-03 Fuel Own Use Register, STF-01 Shifts Worked by Employee, STF-02 Staff Productivity |
+| FMS-R11 | L | R02 | Control and audit: CTL-02 Approvals Log, CTL-03 Corrections Register, CTL-04 Back-dated Postings, CTL-05 Variance Reason Analysis, CTL-06 Control Signals by Cashier, CTL-07 Segregation of Duties, CTL-08 Shift Edit Audit Trail |
+| FMS-R12 | S | R02 | Equipment: EQP-01 Equipment Register, EQP-02 Meter Change Register, EQP-03 Calibration Chart Register, EQP-04 Equipment Health |
+| FMS-R13 | M | R02 | Compliance: CMP-01 Sales Tax Summary, CMP-02 Fiscal Submission Status, CMP-03 Regulatory Volume Return (generic template) |
+| FMS-R14 | M | R03 | Management and planning: FIN-04 Executive Summary, FIN-05 Investor Statement, FIN-06 Station Scorecard, FCS-02 Sales Forecast; saved P&L layout (FIN-01) |
+| FMS-R15 | S | R02 | Integrations: INT-02 Integration Inbox Log |
+| FMS-R16 | S | R03–R15 | Scheduled reports (Auto Email Report fixtures, disabled by default) and saved filter sets per catalogue section 26 |
+| FMS-R17 | L | R03–R15, K01 | Report tests per catalogue section 29: totals agree with GL/ledgers, weighted rates, corrections, permissions, currencies, filters, performance, empty states |
+| FMS-R18 | M | R17 | Performance check at group scale; Prepared Report settings for heavy reports (WET-03, CSH-02, CTL-06, FIN-03, FIN-04, FIN-06, SAL-06, PRC-03, PRC-04) |
+
+DRY/LPG/SRV reports and INT-03–INT-09 (Mode B) start after non-fuel Phase 1 (section S below) is accepted.
+
+---
+
+## S. Non-fuel: dry stock and services (from fms-nonfuel.md)
+
+Decisions D37, D39, D51, D52 confirmed 2026-11-06. All tasks here are **Proposed** pending fms-nonfuel.md formal acceptance and owner sign-off on the phase.
+
+**Phase 0 — Foundation**
+
+| Task | Size | Scope |
+|---|---|---|
+| FMS-S01 | S | Stock Adjustment Reason master; Fuel Own Use Purpose stays for fuel |
+| FMS-S02 | S | Station Stock Location master (D52); `shop_warehouse` remains default |
+| FMS-S03 | S | Item and Item Group count fields (`count_policy`, `count_class`); accounts (Shop Stock Variance, Dry Stock Write-off, Service Consumption, Cylinder Float/Deposit) |
+| FMS-S04 | S | Stock Entry types *Dry Stock Adjustment* and *Service Consumption*; FMS-D7xx error range in `errors.py` |
+
+**Phase 1 — Manual operations (pilot-critical)**
+
+| Task | Size | Depends on | Scope |
+|---|---|---|---|
+| FMS-S05 | S | S01–S04 | Shift Template Item Assignment child table; shifts pre-fill Dry Stock rows at creation |
+| FMS-S06 | M | S05 | Dry Stock tab on Forecourt Shift; *Shift Stock Count* child rows; count formula in `calc/dry_stock.py` (pure Python, no frappe imports) |
+| FMS-S07 | M | S03 | Service Type master; Service Job DocType with auto-fill (D39): station, company, shift, attendant fetched on load |
+| FMS-S08 | S | S07 | Shift Service tab; jobs pulled from the window at close |
+| FMS-S09 | M | S06, S08 | Posting additions: walk-in invoice lines for counted items, service lines, Service Consumption Stock Entry; POS cash deduction (D37, R2) |
+| FMS-S10 | S | S09 | Dry Stock Ledger Entry (D51); written only by `posting/ledgers.py` |
+| FMS-S11 | S | S06 | Gates D701–D720 in `before_submit`; FMS-D7xx error messages |
+| FMS-S12 | S | S11 | Dry Stock Count (Handover) DocType |
+| FMS-S13 | S | S09 | Correction types for dry stock count and Service Job |
+| FMS-S14 | S | S09 | Back-dating hook: block stock documents dated inside a closed shift window for counted items (D50) |
+
+**Phase 2 — Control and reporting** (after Phase 1 pilot)
+
+FMS-S15–S22: Spot Audit, Full Stock Take, batch/serial, LPG Product and exchange rule, dry stock reports (DRY-01 to DRY-08, LPG-01, SRV-01 to SRV-03), FMS Health additions.
+
+---
+
 ## P. Later phases (backlog)
 
 Each epic is split into tasks in this file when it is scheduled.
