@@ -23,7 +23,7 @@ def _ensure_test_company() -> str:
 		return companies[0]
 	# No company on a fresh test site — load ERPNext's standard test records.
 	# This is what bench run-tests --app erpnext does in its own setUpClass.
-	frappe.test_runner.make_test_records("Company", verbose=False)
+	frappe.test_runner.make_test_records("Company")
 	companies = frappe.get_all("Company", limit=1, pluck="name")
 	if companies:
 		return companies[0]
