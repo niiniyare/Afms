@@ -36,6 +36,9 @@ from frappe import _
 from frappe.utils import get_datetime, now_datetime
 
 
+# nosemgrep: frappe-semgrep-rules.rules.security.guest-whitelisted-method
+# M-Pesa C2B uses shortcode-based identity; Safaricom servers do not send
+# Frappe session tokens, so allow_guest is required for this webhook.
 @frappe.whitelist(allow_guest=True, methods=["POST"])
 def c2b_callback(**kwargs) -> dict:
 	"""Receive M-Pesa C2B confirmation and create Integration Inbox row."""
