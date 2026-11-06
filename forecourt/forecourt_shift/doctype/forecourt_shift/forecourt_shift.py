@@ -1672,6 +1672,7 @@ class ForecourtShift(Document):
 			"Fuel Tank",
 			filters={"station": self.station, "status": "Active"},
 			fields=["name", "item", "dip_entry_mode", "opening_dip_l"],
+			order_by="name asc",
 		)
 		station = frappe.get_cached_doc("Station", self.station)
 		station_dip_mode = (

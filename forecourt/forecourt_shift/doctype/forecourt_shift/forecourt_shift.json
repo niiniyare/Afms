@@ -248,7 +248,9 @@
    "fieldname": "prices",
    "fieldtype": "Table",
    "label": "Price Segments",
-   "options": "Shift Price"
+   "options": "Shift Price",
+   "cannot_add_rows": 1,
+   "cannot_delete_rows": 1
   },
   {
    "fieldname": "tab_meters",
@@ -259,7 +261,9 @@
    "fieldname": "meter_readings",
    "fieldtype": "Table",
    "label": "Meter Readings",
-   "options": "Shift Meter Reading"
+   "options": "Shift Meter Reading",
+   "cannot_add_rows": 1,
+   "cannot_delete_rows": 1
   },
   {
    "fieldname": "tab_tanks",
@@ -270,7 +274,9 @@
    "fieldname": "tank_dips",
    "fieldtype": "Table",
    "label": "Tank Dips",
-   "options": "Shift Tank Dip"
+   "options": "Shift Tank Dip",
+   "cannot_add_rows": 1,
+   "cannot_delete_rows": 1
   },
   {
    "fieldname": "tab_credit",
@@ -303,7 +309,9 @@
    "fieldname": "cashiers",
    "fieldtype": "Table",
    "label": "Cashiers",
-   "options": "Shift Cashier"
+   "options": "Shift Cashier",
+   "cannot_add_rows": 1,
+   "cannot_delete_rows": 1
   },
   {
    "fieldname": "cash_counts",

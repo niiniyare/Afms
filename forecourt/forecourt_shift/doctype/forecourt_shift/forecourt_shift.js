@@ -24,6 +24,33 @@ frappe.ui.form.on("Shift Cashier", {
 frappe.ui.form.on("Shift Tank Dip", {
 	form_render(frm, cdt, cdn) {
 		_add_tank_resolve_button(frm, cdn);
+		_set_tank_dip_flag(frm, cdt, cdn);
+	},
+	dip_l(frm, cdt, cdn) {
+		_set_tank_dip_flag(frm, cdt, cdn);
+	},
+	dip_mm(frm, cdt, cdn) {
+		_set_tank_dip_flag(frm, cdt, cdn);
+	},
+});
+
+// FMS-U04: Meter reading field changes — update flag column inline.
+frappe.ui.form.on("Shift Meter Reading", {
+	form_render(frm, cdt, cdn) {
+		_add_meter_history_button(frm, cdn);
+		_set_meter_flag(frm, cdt, cdn);
+	},
+	closing_elec_cash(frm, cdt, cdn) {
+		_set_meter_flag(frm, cdt, cdn);
+	},
+	closing_elec_meter(frm, cdt, cdn) {
+		_set_meter_flag(frm, cdt, cdn);
+	},
+	closing_man_meter(frm, cdt, cdn) {
+		_set_meter_flag(frm, cdt, cdn);
+	},
+	drift_breach(frm, cdt, cdn) {
+		_set_meter_flag(frm, cdt, cdn);
 	},
 });
 
@@ -46,6 +73,11 @@ frappe.ui.form.on("Forecourt Shift", {
 
 	refresh(frm) {
 		_set_status_indicator(frm);
+
+		// U04: Show all meters toggle and flag/status coloring.
+		_setup_meters_toggle(frm);
+		_color_grid_flags(frm, "meter_readings", "Shift Meter Reading");
+		_color_grid_flags(frm, "tank_dips", "Shift Tank Dip");
 
 		// U06: readiness panel on Overview tab for active draft shifts.
 		if (
@@ -459,6 +491,139 @@ function _after_close_prompt(frm) {
 		},
 	});
 	d.show();
+}
+
+// FMS-U04: Grid standards — flag column, Show all meters toggle, History ————
+
+const _METER_FLAG_COLOR = {
+	Missing: "#888",
+	"Below opening": "#d9534f",
+	"Over limit": "#d9534f",
+	Drift: "#e67e22",
+	Unusual: "#e67e22",
+	OK: "#5cb85c",
+};
+const _TANK_FLAG_COLOR = {
+	Approval: "#f0ad4e",
+	Outside: "#d9534f",
+	Within: "#5cb85c",
+};
+
+function _set_meter_flag(frm, cdt, cdn) {
+	const row = frappe.get_doc(cdt, cdn);
+	if (!row) return;
+	let flag;
+	const closing = frappe.utils.flt(row.closing_elec_cash);
+	const opening = frappe.utils.flt(row.opening_elec_cash);
+	if (!closing && !row.rollover_elec_cash) {
+		flag = __("Missing");
+	} else if (closing < opening && !row.rollover_elec_cash) {
+		flag = __("Below opening");
+	} else if (row.drift_breach) {
+		flag = __("Drift");
+	} else {
+		flag = __("OK");
+	}
+	frappe.model.set_value(cdt, cdn, "flag", flag);
+}
+
+function _set_tank_dip_flag(frm, cdt, cdn) {
+	const row = frappe.get_doc(cdt, cdn);
+	if (!row) return;
+	let flag;
+	if (row.needs_approval) {
+		flag = __("Approval");
+	} else if (row.within_tolerance) {
+		flag = __("Within");
+	} else {
+		flag = __("Outside");
+	}
+	frappe.model.set_value(cdt, cdn, "flag", flag);
+}
+
+function _color_grid_flags(frm, grid_fieldname, child_doctype) {
+	const $grid = frm.fields_dict[grid_fieldname] && frm.fields_dict[grid_fieldname].$wrapper;
+	if (!$grid) return;
+	const color_map =
+		child_doctype === "Shift Meter Reading" ? _METER_FLAG_COLOR : _TANK_FLAG_COLOR;
+	$grid.find('[data-fieldname="flag"] .like-disabled-input, [data-fieldname="flag"] .static-area').each(
+		function () {
+			const text = $(this).text().trim();
+			const c = color_map[text];
+			if (c) {
+				$(this).css({ color: c, "font-weight": "bold" });
+			}
+		}
+	);
+}
+
+function _setup_meters_toggle(frm) {
+	const $wrapper = frm.fields_dict.meter_readings && frm.fields_dict.meter_readings.$wrapper;
+	if (!$wrapper) return;
+	// Only show when station records more than basis meter.
+	const has_extra = frm.doc.record_elec_meter || frm.doc.record_man_meter;
+	if (!has_extra) return;
+	if ($wrapper.find(".fms-meters-toggle").length) return;
+
+	const $toggle = $(
+		`<span class="fms-meters-toggle" style="margin-left:10px;font-size:0.85em">` +
+			`<label style="font-weight:normal;cursor:pointer">` +
+			`<input type="checkbox" style="margin-right:4px">` +
+			`${__("Show all meters")}` +
+			`</label></span>`
+	);
+	$wrapper.find(".grid-heading-row").first().find(".col-header-label").first().after($toggle);
+	$toggle.find("input").on("change", function () {
+		_set_all_meters_view(frm, this.checked);
+	});
+}
+
+// Toggle between basis-only view (10 col default) and all-meters view (10 col).
+// Default:   nozzle(1) item(1) cashier(2) opening(1) closing(2) litres(1) amount(1) flag(1)
+// All-meters: nozzle(1) cashier(2) closing_ecash(2) closing_evol(2) closing_mvol(2) flag(1)
+function _set_all_meters_view(frm, show_all) {
+	const basis_only = ["item", "opening_elec_cash", "net_volume_l", "amount"];
+	const extra = [
+		["closing_elec_meter", 2],
+		["closing_man_meter", 2],
+	];
+	for (const fn of basis_only) {
+		const df = frappe.meta.get_docfield("Shift Meter Reading", fn);
+		if (df) df.in_list_view = show_all ? 0 : 1;
+	}
+	for (const [fn, col] of extra) {
+		const df = frappe.meta.get_docfield("Shift Meter Reading", fn);
+		if (df) {
+			df.in_list_view = show_all ? 1 : 0;
+			df.columns = col;
+		}
+	}
+	frm.refresh_field("meter_readings");
+	_color_grid_flags(frm, "meter_readings", "Shift Meter Reading");
+}
+
+function _add_meter_history_button(frm, cdn) {
+	const row = locals["Shift Meter Reading"] && locals["Shift Meter Reading"][cdn];
+	if (!row || !row.nozzle) return;
+	const grid = frm.fields_dict.meter_readings && frm.fields_dict.meter_readings.grid;
+	if (!grid || !grid.grid_form) return;
+	const $wrapper = $(grid.grid_form.wrapper);
+	if ($wrapper.find(".fms-meter-history-btn").length) return;
+
+	const $section = $(
+		`<div class="fms-history-section" style="padding:4px 15px 8px">` +
+			`<button class="btn btn-xs btn-default fms-meter-history-btn">` +
+			`${__("View History")}` +
+			`</button></div>`
+	);
+	$section.find(".fms-meter-history-btn").on("click", function () {
+		frappe.set_route("query-report", "Meter Movement", {
+			nozzle: row.nozzle,
+			from_date: frappe.datetime.add_days(frappe.datetime.nowdate(), -30),
+			to_date: frappe.datetime.nowdate(),
+		});
+	});
+	$wrapper.append($section);
 }
 
 // FMS-U06: Close Readiness Panel ————————————————————————————————————————————
