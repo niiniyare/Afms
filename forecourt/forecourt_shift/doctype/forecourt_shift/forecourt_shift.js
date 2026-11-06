@@ -59,34 +59,7 @@ frappe.ui.form.on("Forecourt Shift", {
 
 		if (frm.doc.docstatus === 0 && frm.doc.status === "Reconciled") {
 			frm.add_custom_button(__("Close"), function () {
-				frappe.confirm(
-					__("Close this shift and post all accounting entries?"),
-					function () {
-						frappe.call({
-							method: "forecourt.forecourt_shift.close.close_shift",
-							args: { shift_name: frm.docname },
-							freeze: true,
-							freeze_message: __("Closing shift…"),
-							callback(r) {
-								if (r.message === "submitted") {
-									frm.reload_doc();
-									_after_close_prompt(frm);
-								} else if (r.message === "enqueued") {
-									frm.reload_doc();
-									frappe.show_alert(
-										{
-											message: __(
-												"Large shift queued for background close. Status will update automatically."
-											),
-											indicator: "blue",
-										},
-										8
-									);
-								}
-							},
-						});
-					}
-				);
+				_show_close_confirm_dialog(frm);
 			}).addClass("btn-primary");
 		}
 
@@ -379,6 +352,89 @@ function _set_dialog_info(dialog, text) {
 	} else {
 		$html.html("");
 	}
+}
+
+// FMS-U07: Close confirmation dialog with shift totals summary ———————————————
+
+function _show_close_confirm_dialog(frm) {
+	const d = frm.doc;
+	const fmt_cur = (v) => frappe.format(v || 0, { fieldtype: "Currency" });
+	const fmt_flt = (v, prec) =>
+		frappe.format(v || 0, { fieldtype: "Float", precision: prec || 3 });
+
+	const rows = [
+		[__("Station"), frappe.utils.escape_html(d.station || "")],
+		[__("Shift Template"), frappe.utils.escape_html(d.shift_template || "")],
+		[__("Shift Date"), frappe.format(d.shift_date, { fieldtype: "Date" })],
+		["—", ""],
+		[__("Fuel Volume (L)"), fmt_flt(d.total_fuel_volume)],
+		[__("Fuel Amount"), fmt_cur(d.total_fuel_amount)],
+		["—", ""],
+		[__("Cash"), fmt_cur(d.total_cash)],
+		[__("Mobile Money"), fmt_cur(d.total_mobile)],
+		[__("Card"), fmt_cur(d.total_card)],
+		[__("Credit Sales"), fmt_cur(d.total_credit)],
+		[__("Expenses"), fmt_cur(d.total_expenses)],
+		["—", ""],
+		[__("Net Difference"), fmt_cur(d.total_difference)],
+	];
+
+	let table_html =
+		`<table class="table table-condensed" style="font-size:0.9em;margin:0">` +
+		`<tbody>`;
+	for (const [label, value] of rows) {
+		if (label === "—") {
+			table_html += `<tr><td colspan="2"><hr style="margin:4px 0"></td></tr>`;
+		} else {
+			table_html +=
+				`<tr>` +
+				`<td style="color:#888;padding:2px 8px 2px 0;white-space:nowrap">${label}</td>` +
+				`<td style="text-align:right;padding:2px 0">${value}</td>` +
+				`</tr>`;
+		}
+	}
+	table_html += `</tbody></table>`;
+
+	const dialog = new frappe.ui.Dialog({
+		title: __("Close Shift"),
+		fields: [
+			{
+				fieldname: "summary_html",
+				fieldtype: "HTML",
+				options: table_html,
+			},
+		],
+		primary_action_label: __("Close and Post"),
+		secondary_action_label: __("Cancel"),
+		primary_action() {
+			dialog.disable_primary_action();
+			frappe.call({
+				method: "forecourt.forecourt_shift.close.close_shift",
+				args: { shift_name: frm.docname },
+				callback(r) {
+					if (r.exc) {
+						dialog.enable_primary_action();
+						return;
+					}
+					dialog.hide();
+					if (r.message === "submitted") {
+						frm.reload_doc();
+						_after_close_prompt(frm);
+					} else {
+						frm.reload_doc();
+						frappe.show_alert({
+							message: __("Closing shift in background…"),
+							indicator: "blue",
+						});
+					}
+				},
+			});
+		},
+		secondary_action() {
+			dialog.hide();
+		},
+	});
+	dialog.show();
 }
 
 function _after_close_prompt(frm) {

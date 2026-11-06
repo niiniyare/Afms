@@ -1,9 +1,14 @@
-"""F16: Background close for large Forecourt Shifts."""
+"""F16: Background close for large Forecourt Shifts.
+
+FMS-S120  Close already in progress for this shift.
+"""
 
 from __future__ import annotations
 
 import frappe
 from frappe import _
+
+from forecourt.errors import FMS_S120, fms_error_wrapper
 
 
 @frappe.whitelist()
@@ -11,20 +16,32 @@ def close_shift(shift_name: str) -> str:
 	"""Close a shift directly (< threshold) or enqueue a background job (>= threshold).
 
 	Returns "submitted" or "enqueued".
+	Raises FMS-S120 if a close is already in progress.
 	"""
+	with fms_error_wrapper("close_shift"):
+		return _do_close_shift(shift_name)
+
+
+def _do_close_shift(shift_name: str) -> str:
 	frappe.has_permission("Forecourt Shift", "submit", shift_name, throw=True)
 
 	shift = frappe.get_doc("Forecourt Shift", shift_name)
 	if shift.docstatus != 0:
 		frappe.throw(_("[FMS-F16] Shift {0} is already submitted.").format(shift_name))
 	if shift.status == "Closing":
-		frappe.throw(_("[FMS-F16] Shift {0} is already being closed.").format(shift_name))
+		frappe.throw(
+			_("[{0}] Close is already in progress for shift {1}. Please wait.").format(
+				FMS_S120, shift_name
+			)
+		)
 	if shift.status != "Reconciled":
 		frappe.throw(
 			_("[FMS-F16] Shift must be Reconciled before closing. Current status: {0}.").format(shift.status)
 		)
 
-	threshold = int(frappe.db.get_single_value("Forecourt Settings", "background_close_threshold") or 200)
+	threshold = int(
+		frappe.db.get_single_value("Forecourt Settings", "background_close_threshold") or 200
+	)
 	if len(shift.collections) < threshold:
 		shift.submit()
 		return "submitted"
