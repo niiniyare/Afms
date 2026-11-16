@@ -116,7 +116,24 @@ fixtures = [
 	# FMS number cards, dashboard charts and workspaces
 	{"dt": "Number Card", "filters": [["name", "like", "FMS - %"]]},
 	{"dt": "Dashboard Chart", "filters": [["name", "like", "FMS - %"]]},
-	{"dt": "Workspace", "filters": [["name", "=", "Forecourt"]]},
+	{
+		"dt": "Workspace",
+		"filters": [
+			[
+				"name",
+				"in",
+				[
+					"Forecourt",
+					"Shifts",
+					"Wetstock",
+					"Forecourt Finance",
+					"Forecourt Operations",
+					"Forecourt Group",
+					"Forecourt Setup",
+				],
+			]
+		],
+	},
 	# Reference master seed records (catalogue 4.4)
 	{
 		"dt": "Variance Reason",

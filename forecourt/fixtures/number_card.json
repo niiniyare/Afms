@@ -18,7 +18,7 @@
     "type": "Document Type",
     "document_type": "Forecourt Shift",
     "function": "Count",
-    "filters_json": "[[\"Forecourt Shift\",\"approval_state\",\"=\",\"Pending Approval\",false]]",
+    "filters_json": "[[\"Forecourt Shift\",\"status\",\"=\",\"Pending Approval\",false]]",
     "is_public": 1,
     "is_standard": 1,
     "module": "Forecourt Shift"

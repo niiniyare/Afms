@@ -5,7 +5,7 @@
     {"chart_name": "FMS - Litres per Day by Product", "label": "Litres per Day by Product"},
     {"chart_name": "FMS - Payment Mix", "label": "Payment Mix"}
   ],
-  "content": "[{\"id\":\"nc1\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"FMS - Fuel Sales Today\",\"col\":6}},{\"id\":\"nc2\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"FMS - Litres Sold Today\",\"col\":6}},{\"id\":\"ch1\",\"type\":\"chart\",\"data\":{\"chart_name\":\"FMS - Station Comparison Litres\",\"col\":12}},{\"id\":\"ch2\",\"type\":\"chart\",\"data\":{\"chart_name\":\"FMS - Litres per Day by Product\",\"col\":6}},{\"id\":\"ch3\",\"type\":\"chart\",\"data\":{\"chart_name\":\"FMS - Payment Mix\",\"col\":6}}]",
+  "content": "[{\"id\":\"sc1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Station Comparison\",\"col\":4}},{\"id\":\"sc2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Daily Station Report\",\"col\":4}},{\"id\":\"sc3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"P&L Statement\",\"col\":4}},{\"id\":\"nc1\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Fuel Sales Today\",\"col\":6}},{\"id\":\"nc2\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Litres Sold Today\",\"col\":6}},{\"id\":\"ch1\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Station Comparison\",\"col\":12}},{\"id\":\"ch2\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Litres per Day by Product\",\"col\":6}},{\"id\":\"ch3\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Payment Mix\",\"col\":6}},{\"id\":\"cd1\",\"type\":\"card\",\"data\":{\"card_name\":\"Financials\",\"col\":6}},{\"id\":\"cd2\",\"type\":\"card\",\"data\":{\"card_name\":\"FMS\",\"col\":6}}]",
   "doctype": "Workspace",
   "icon": "bar-chart",
   "is_hidden": 0,

@@ -27,13 +27,6 @@ def _columns():
 			"width": 160,
 		},
 		{
-			"label": _("Station"),
-			"fieldname": "station",
-			"fieldtype": "Link",
-			"options": "Station",
-			"width": 120,
-		},
-		{
 			"label": _("Mode"),
 			"fieldname": "mode_of_payment",
 			"fieldtype": "Link",
@@ -52,8 +45,7 @@ def _data(filters):
 	f = {"docstatus": 1, "clearance_date": ["is", "not set"]}
 	if filters.get("company"):
 		f["company"] = filters["company"]
-	if filters.get("station"):
-		f["custom_station"] = filters["station"]
+	# Payment Entry has no station custom field yet; station filter is not applied
 	if filters.get("mode_of_payment"):
 		f["mode_of_payment"] = filters["mode_of_payment"]
 
@@ -65,7 +57,6 @@ def _data(filters):
 		fields=[
 			"name",
 			"posting_date",
-			"custom_station as station",
 			"mode_of_payment",
 			"reference_no",
 			"paid_amount",
@@ -88,7 +79,6 @@ def _data(filters):
 			{
 				"posting_date": row.posting_date,
 				"name": row.name,
-				"station": row.station,
 				"mode_of_payment": row.mode_of_payment,
 				"reference_no": row.reference_no,
 				"paid_amount": flt(row.paid_amount, 2),

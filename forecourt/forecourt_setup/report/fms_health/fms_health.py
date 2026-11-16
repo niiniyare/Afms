@@ -62,7 +62,7 @@ def _check_no_shift_today(today, station_filter) -> list[dict]:
 			"Forecourt Shift",
 			filters={
 				"docstatus": 1,
-				"posting_date": [">=", cutoff],
+				"shift_date": [">=", cutoff],
 			},
 			pluck="station",
 		)
@@ -90,23 +90,23 @@ def _check_stale_draft_shifts(today, station_filter) -> list[dict]:
 
 	backdating_limit = 2
 	cutoff = add_days(today, -backdating_limit)
-	f = {"docstatus": 0, "posting_date": ["<", cutoff]}
+	f = {"docstatus": 0, "shift_date": ["<", cutoff]}
 	if station_filter:
 		f["station"] = station_filter
 
 	drafts = frappe.get_all(
 		"Forecourt Shift",
 		filters=f,
-		fields=["name", "station", "posting_date"],
+		fields=["name", "station", "shift_date"],
 	)
 	rows = []
 	for d in drafts:
-		age = (today - getdate(d.posting_date)).days
+		age = (today - getdate(d.shift_date)).days
 		rows.append(
 			{
 				"category": _("Stale Draft Shift"),
 				"station": d.station,
-				"issue": _("Draft shift {0} is {1} days old").format(d.name, age),
+				"issue": _("Draft shift {0} dated {1} ({2} days ago)").format(d.name, d.shift_date, age),
 				"document": d.name,
 				"doctype": "Forecourt Shift",
 				"age_days": age,
@@ -216,16 +216,15 @@ def _check_old_clearing_items(today, station_filter) -> list[dict]:
 	f = {
 		"docstatus": 1,
 		"payment_type": "Receive",
-		"bank_cleared_on": ["is", "not set"],
+		"clearance_date": ["is", "not set"],
 		"posting_date": ["<", cutoff],
 	}
-	if station_filter:
-		f["fms_station"] = station_filter
+	# Payment Entry has no station custom field; station_filter not applied here
 
 	entries = frappe.get_all(
 		"Payment Entry",
 		filters=f,
-		fields=["name", "fms_station", "posting_date"],
+		fields=["name", "posting_date"],
 	)
 	rows = []
 	for e in entries:
@@ -233,7 +232,7 @@ def _check_old_clearing_items(today, station_filter) -> list[dict]:
 		rows.append(
 			{
 				"category": _("Uncleared Payment"),
-				"station": e.get("fms_station"),
+				"station": None,
 				"issue": _("Payment Entry {0} not bank-cleared ({1} days old)").format(e.name, age),
 				"document": e.name,
 				"doctype": "Payment Entry",
@@ -277,17 +276,16 @@ def _check_calibration_charts(today, station_filter) -> list[dict]:
 	if not frappe.db.table_exists("Tank Calibration Chart") or not frappe.db.table_exists("Fuel Tank"):
 		return []
 
-	warn_days = 30
-	warn_date = add_days(today, warn_days)
-
 	tank_filter = {}
 	if station_filter:
 		tank_filter["station"] = station_filter
 	tanks = frappe.get_all("Fuel Tank", filters=tank_filter, fields=["name", "station"])
 
+	# Most recent chart per tank (Tank Calibration Chart has valid_from only, no valid_to)
 	charts = frappe.get_all(
 		"Tank Calibration Chart",
-		fields=["name", "tank", "valid_to"],
+		fields=["name", "tank", "valid_from"],
+		order_by="valid_from desc",
 	)
 	chart_map: dict[str, dict] = {}
 	for c in charts:
@@ -297,8 +295,7 @@ def _check_calibration_charts(today, station_filter) -> list[dict]:
 
 	rows = []
 	for t in tanks:
-		chart = chart_map.get(t.name)
-		if not chart:
+		if t.name not in chart_map:
 			rows.append(
 				{
 					"category": _("Missing Calibration"),
@@ -307,18 +304,6 @@ def _check_calibration_charts(today, station_filter) -> list[dict]:
 					"document": t.name,
 					"doctype": "Fuel Tank",
 					"age_days": 0,
-				}
-			)
-		elif chart.get("valid_to") and getdate(chart["valid_to"]) <= getdate(warn_date):
-			days_left = (getdate(chart["valid_to"]) - today).days
-			rows.append(
-				{
-					"category": _("Chart Expiring"),
-					"station": t.station,
-					"issue": _("Calibration chart for {0} expires in {1} days").format(t.name, days_left),
-					"document": chart["name"],
-					"doctype": "Tank Calibration Chart",
-					"age_days": max(0, -days_left),
 				}
 			)
 	return rows
