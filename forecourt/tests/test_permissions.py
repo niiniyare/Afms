@@ -205,39 +205,39 @@ class TestApprovalSegregation(FrappeTestCase):
 	def test_shift_approval_gate_blocks_pending_state(self):
 		from forecourt.forecourt_shift.doctype.forecourt_shift.forecourt_shift import ForecourtShift
 
-		errors: list[str] = []
+		items: list[dict] = []
 		shift = ForecourtShift.__new__(ForecourtShift)
 		shift.approval_state = "Pending Approval"
-		shift._gate_shift_approval(errors)
-		self.assertEqual(len(errors), 1)
-		self.assertIn("FMS-S116", errors[0])
+		shift._gate_shift_approval(items)
+		self.assertEqual(len(items), 1)
+		self.assertEqual(items[0]["code"], "FMS-S116")
 
 	def test_shift_approval_gate_blocks_rejected_state(self):
 		from forecourt.forecourt_shift.doctype.forecourt_shift.forecourt_shift import ForecourtShift
 
-		errors: list[str] = []
+		items: list[dict] = []
 		shift = ForecourtShift.__new__(ForecourtShift)
 		shift.approval_state = "Rejected"
-		shift._gate_shift_approval(errors)
-		self.assertEqual(len(errors), 1)
+		shift._gate_shift_approval(items)
+		self.assertEqual(len(items), 1)
 
 	def test_shift_approval_gate_passes_when_approved(self):
 		from forecourt.forecourt_shift.doctype.forecourt_shift.forecourt_shift import ForecourtShift
 
-		errors: list[str] = []
+		items: list[dict] = []
 		shift = ForecourtShift.__new__(ForecourtShift)
 		shift.approval_state = "Approved"
-		shift._gate_shift_approval(errors)
-		self.assertEqual(errors, [])
+		shift._gate_shift_approval(items)
+		self.assertEqual(items, [])
 
 	def test_shift_approval_gate_passes_when_not_required(self):
 		from forecourt.forecourt_shift.doctype.forecourt_shift.forecourt_shift import ForecourtShift
 
-		errors: list[str] = []
+		items: list[dict] = []
 		shift = ForecourtShift.__new__(ForecourtShift)
 		shift.approval_state = "Not Required"
-		shift._gate_shift_approval(errors)
-		self.assertEqual(errors, [])
+		shift._gate_shift_approval(items)
+		self.assertEqual(items, [])
 
 
 # ---------------------------------------------------------------------------
