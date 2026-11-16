@@ -2,9 +2,9 @@
 from __future__ import annotations
 
 import frappe
+from frappe.tests.utils import FrappeTestCase
 
 from forecourt.tests.factories import (
-	FMSTestCase,
 	make_fuel_item,
 	make_fuel_tank,
 	make_nozzle,
@@ -13,7 +13,7 @@ from forecourt.tests.factories import (
 )
 
 
-class TestStationSetup(FMSTestCase):
+class TestStationSetup(FrappeTestCase):
 	def test_fuel_tank_creates_warehouse(self) -> None:
 		station = make_station(code="KE-TST-WH")
 		tank = make_fuel_tank(station=station.name, tank_code="T1")
