@@ -10,17 +10,17 @@ is confirmed by the owner:
 import frappe
 
 OLD_WORKSPACES = [
-    "Shifts",
-    "Wetstock",
-    "Forecourt Finance",
-    "Forecourt Operations",
-    "Forecourt Group",
-    "Forecourt Setup",
+	"Shifts",
+	"Wetstock",
+	"Forecourt Finance",
+	"Forecourt Operations",
+	"Forecourt Group",
+	"Forecourt Setup",
 ]
 
 
 def execute() -> None:
-    for name in OLD_WORKSPACES:
-        if frappe.db.exists("Workspace", name):
-            frappe.db.set_value("Workspace", name, "is_hidden", 1, update_modified=False)
-    frappe.clear_cache()
+	for name in OLD_WORKSPACES:
+		if frappe.db.exists("Workspace", name):
+			frappe.db.set_value("Workspace", name, "is_hidden", 1, update_modified=False)
+	frappe.clear_cache()
