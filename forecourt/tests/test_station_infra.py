@@ -13,7 +13,7 @@ from forecourt.tests.factories import (
 )
 
 
-class TestStationSetup(FrappeTestCase):
+class TestStationInfra(FrappeTestCase):
 	def test_fuel_tank_creates_warehouse(self) -> None:
 		station = make_station(code="KE-TST-WH")
 		tank = make_fuel_tank(station=station.name, tank_code="T1")
