@@ -911,6 +911,7 @@ class ForecourtShift(Document):
 		self._gate_tank_dips_required(items)
 		self._gate_drift_reason(items)
 		self._gate_credit_over_limit(items)
+		self._gate_credit_volume(items)
 		self._gate_tank_dips_explained(items)
 		return [f"{i['message']} {i['fix']}".strip() for i in items]
 

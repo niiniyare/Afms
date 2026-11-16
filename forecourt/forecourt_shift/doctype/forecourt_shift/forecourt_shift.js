@@ -24,7 +24,6 @@ frappe.ui.form.on("Shift Cashier", {
 frappe.ui.form.on("Shift Tank Dip", {
 	form_render(frm, cdt, cdn) {
 		_add_tank_resolve_button(frm, cdn);
-		_set_tank_dip_flag(frm, cdt, cdn);
 	},
 	dip_l(frm, cdt, cdn) {
 		_set_tank_dip_flag(frm, cdt, cdn);
@@ -38,7 +37,6 @@ frappe.ui.form.on("Shift Tank Dip", {
 frappe.ui.form.on("Shift Meter Reading", {
 	form_render(frm, cdt, cdn) {
 		_add_meter_history_button(frm, cdn);
-		_set_meter_flag(frm, cdt, cdn);
 	},
 	closing_elec_cash(frm, cdt, cdn) {
 		_set_meter_flag(frm, cdt, cdn);
@@ -82,7 +80,7 @@ frappe.ui.form.on("Forecourt Shift", {
 		// U06: readiness panel on Overview tab for active draft shifts.
 		if (
 			frm.doc.docstatus === 0 &&
-			["Counting", "Reconciled", "Pending Approval"].includes(frm.doc.status)
+			["Open", "Counting", "Reconciled", "Pending Approval"].includes(frm.doc.status)
 		) {
 			_load_readiness_panel(frm);
 		} else if (frm.fields_dict.readiness_html) {
@@ -151,12 +149,14 @@ frappe.ui.form.on("Forecourt Shift", {
 function _add_cashier_resolve_button(frm, cdn) {
 	const row = locals["Shift Cashier"] && locals["Shift Cashier"][cdn];
 	if (!row || frm.doc.docstatus !== 0) return;
-	const diff = frappe.utils.flt(row.difference);
+	const diff = flt(row.difference);
 	if (diff === 0 || row.resolved) return;
 
 	const grid = frm.fields_dict.cashiers && frm.fields_dict.cashiers.grid;
-	if (!grid || !grid.grid_form) return;
-	const $wrapper = $(grid.grid_form.wrapper);
+	if (!grid) return;
+	const grid_row = grid.grid_rows_by_docname && grid.grid_rows_by_docname[cdn];
+	if (!grid_row || !grid_row.grid_form) return;
+	const $wrapper = $(grid_row.grid_form.wrapper);
 	if ($wrapper.find(".fms-resolve-cashier-btn").length) return;
 
 	const default_action = diff < 0 ? "Charge to cashier" : "Record excess";
@@ -168,7 +168,7 @@ function _add_cashier_resolve_button(frm, cdn) {
 	$section.find(".fms-resolve-cashier-btn").on("click", function () {
 		_resolve_cashier_dialog(frm, row, default_action);
 	});
-	$wrapper.append($section);
+	$wrapper.prepend($section);
 }
 
 function _add_tank_resolve_button(frm, cdn) {
@@ -177,8 +177,10 @@ function _add_tank_resolve_button(frm, cdn) {
 	if (row.within_tolerance) return;
 
 	const grid = frm.fields_dict.tank_dips && frm.fields_dict.tank_dips.grid;
-	if (!grid || !grid.grid_form) return;
-	const $wrapper = $(grid.grid_form.wrapper);
+	if (!grid) return;
+	const grid_row = grid.grid_rows_by_docname && grid.grid_rows_by_docname[cdn];
+	if (!grid_row || !grid_row.grid_form) return;
+	const $wrapper = $(grid_row.grid_form.wrapper);
 	if ($wrapper.find(".fms-resolve-tank-btn").length) return;
 
 	const $section = $(`<div class="fms-resolve-section" style="padding:6px 15px 8px">
@@ -189,20 +191,32 @@ function _add_tank_resolve_button(frm, cdn) {
 	$section.find(".fms-resolve-tank-btn").on("click", function () {
 		_resolve_tank_dialog(frm, row);
 	});
-	$wrapper.append($section);
+	$wrapper.prepend($section);
 }
 
 function _resolve_cashier_dialog(frm, row, default_action) {
-	const diff = frappe.utils.flt(row.difference);
+	const diff = flt(row.difference);
+	const meter_issue = frm._fms_readiness_codes && frm._fms_readiness_codes.has("FMS-S108");
 	const dialog = new frappe.ui.Dialog({
 		title: __("Resolve: {0}", [row.cashier]),
 		fields: [
+			...(meter_issue
+				? [
+						{
+							fieldname: "meter_warning",
+							fieldtype: "HTML",
+							options: `<div class="alert alert-warning">${__(
+								"Credit litres exceed metered litres (FMS-S108). Check the meter readings before recording this difference as excess or shortage."
+							)}</div>`,
+						},
+				  ]
+				: []),
 			{
 				fieldname: "action",
 				fieldtype: "Select",
 				label: __("Action"),
 				options: "Charge to cashier\nWrite off\nRecord excess",
-				default: default_action,
+				default: meter_issue ? "" : default_action,
 				reqd: 1,
 			},
 			{
@@ -513,8 +527,8 @@ function _set_meter_flag(frm, cdt, cdn) {
 	const row = frappe.get_doc(cdt, cdn);
 	if (!row) return;
 	let flag;
-	const closing = frappe.utils.flt(row.closing_elec_cash);
-	const opening = frappe.utils.flt(row.opening_elec_cash);
+	const closing = flt(row.closing_elec_cash);
+	const opening = flt(row.opening_elec_cash);
 	if (!closing && !row.rollover_elec_cash) {
 		flag = __("Missing");
 	} else if (closing < opening && !row.rollover_elec_cash) {
@@ -524,7 +538,7 @@ function _set_meter_flag(frm, cdt, cdn) {
 	} else {
 		flag = __("OK");
 	}
-	frappe.model.set_value(cdt, cdn, "flag", flag);
+	if (row.flag !== flag) frappe.model.set_value(cdt, cdn, "flag", flag);
 }
 
 function _set_tank_dip_flag(frm, cdt, cdn) {
@@ -538,7 +552,7 @@ function _set_tank_dip_flag(frm, cdt, cdn) {
 	} else {
 		flag = __("Outside");
 	}
-	frappe.model.set_value(cdt, cdn, "flag", flag);
+	if (row.flag !== flag) frappe.model.set_value(cdt, cdn, "flag", flag);
 }
 
 function _color_grid_flags(frm, grid_fieldname, child_doctype) {
@@ -606,8 +620,10 @@ function _add_meter_history_button(frm, cdn) {
 	const row = locals["Shift Meter Reading"] && locals["Shift Meter Reading"][cdn];
 	if (!row || !row.nozzle) return;
 	const grid = frm.fields_dict.meter_readings && frm.fields_dict.meter_readings.grid;
-	if (!grid || !grid.grid_form) return;
-	const $wrapper = $(grid.grid_form.wrapper);
+	if (!grid) return;
+	const grid_row = grid.grid_rows_by_docname && grid.grid_rows_by_docname[cdn];
+	if (!grid_row || !grid_row.grid_form) return;
+	const $wrapper = $(grid_row.grid_form.wrapper);
 	if ($wrapper.find(".fms-meter-history-btn").length) return;
 
 	const $section = $(
@@ -623,7 +639,7 @@ function _add_meter_history_button(frm, cdn) {
 			to_date: frappe.datetime.nowdate(),
 		});
 	});
-	$wrapper.append($section);
+	$wrapper.prepend($section);
 }
 
 // FMS-U06: Close Readiness Panel ————————————————————————————————————————————
@@ -661,6 +677,7 @@ function _render_readiness_panel(frm, data) {
 
 	const color = STATE_COLOR[data.state] || "#888";
 	const label = STATE_LABEL[data.state] || data.state;
+	frm._fms_readiness_codes = new Set((data.items || []).map((item) => item.code));
 
 	let html =
 		`<div style="margin:6px 0 8px;display:flex;align-items:center;gap:8px">` +
