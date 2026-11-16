@@ -642,23 +642,23 @@ class TestOverLimitCreditGate(unittest.TestCase):
 	def _run(self, credit_sales):
 		ForecourtShift = _import_shift()
 		doc = _make_shift(credit_sales=credit_sales)
-		errors: list[str] = []
-		ForecourtShift._gate_credit_over_limit(doc, errors)
-		return errors
+		items: list[dict] = []
+		ForecourtShift._gate_credit_over_limit(doc, items)
+		return items
 
 	def test_blocks_unapproved_over_limit(self):
 		credit = [_row(customer="CUST-001", slip_no="SLP-001", over_limit=1, over_limit_approved_by=None)]
-		errors = self._run(credit)
-		self.assertEqual(len(errors), 1)
-		self.assertIn("FMS-S107", errors[0])
-		self.assertIn("CUST-001", errors[0])
+		items = self._run(credit)
+		self.assertEqual(len(items), 1)
+		self.assertEqual(items[0]["code"], "FMS-S107")
+		self.assertIn("CUST-001", items[0]["message"])
 
 	def test_passes_approved_over_limit(self):
 		credit = [
 			_row(customer="CUST-001", slip_no="SLP-001", over_limit=1, over_limit_approved_by="DIR-001")
 		]
-		errors = self._run(credit)
-		self.assertEqual(errors, [])
+		items = self._run(credit)
+		self.assertEqual(items, [])
 
 	def test_passes_within_limit(self):
 		credit = [_row(customer="CUST-001", slip_no="SLP-001", over_limit=0, over_limit_approved_by=None)]
