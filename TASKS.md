@@ -28,7 +28,8 @@
 | L. CI/CD | 4 | 0 |
 | M. Deployment and operations | 8 | 0 |
 | N. Pilot and go-live | 5 | 0 |
-| **Total (Phases 0–3)** | **124** | **99** |
+| R. Reporting framework and new reports | 18 | 1 |
+| **Total (Phases 0–3)** | **142** | **100** |
 | P. Later phases (backlog) | 8 epics | — |
 
 Update the *Done* column in the same commit that ticks a task.
