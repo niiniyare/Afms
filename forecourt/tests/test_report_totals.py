@@ -194,8 +194,20 @@ def _mock_get_all(doctype, filters=None, fields=None, **kw):
 	return []
 
 
+_rpt_saved: dict = {}
+
+
 def setUpModule():
 	import frappe
+
+	_rpt_saved.update(
+		flags=frappe.flags,
+		db=frappe.db,
+		get_all=frappe.get_all,
+		get_cached_doc=frappe.get_cached_doc,
+		get_system_settings=frappe.get_system_settings,
+		_=frappe._,
+	)
 
 	frappe.db = MagicMock()
 	frappe.db.get_value.return_value = None
@@ -207,6 +219,14 @@ def setUpModule():
 	# → unknown rounding method → exception caught → 0.0; pin to a known method.
 	frappe.get_system_settings = MagicMock(return_value="Banker's Rounding (legacy)")
 	frappe._ = lambda s, *a, **kw: s
+
+
+def tearDownModule():
+	import frappe
+
+	for attr, val in _rpt_saved.items():
+		setattr(frappe, attr, val)
+	_rpt_saved.clear()
 
 
 # ------------------------------------------------------------------

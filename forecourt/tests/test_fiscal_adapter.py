@@ -16,8 +16,19 @@ from unittest.mock import MagicMock, patch
 # ---------------------------------------------------------------------------
 
 
+_saved = {}
+
+
 def setUpModule() -> None:
 	import frappe
+
+	_saved["flags"] = frappe.flags
+	_saved["db"] = frappe.db
+	_saved["get_cached_doc"] = frappe.get_cached_doc
+	_saved["log_error"] = frappe.log_error
+	_saved["_"] = frappe._
+	_saved["get_attr"] = frappe.get_attr
+	_saved["get_system_settings"] = frappe.get_system_settings
 
 	frappe.db = MagicMock()
 	frappe.flags = SimpleNamespace(in_test=True)
@@ -33,6 +44,14 @@ def setUpModule() -> None:
 			"rounding_method": "Banker's Rounding (legacy)",
 		}.get(key, "")
 	)
+
+
+def tearDownModule() -> None:
+	import frappe
+
+	for attr, val in _saved.items():
+		setattr(frappe, attr, val)
+	_saved.clear()
 
 
 def _real_get_attr(dotted: str) -> object:

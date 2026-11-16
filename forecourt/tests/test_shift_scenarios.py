@@ -38,9 +38,24 @@ _SETTINGS = SimpleNamespace(
 	approval_multiplier=2.0,
 )
 
+_original_frappe_flags = None
+_original_frappe_db = None
+_original_frappe_get_all = None
+_original_frappe_get_cached_doc = None
+
 
 def setUpModule():
+	global \
+		_original_frappe_flags, \
+		_original_frappe_db, \
+		_original_frappe_get_all, \
+		_original_frappe_get_cached_doc
 	import frappe
+
+	_original_frappe_flags = frappe.flags
+	_original_frappe_db = frappe.db
+	_original_frappe_get_all = frappe.get_all
+	_original_frappe_get_cached_doc = frappe.get_cached_doc
 
 	_TRANS_PATCHER.start()
 	_FLT_PATCHER.start()
@@ -56,9 +71,24 @@ def setUpModule():
 
 
 def tearDownModule():
+	global \
+		_original_frappe_flags, \
+		_original_frappe_db, \
+		_original_frappe_get_all, \
+		_original_frappe_get_cached_doc
+	import frappe
+
 	_GETDT_PATCHER.stop()
 	_FLT_PATCHER.stop()
 	_TRANS_PATCHER.stop()
+	if _original_frappe_flags is not None:
+		frappe.flags = _original_frappe_flags
+	if _original_frappe_db is not None:
+		frappe.db = _original_frappe_db
+	if _original_frappe_get_all is not None:
+		frappe.get_all = _original_frappe_get_all
+	if _original_frappe_get_cached_doc is not None:
+		frappe.get_cached_doc = _original_frappe_get_cached_doc
 
 
 # ── helpers ────────────────────────────────────────────────────────────────
