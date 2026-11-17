@@ -247,7 +247,8 @@ app_include_js = "/assets/forecourt/js/station_default.js"
 # ------------
 
 # before_install = "forecourt.install.before_install"
-# after_install = "forecourt.install.after_install"
+after_install = "forecourt.install.after_install"
+after_migrate = "forecourt.install.after_migrate"
 
 # Uninstallation
 # ------------
