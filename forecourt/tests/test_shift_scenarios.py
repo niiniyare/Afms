@@ -38,57 +38,40 @@ _SETTINGS = SimpleNamespace(
 	approval_multiplier=2.0,
 )
 
-_original_frappe_flags = None
-_original_frappe_db = None
-_original_frappe_get_all = None
-_original_frappe_get_cached_doc = None
+_PATCHERS: list = []
+
+
+def _make_db_mock():
+	db = MagicMock()
+	db.get_value.return_value = None
+	db.exists.return_value = False
+	db.count.return_value = 0
+	return db
 
 
 def setUpModule():
-	global \
-		_original_frappe_flags, \
-		_original_frappe_db, \
-		_original_frappe_get_all, \
-		_original_frappe_get_cached_doc
 	import frappe
 
-	_original_frappe_flags = frappe.flags
-	_original_frappe_db = frappe.db
-	_original_frappe_get_all = frappe.get_all
-	_original_frappe_get_cached_doc = frappe.get_cached_doc
-
-	_TRANS_PATCHER.start()
-	_FLT_PATCHER.start()
-	_GETDT_PATCHER.start()
-	frappe.db = MagicMock()
-	frappe.db.get_value.return_value = None
-	frappe.db.exists.return_value = False
-	frappe.db.count.return_value = 0
-	frappe.get_all = MagicMock(return_value=[])
-	frappe.get_cached_doc = MagicMock(return_value=_SETTINGS)
-	# Replace LocalProxy so tests can set attributes without a bound site.
-	frappe.flags = SimpleNamespace(fms_background_close=False, in_test=True)
+	# patch.object guarantees exact restore of every replaced attribute,
+	# including the flags/db LocalProxy objects.
+	_PATCHERS[:] = [
+		_TRANS_PATCHER,
+		_FLT_PATCHER,
+		_GETDT_PATCHER,
+		patch.object(frappe, "db", _make_db_mock()),
+		patch.object(frappe, "get_all", MagicMock(return_value=[])),
+		patch.object(frappe, "get_cached_doc", MagicMock(return_value=_SETTINGS)),
+		# Replace LocalProxy so tests can set attributes without a bound site.
+		patch.object(frappe, "flags", SimpleNamespace(fms_background_close=False, in_test=True)),
+	]
+	for p in _PATCHERS:
+		p.start()
 
 
 def tearDownModule():
-	global \
-		_original_frappe_flags, \
-		_original_frappe_db, \
-		_original_frappe_get_all, \
-		_original_frappe_get_cached_doc
-	import frappe
-
-	_GETDT_PATCHER.stop()
-	_FLT_PATCHER.stop()
-	_TRANS_PATCHER.stop()
-	if _original_frappe_flags is not None:
-		frappe.flags = _original_frappe_flags
-	if _original_frappe_db is not None:
-		frappe.db = _original_frappe_db
-	if _original_frappe_get_all is not None:
-		frappe.get_all = _original_frappe_get_all
-	if _original_frappe_get_cached_doc is not None:
-		frappe.get_cached_doc = _original_frappe_get_cached_doc
+	for p in reversed(_PATCHERS):
+		p.stop()
+	_PATCHERS.clear()
 	try:
 		from frappe.tests.utils.generators import get_modules as _gm
 

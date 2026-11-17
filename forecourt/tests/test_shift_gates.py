@@ -21,31 +21,36 @@ _FLT_PATCHER = patch(
 )
 
 
-_sg_saved: dict = {}
+_PATCHERS: list = []
+
+
+def _make_db_mock():
+	db = MagicMock()
+	db.get_value.return_value = None
+	db.exists.return_value = False
+	db.count.return_value = 0
+	return db
 
 
 def setUpModule():
 	import frappe
 
-	_sg_saved.update(db=frappe.db, get_all=frappe.get_all)
-	_TRANS_PATCHER.start()
-	_FLT_PATCHER.start()
 	# frappe.db is an unbound LocalProxy without a site; replace with a mock.
-	frappe.db = MagicMock()
-	frappe.db.get_value.return_value = None
-	frappe.db.exists.return_value = False
-	frappe.db.count.return_value = 0
-	frappe.get_all = MagicMock(return_value=[])
+	# patch.object guarantees exact restore of every replaced attribute.
+	_PATCHERS[:] = [
+		_TRANS_PATCHER,
+		_FLT_PATCHER,
+		patch.object(frappe, "db", _make_db_mock()),
+		patch.object(frappe, "get_all", MagicMock(return_value=[])),
+	]
+	for p in _PATCHERS:
+		p.start()
 
 
 def tearDownModule():
-	import frappe
-
-	_FLT_PATCHER.stop()
-	_TRANS_PATCHER.stop()
-	for attr, val in _sg_saved.items():
-		setattr(frappe, attr, val)
-	_sg_saved.clear()
+	for p in reversed(_PATCHERS):
+		p.stop()
+	_PATCHERS.clear()
 	try:
 		from frappe.tests.utils.generators import get_modules as _gm
 

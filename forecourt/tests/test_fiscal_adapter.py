@@ -16,42 +16,41 @@ from unittest.mock import MagicMock, patch
 # ---------------------------------------------------------------------------
 
 
-_saved = {}
+_PATCHERS: list = []
 
 
 def setUpModule() -> None:
 	import frappe
 
-	_saved["flags"] = frappe.flags
-	_saved["db"] = frappe.db
-	_saved["get_cached_doc"] = frappe.get_cached_doc
-	_saved["log_error"] = frappe.log_error
-	_saved["_"] = frappe._
-	_saved["get_attr"] = frappe.get_attr
-	_saved["get_system_settings"] = frappe.get_system_settings
-
-	frappe.db = MagicMock()
-	frappe.flags = SimpleNamespace(in_test=True)
-	frappe.session = SimpleNamespace(user="test@example.com")
-	frappe.get_cached_doc = MagicMock()
-	frappe.log_error = MagicMock()
-	frappe._ = lambda s, *a, **kw: s
-	frappe.get_attr = _real_get_attr
-	# Required by now_datetime() → get_system_timezone() → get_system_settings("time_zone")
-	frappe.get_system_settings = MagicMock(
-		side_effect=lambda key: {
-			"time_zone": "Africa/Nairobi",
-			"rounding_method": "Banker's Rounding (legacy)",
-		}.get(key, "")
-	)
+	# patch.object guarantees exact restore of every replaced attribute.
+	# get_system_settings required by now_datetime() → get_system_timezone().
+	_PATCHERS[:] = [
+		patch.object(frappe, "db", MagicMock()),
+		patch.object(frappe, "flags", SimpleNamespace(in_test=True)),
+		patch.object(frappe, "session", SimpleNamespace(user="test@example.com")),
+		patch.object(frappe, "get_cached_doc", MagicMock()),
+		patch.object(frappe, "log_error", MagicMock()),
+		patch.object(frappe, "_", lambda s, *a, **kw: s),
+		patch.object(frappe, "get_attr", _real_get_attr),
+		patch.object(
+			frappe,
+			"get_system_settings",
+			MagicMock(
+				side_effect=lambda key: {
+					"time_zone": "Africa/Nairobi",
+					"rounding_method": "Banker's Rounding (legacy)",
+				}.get(key, "")
+			),
+		),
+	]
+	for p in _PATCHERS:
+		p.start()
 
 
 def tearDownModule() -> None:
-	import frappe
-
-	for attr, val in _saved.items():
-		setattr(frappe, attr, val)
-	_saved.clear()
+	for p in reversed(_PATCHERS):
+		p.stop()
+	_PATCHERS.clear()
 	try:
 		from frappe.tests.utils.generators import get_modules as _gm
 
