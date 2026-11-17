@@ -158,16 +158,14 @@ fixtures = [
 	},
 ]
 
-# Each item in the list will be shown as an app in the apps page
-# add_to_apps_screen = [
-# 	{
-# 		"name": "forecourt",
-# 		"logo": "/assets/forecourt/logo.png",
-# 		"title": "Forecourt Management",
-# 		"route": "/forecourt",
-# 		"has_permission": "forecourt.api.permission.has_app_permission",
-# 	}
-# ]
+add_to_apps_screen = [
+	{
+		"name": "forecourt",
+		"title": "FMS",
+		"logo": "/assets/forecourt/images/fms-logo.png",
+		"route": "/app/forecourt",
+	}
+]
 
 # The dock, the rail down the left of the desk, is a document rather than a hook. Author it in
 # Manage Dock on a developer-mode site and press Export to App, and it is written to

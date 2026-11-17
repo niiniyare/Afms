@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import unittest
 from types import SimpleNamespace
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 # ------------------------------------------------------------------
 # Canned ledger data shared by all tests
@@ -194,19 +194,44 @@ def _mock_get_all(doctype, filters=None, fields=None, **kw):
 	return []
 
 
+_PATCHERS: list = []
+
+
+def _make_db_mock():
+	db = MagicMock()
+	db.get_value.return_value = None
+	db.exists.return_value = False
+	return db
+
+
 def setUpModule():
 	import frappe
 
-	frappe.db = MagicMock()
-	frappe.db.get_value.return_value = None
-	frappe.db.exists.return_value = False
-	frappe.get_all = MagicMock(side_effect=_mock_get_all)
-	frappe.get_cached_doc = MagicMock(return_value=SimpleNamespace())
-	frappe.flags = SimpleNamespace(in_test=True)
+	# patch.object guarantees exact restore of every replaced attribute.
 	# flt() calls frappe.get_system_settings("rounding_method") → returns MagicMock
 	# → unknown rounding method → exception caught → 0.0; pin to a known method.
-	frappe.get_system_settings = MagicMock(return_value="Banker's Rounding (legacy)")
-	frappe._ = lambda s, *a, **kw: s
+	_PATCHERS[:] = [
+		patch.object(frappe, "db", _make_db_mock()),
+		patch.object(frappe, "get_all", MagicMock(side_effect=_mock_get_all)),
+		patch.object(frappe, "get_cached_doc", MagicMock(return_value=SimpleNamespace())),
+		patch.object(frappe, "flags", SimpleNamespace(in_test=True)),
+		patch.object(frappe, "get_system_settings", MagicMock(return_value="Banker's Rounding (legacy)")),
+		patch.object(frappe, "_", lambda s, *a, **kw: s),
+	]
+	for p in _PATCHERS:
+		p.start()
+
+
+def tearDownModule():
+	for p in reversed(_PATCHERS):
+		p.stop()
+	_PATCHERS.clear()
+	try:
+		from frappe.tests.utils.generators import get_modules as _gm
+
+		_gm.cache_clear()
+	except (ImportError, AttributeError):
+		pass
 
 
 # ------------------------------------------------------------------
