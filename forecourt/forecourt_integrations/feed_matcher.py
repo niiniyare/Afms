@@ -3,7 +3,6 @@
 Called:
   - from Forecourt Shift after_insert (to pick up feeds for the new window)
   - from a Refresh button on the shift form
-  - from before_submit to gate on unassigned feeds (FMS-S111)
 
 Logic:
   For each Unmatched feed entry where station matches and
@@ -13,8 +12,8 @@ Logic:
     2. If the reference already exists in shift.collections → skip.
     3. Otherwise append a Shift Collection row and mark the feed as Matched.
 
-Gate FMS-S111: before_submit, if any Unmatched feed entry exists for the
-station within the shift window, raise an error.
+The FMS-S111 before_submit gate lives on the shift controller
+(_gate_feed_entries), not here.
 """
 
 from __future__ import annotations
@@ -23,7 +22,6 @@ import frappe
 from frappe import _
 from frappe.utils import flt, get_datetime
 
-from forecourt.errors import FMS_S111, FMSValidationError
 from forecourt.forecourt_integrations.statement_import import (
 	_collection_type_for_provider,
 	_load_mapping,
@@ -109,28 +107,3 @@ def match_feeds_to_shift(shift_doc: "frappe.Document") -> int:
 
 	return created
 
-
-def gate_unmatched_feeds(shift_doc: "frappe.Document") -> None:
-	"""Raise FMS-S111 if any Unmatched feed entry exists in the shift window."""
-	if not shift_doc.station or not shift_doc.shift_start or not shift_doc.shift_end:
-		return
-
-	shift_start = get_datetime(shift_doc.shift_start)
-	shift_end = get_datetime(shift_doc.shift_end)
-
-	unmatched = frappe.db.count(
-		"Payment Feed Entry",
-		{
-			"station": shift_doc.station,
-			"status": "Unmatched",
-			"transaction_time": ["between", [shift_start, shift_end]],
-		},
-	)
-	if unmatched:
-		raise FMSValidationError(
-			FMS_S111,
-			_(
-				"{0}: {1} payment feed entries for this shift have not been assigned to a cashier. "
-				"Assign or ignore them before closing."
-			).format(FMS_S111, unmatched),
-		)
