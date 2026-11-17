@@ -30,8 +30,6 @@ Procfile
 patches.txt
 env/
 
-# Stale scaffolded copy at bench root — authoritative source is apps/forecourt/
-forecourt/
 
 # Environments (not bench dirs — those live one level up)
 .env

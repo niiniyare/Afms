@@ -28,7 +28,7 @@
 | L. CI/CD | 4 | 0 |
 | M. Deployment and operations | 8 | 0 |
 | N. Pilot and go-live | 5 | 0 |
-| R. Reporting framework and new reports | 18 | 1 |
+| R. Reporting framework and new reports | 18 | 0 |
 | **Total (Phases 0–3)** | **142** | **100** |
 | P. Later phases (backlog) | 8 epics | — |
 
@@ -971,7 +971,10 @@ Add bugs here as they are found. Each bug becomes a task with the same format.
 
 | ID | Found in | Description | Task | Status |
 |---|---|---|---|---|
-| FMS-BUG-001 | FMS-K01 golden run | Meter-reading correction supersedes every nozzle ledger row of the shift and leaves the corrected nozzle's sales ledger at the uncorrected amount (`forecourt/corrections/meter.py`) | FMS-BUG-001 | Open |
+| FMS-BUG-001 | FMS-K01 golden run | Meter-reading correction supersedes every nozzle ledger row of the shift and leaves the corrected nozzle's sales ledger at the uncorrected amount (`forecourt/corrections/meter.py`) | FMS-BUG-001 | Fixed on `task/FMS-BUG-001-meter-correction-supersede`, awaiting merge |
+| FMS-BUG-002 | Audit 2026-11-17 | Dip correction does not supersede Wetstock Ledger rows or recompute variance symmetrically with the meter path (`forecourt/corrections/dip.py`) | RM-004 | Open |
+| FMS-BUG-003 | Audit 2026-11-17 | `patches.txt` referenced missing module `forecourt.patches.v0_0.rename_forecourt_settings_meter_fields`; upgrade CI job never ran (`contains()` on a file count) | RM-002/RM-003 | Fixed on main, awaiting push |
+| FMS-BUG-004 | Audit 2026-11-17 | Repo hygiene: `.pyc` files tracked under report dirs; `.gitignore` ignored the whole `forecourt/` app dir blocking new files | RM-006 | Fixed on main, awaiting push |
 
 - [ ] **FMS-BUG-001 · Bug fix · Meter correction supersedes all nozzle rows and not the sales ledger** · M · FMS-K01
   - **Skills:** frappe-agent-debugger, frappe-errors-controllers
