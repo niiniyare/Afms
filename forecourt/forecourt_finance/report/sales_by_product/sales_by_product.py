@@ -6,7 +6,7 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
-from forecourt.reports.common import apply_station_permission
+from forecourt.reports.common import apply_date_filter, apply_station_permission
 
 
 def execute(filters=None):
@@ -80,13 +80,7 @@ def _base_filters(filters):
 	for field in ("company", "item"):
 		if filters.get(field):
 			f[field] = filters[field]
-	if filters.get("from_date"):
-		f["posting_date"] = [">=", filters["from_date"]]
-	if filters.get("to_date"):
-		if "posting_date" in f:
-			f["posting_date"] = ["between", [filters["from_date"], filters["to_date"]]]
-		else:
-			f["posting_date"] = ["<=", filters["to_date"]]
+	apply_date_filter(f, filters)
 	err = apply_station_permission(f, filters)
 	if err:
 		return None

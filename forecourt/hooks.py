@@ -186,7 +186,10 @@ extend_bootinfo = "forecourt.boot.get_bootinfo"
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/forecourt/css/forecourt.css"
-app_include_js = "/assets/forecourt/js/station_default.js"
+app_include_js = [
+	"/assets/forecourt/js/station_default.js",
+	"/assets/forecourt/js/report_filters.js",
+]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/forecourt/css/forecourt.css"

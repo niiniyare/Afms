@@ -11,7 +11,7 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
-from forecourt.reports.common import apply_station_permission
+from forecourt.reports.common import apply_date_filter, apply_station_permission
 
 
 def execute(filters=None):
@@ -101,10 +101,7 @@ def _data(filters: dict) -> list[dict]:
 			f[field] = filters[field]
 	if filters.get("forecourt_shift"):
 		f["forecourt_shift"] = filters["forecourt_shift"]
-	if filters.get("from_date") and filters.get("to_date"):
-		f["posting_date"] = ["between", [filters["from_date"], filters["to_date"]]]
-	elif filters.get("from_date"):
-		f["posting_date"] = [">=", filters["from_date"]]
+	apply_date_filter(f, filters)
 	err = apply_station_permission(f, filters)
 	if err:
 		return []

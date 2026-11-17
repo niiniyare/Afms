@@ -6,7 +6,7 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
-from forecourt.reports.common import apply_station_permission
+from forecourt.reports.common import apply_date_filter, apply_station_permission
 
 
 def execute(filters=None):
@@ -59,10 +59,7 @@ def _data(filters):
 		f["tank"] = filters["tank"]
 	if filters.get("supplier"):
 		f["supplier"] = filters["supplier"]
-	if filters.get("from_date") and filters.get("to_date"):
-		f["posting_date"] = ["between", [filters["from_date"], filters["to_date"]]]
-	elif filters.get("from_date"):
-		f["posting_date"] = [">=", filters["from_date"]]
+	apply_date_filter(f, filters)
 	err = apply_station_permission(f, filters)
 	if err:
 		return []

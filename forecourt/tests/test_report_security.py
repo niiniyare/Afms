@@ -583,3 +583,116 @@ class TestFmsHealthPermissions(UnitTestCase):
 		self.assertIn("STA-A", stations_in_result)
 		self.assertNotIn("STA-B", stations_in_result)
 		self.assertIn(None, stations_in_result)  # Integration Inbox row passes through
+
+
+# ---------------------------------------------------------------------------
+# apply_date_filter and apply_shift_date_filter unit tests (FMS-R03)
+# ---------------------------------------------------------------------------
+
+
+class TestApplyDateFilter(UnitTestCase):
+	"""Tests for the two date-range filter helpers in common.py."""
+
+	def setUp(self):
+		from forecourt.reports.common import apply_date_filter, apply_shift_date_filter
+
+		self._adf = apply_date_filter
+		self._asdf = apply_shift_date_filter
+
+	# --- apply_date_filter ---
+
+	def test_both_dates_produces_between(self):
+		f: dict = {}
+		self._adf(f, {"from_date": "2026-01-01", "to_date": "2026-01-31"})
+		self.assertEqual(f["posting_date"], ["between", ["2026-01-01", "2026-01-31"]])
+
+	def test_only_from_date(self):
+		f: dict = {}
+		self._adf(f, {"from_date": "2026-01-01"})
+		self.assertEqual(f["posting_date"], [">=", "2026-01-01"])
+
+	def test_only_to_date(self):
+		f: dict = {}
+		self._adf(f, {"to_date": "2026-01-31"})
+		self.assertEqual(f["posting_date"], ["<=", "2026-01-31"])
+
+	def test_no_dates_no_mutation(self):
+		f: dict = {"is_cancelled": 0}
+		self._adf(f, {})
+		self.assertNotIn("posting_date", f)
+		self.assertEqual(f, {"is_cancelled": 0})
+
+	def test_custom_date_field(self):
+		f: dict = {}
+		self._adf(f, {"from_date": "2026-03-01", "to_date": "2026-03-31"}, date_field="transaction_date")
+		self.assertEqual(f["transaction_date"], ["between", ["2026-03-01", "2026-03-31"]])
+
+	def test_does_not_add_posting_date_when_custom_field_used(self):
+		f: dict = {}
+		self._adf(f, {"from_date": "2026-01-01"}, date_field="shift_date")
+		self.assertNotIn("posting_date", f)
+		self.assertIn("shift_date", f)
+
+	# --- apply_shift_date_filter ---
+
+	def test_shift_both_dates(self):
+		f: dict = {}
+		self._asdf(f, {"from_date": "2026-02-01", "to_date": "2026-02-28"})
+		self.assertEqual(f["shift_date"], ["between", ["2026-02-01", "2026-02-28"]])
+
+	def test_shift_only_from_date(self):
+		f: dict = {}
+		self._asdf(f, {"from_date": "2026-02-01"})
+		self.assertEqual(f["shift_date"], [">=", "2026-02-01"])
+
+	def test_shift_no_dates_no_mutation(self):
+		f: dict = {"docstatus": 1}
+		self._asdf(f, {})
+		self.assertNotIn("shift_date", f)
+
+	def test_shift_does_not_set_posting_date(self):
+		f: dict = {}
+		self._asdf(f, {"from_date": "2026-01-01", "to_date": "2026-01-31"})
+		self.assertNotIn("posting_date", f)
+
+
+# ---------------------------------------------------------------------------
+# validate_date_range unit tests (FMS-R03)
+# ---------------------------------------------------------------------------
+
+
+class TestValidateDateRange(UnitTestCase):
+	def setUp(self):
+		from forecourt.reports.common import validate_date_range
+
+		self._fn = validate_date_range
+
+	def test_valid_range_returns_none(self):
+		result = self._fn("2026-01-01", "2026-01-31")
+		self.assertIsNone(result)
+
+	def test_inverted_dates_returns_r801(self):
+		result = self._fn("2026-01-31", "2026-01-01")
+		self.assertIsNotNone(result)
+		self.assertIn("FMS-R801", result)
+
+	def test_range_exceeding_max_returns_r802(self):
+		result = self._fn("2024-01-01", "2026-01-01", max_days=366)
+		self.assertIsNotNone(result)
+		self.assertIn("FMS-R802", result)
+
+	def test_range_exactly_at_max_is_valid(self):
+		result = self._fn("2026-01-01", "2026-01-01", max_days=1)
+		self.assertIsNone(result)
+
+	def test_missing_from_date_returns_none(self):
+		result = self._fn(None, "2026-01-31")
+		self.assertIsNone(result)
+
+	def test_missing_to_date_returns_none(self):
+		result = self._fn("2026-01-01", None)
+		self.assertIsNone(result)
+
+	def test_both_missing_returns_none(self):
+		result = self._fn(None, None)
+		self.assertIsNone(result)
