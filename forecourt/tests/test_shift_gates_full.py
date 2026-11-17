@@ -50,34 +50,37 @@ _GETDATETIME_PATCHER = patch(
 )
 
 
-_sgf_saved: dict = {}
+_PATCHERS: list = []
+
+
+def _make_db_mock():
+	db = MagicMock()
+	db.get_value.return_value = None
+	db.exists.return_value = False
+	db.count.return_value = 0
+	return db
 
 
 def setUpModule():
 	import frappe
 
-	_sgf_saved.update(db=frappe.db, get_all=frappe.get_all, get_cached_doc=frappe.get_cached_doc)
-	_TRANS_PATCHER.start()
-	_FLT_PATCHER.start()
-	_GETDATETIME_PATCHER.start()
-
-	frappe.db = MagicMock()
-	frappe.db.get_value.return_value = None
-	frappe.db.exists.return_value = False
-	frappe.db.count.return_value = 0
-	frappe.get_all = MagicMock(return_value=[])
-	frappe.get_cached_doc = MagicMock()
+	# patch.object guarantees exact restore of every replaced attribute.
+	_PATCHERS[:] = [
+		_TRANS_PATCHER,
+		_FLT_PATCHER,
+		_GETDATETIME_PATCHER,
+		patch.object(frappe, "db", _make_db_mock()),
+		patch.object(frappe, "get_all", MagicMock(return_value=[])),
+		patch.object(frappe, "get_cached_doc", MagicMock()),
+	]
+	for p in _PATCHERS:
+		p.start()
 
 
 def tearDownModule():
-	import frappe
-
-	_GETDATETIME_PATCHER.stop()
-	_FLT_PATCHER.stop()
-	_TRANS_PATCHER.stop()
-	for attr, val in _sgf_saved.items():
-		setattr(frappe, attr, val)
-	_sgf_saved.clear()
+	for p in reversed(_PATCHERS):
+		p.stop()
+	_PATCHERS.clear()
 	try:
 		from frappe.tests.utils.generators import get_modules as _gm
 
