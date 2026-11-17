@@ -150,10 +150,10 @@ jobs:
   upgrade:
     runs-on: ubuntu-latest
     name: Upgrade Migration Test
-    # Only run on PRs that touch patches.txt, patches/, or DocType JSON
-    if: |
-      github.event_name == 'pull_request' &&
-      contains(github.event.pull_request.changed_files, 'patches')
+    # changed_files in the PR payload is a count, not a list, so the old
+    # contains() filter never matched and the job always skipped. Run the
+    # upgrade check on every PR; migration safety is cheap insurance.
+    if: github.event_name == 'pull_request'
 
     services:
       mariadb:
