@@ -21,7 +21,7 @@
 | E. Station movements | 10 | 10 |
 | F. Forecourt Shift (Phase 1 core) | 18 | 18 |
 | G. Shift Correction | 6 | 6 |
-| H. Reports and workspaces | 12 | 11 |
+| H. Reports and workspaces | 12 | 12 |
 | I. Approvals, roles and permissions | 6 | 6 |
 | J. Payment import and integrations | 8 | 8 |
 | K. Quality, scenarios and UAT | 7 | 0 |
@@ -891,8 +891,8 @@ The catalogue is at `docs/reporting-catalogue.md`. These tasks follow sections 3
 
 | Task | Size | Depends on | Scope |
 |---|---|---|---|
-| FMS-R01 | M | — | Audit the 22 built reports against the catalogue; list name, filter, column and totals differences |
-| FMS-R02 | L | R01 | `forecourt/reports/common.py` (permitted_stations, permitted_companies, totals profiles T-ADD/WTD/BAL/REG/RANK/PIVOT, tree rows) + `report_filters.js` (standard filter order, dependent filters, comparison presets) |
+| ~~FMS-R01~~ ✓ | M | — | Audit the 22 built reports against the catalogue; list name, filter, column and totals differences |
+| ~~FMS-R02~~ ✓ | L | R01 | `forecourt/reports/common.py` (permitted_stations, permitted_companies, totals profiles T-ADD/WTD/BAL/REG/RANK/PIVOT, tree rows) + `report_filters.js` (standard filter order, dependent filters, comparison presets) |
 | FMS-R03 | L | R02 | Migrate built reports onto the framework; apply (ext.) changes: SHF-02, SHF-03, SAL-01, SAL-03, MTR-03, WET-03, DLV-02, CSH-02, CRD-01, CTL-01, FIN-03, FCS-01 |
 | FMS-R04 | L | R02 | Shift and cash: SHF-04 Shift Reconciliation, SHF-06 Late Closes, SHF-07 Monthly Station Report, CSH-03 Cash Collection, CSH-05 Banking Register, CSH-06 Shortage Recovery, CSH-07 Cash Count by Currency |
 | FMS-R05 | L | R02 | Meters and wetstock: MTR-01 Meter Movement, MTR-04 Meter Change Register, MTR-05 Nozzle Idle Analysis, WET-02 Tank Stock Movement, WET-04 Leak Indicator, WET-05 Water-in-Tank, WET-06 Delivery Accuracy, WET-07 Tank Calibration Status, WET-08 Inventory Value |
@@ -971,7 +971,14 @@ Add bugs here as they are found. Each bug becomes a task with the same format.
 
 | ID | Found in | Description | Task | Status |
 |---|---|---|---|---|
-| | | | | |
+| FMS-BUG-001 | FMS-K01 golden run | Meter-reading correction supersedes every nozzle ledger row of the shift and leaves the corrected nozzle's sales ledger at the uncorrected amount (`forecourt/corrections/meter.py`) | FMS-BUG-001 | Open |
+
+- [ ] **FMS-BUG-001 · Bug fix · Meter correction supersedes all nozzle rows and not the sales ledger** · M · FMS-K01
+  - **Skills:** frappe-agent-debugger, frappe-errors-controllers
+  - **Description:** The golden run's director-approved correction lowers the closing e-cash of one nozzle by 1,000 KES on the shift. `corrections/meter.py` supersedes every unsuperseded Nozzle Ledger Entry of that shift, so 1 active row remains instead of 6. The nozzle's attributed Sales Ledger amount stays at 19,800 instead of 18,800. Design guide 6.8 requires superseding only the affected rows for both shifts, writing corrected rows, adjusting walk-in sales with a Credit Note or extra Sales Invoice, and recalculating cashier balances. The golden checks do not yet cover the walk-in adjustment, cashier recalculation or next-shift opening update.
+  - **Expectation:** Only the corrected nozzle's rows are superseded; its corrected Sales Ledger rows match the corrected meter; the walk-in delta is posted; checks "Unaffected nozzle ledger rows stay active" and "Corrected nozzle sales match corrected meter" pass.
+  - **Verify (CLI):** `bench --site test_fms execute forecourt.tests.golden.run` prints "all checks passed".
+  - **Commit:** `fix(corrections): supersede only the corrected meter rows`
 
 Template:
 
