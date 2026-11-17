@@ -10,6 +10,8 @@ from __future__ import annotations
 import frappe
 from frappe import _
 
+from forecourt.reports.common import apply_station_permission
+
 
 def execute(filters=None):
 	filters = filters or {}
@@ -61,9 +63,12 @@ def _columns():
 
 def _data(filters: dict) -> list[dict]:
 	f: dict = {}
-	for field in ("station", "provider", "status"):
+	for field in ("provider", "status"):
 		if filters.get(field):
 			f[field] = filters[field]
+	err = apply_station_permission(f, filters)
+	if err:
+		return []
 
 	rows = frappe.get_all(
 		"Payment Feed Entry",

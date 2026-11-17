@@ -6,6 +6,8 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
+from forecourt.reports.common import apply_station_permission
+
 
 def execute(filters=None):
 	filters = filters or {}
@@ -34,6 +36,8 @@ def _columns():
 
 def _data(filters):
 	f = _base_filters(filters)
+	if f is None:
+		return []
 	rows = frappe.get_all(
 		"Sales Ledger Entry",
 		filters=f,
@@ -73,7 +77,7 @@ def _data(filters):
 
 def _base_filters(filters):
 	f = {"is_cancelled": 0, "superseded_by": ["is", "not set"]}
-	for field in ("company", "station", "item"):
+	for field in ("company", "item"):
 		if filters.get(field):
 			f[field] = filters[field]
 	if filters.get("from_date"):
@@ -83,4 +87,7 @@ def _base_filters(filters):
 			f["posting_date"] = ["between", [filters["from_date"], filters["to_date"]]]
 		else:
 			f["posting_date"] = ["<=", filters["to_date"]]
+	err = apply_station_permission(f, filters)
+	if err:
+		return None
 	return f

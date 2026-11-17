@@ -11,6 +11,8 @@ import frappe
 from frappe import _
 from frappe.utils import today
 
+from forecourt.reports.common import apply_station_permission
+
 
 def execute(filters=None):
 	filters = filters or {}
@@ -45,16 +47,17 @@ def _data(filters):
 	as_of = today()
 	result = []
 
-	station_filter = {}
-	if filters.get("station"):
-		station_filter["station"] = filters["station"]
+	shift_f: dict = {"docstatus": 0}
 	if filters.get("company"):
-		station_filter["company"] = filters["company"]
+		shift_f["company"] = filters["company"]
+	err = apply_station_permission(shift_f, filters)
+	if err:
+		return []
 
 	# Draft / open Forecourt Shifts
 	for s in frappe.get_all(
 		"Forecourt Shift",
-		filters={"docstatus": 0, **station_filter},
+		filters=shift_f,
 		fields=["name", "station", "shift_date", "status"],
 		order_by="shift_date asc",
 	):
@@ -82,10 +85,12 @@ def _data(filters):
 		if _pr_has_station:
 			grn_fields.append("custom_station as station")
 		grn_filters = {"docstatus": 0, "is_return": 0}
-		if station_filter.get("company"):
-			grn_filters["company"] = station_filter["company"]
-		if _pr_has_station and station_filter.get("station"):
-			grn_filters["custom_station"] = station_filter["station"]
+		if filters.get("company"):
+			grn_filters["company"] = filters["company"]
+		if _pr_has_station and shift_f.get("station"):
+			grn_filters["custom_station"] = shift_f["station"]
+		elif _pr_has_station and isinstance(shift_f.get("station"), list):
+			grn_filters["custom_station"] = shift_f["station"]
 		for grn in frappe.get_all(
 			"Purchase Receipt",
 			filters=grn_filters,
@@ -114,9 +119,14 @@ def _data(filters):
 				)
 
 	# Shift Corrections awaiting approval
+	sc_f: dict = {"docstatus": 0}
+	if filters.get("company"):
+		sc_f["company"] = filters["company"]
+	if shift_f.get("station"):
+		sc_f["station"] = shift_f["station"]
 	for sc in frappe.get_all(
 		"Shift Correction",
-		filters={"docstatus": 0, **station_filter},
+		filters=sc_f,
 		fields=["name", "forecourt_shift", "correction_type", "workflow_state"],
 		order_by="creation asc",
 	):

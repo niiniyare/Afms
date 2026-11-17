@@ -6,6 +6,8 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
+from forecourt.reports.common import apply_station_permission
+
 
 def execute(filters=None):
 	filters = filters or {}
@@ -48,8 +50,6 @@ def _columns():
 
 def _data(filters):
 	f = {"is_cancelled": 0, "superseded_by": ["is", "not set"]}
-	if filters.get("station"):
-		f["station"] = filters["station"]
 	if filters.get("company"):
 		f["company"] = filters["company"]
 	if filters.get("nozzle"):
@@ -62,6 +62,9 @@ def _data(filters):
 		f["posting_date"] = [">=", filters["from_date"]]
 	if filters.get("has_drift"):
 		f["drift_l"] = ["!=", 0]
+	err = apply_station_permission(f, filters)
+	if err:
+		return []
 
 	rows = frappe.get_all(
 		"Nozzle Ledger Entry",

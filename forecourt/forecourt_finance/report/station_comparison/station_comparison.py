@@ -10,6 +10,8 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
+from forecourt.reports.common import apply_station_permission
+
 
 def execute(filters=None):
 	filters = filters or {}
@@ -62,6 +64,13 @@ def _data(filters):
 		company_f["company"] = filters["company"]
 
 	base_f = {"is_cancelled": 0, "superseded_by": ["is", "not set"], **company_f}
+	err = apply_station_permission(base_f, filters)
+	if err:
+		return []
+
+	# Shift count filter — same station restriction
+	shift_f = {"docstatus": 1, **company_f}
+	apply_station_permission(shift_f, filters)
 
 	# Sales ledger
 	sle_rows = frappe.get_all(
@@ -85,7 +94,6 @@ def _data(filters):
 	)
 
 	# Shift count
-	shift_f = {"docstatus": 1, **company_f}
 	if filters.get("from_date") and filters.get("to_date"):
 		shift_f["shift_date"] = ["between", [filters["from_date"], filters["to_date"]]]
 	elif filters.get("from_date"):

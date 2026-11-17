@@ -5,8 +5,6 @@ Summarises one station's day:
   - Payment mix (cash / mobile / card / credit)
   - Cashier balances and differences
   - Tank variances
-
-Columns respect User Permissions via frappe.get_list.
 """
 
 from __future__ import annotations
@@ -14,6 +12,8 @@ from __future__ import annotations
 import frappe
 from frappe import _
 from frappe.utils import flt
+
+from forecourt.reports.common import apply_station_permission
 
 
 def execute(filters=None):
@@ -44,18 +44,18 @@ def _columns():
 
 
 def _data(filters):
-	station = filters.get("station")
 	company = filters.get("company")
 	date = filters.get("date")
 
 	if not date:
 		date = frappe.utils.today()
 
-	sle_filters = {"posting_date": date, "is_cancelled": 0, "superseded_by": ["is", "not set"]}
-	if station:
-		sle_filters["station"] = station
+	sle_filters: dict = {"posting_date": date, "is_cancelled": 0, "superseded_by": ["is", "not set"]}
 	if company:
 		sle_filters["company"] = company
+	err = apply_station_permission(sle_filters, filters)
+	if err:
+		return []
 
 	# Sales by product
 	sle_rows = frappe.get_all(

@@ -10,6 +10,8 @@ import frappe
 from frappe import _
 from frappe.utils import add_days, flt, today
 
+from forecourt.reports.common import apply_station_permission
+
 _FORECAST_DAYS = 14  # rolling average window
 
 
@@ -59,12 +61,13 @@ def _data(filters):
 	window_start = add_days(as_of, -_FORECAST_DAYS)
 
 	base_f = {"is_cancelled": 0, "superseded_by": ["is", "not set"]}
-	if filters.get("station"):
-		base_f["station"] = filters["station"]
 	if filters.get("company"):
 		base_f["company"] = filters["company"]
 	if filters.get("tank"):
 		base_f["tank"] = filters["tank"]
+	err = apply_station_permission(base_f, filters)
+	if err:
+		return []
 
 	# Current stock: latest dip per tank
 	stock_f = {**base_f, "entry_type": "Shift"}

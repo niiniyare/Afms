@@ -10,6 +10,8 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
+from forecourt.reports.common import apply_station_permission
+
 
 def execute(filters=None):
 	filters = filters or {}
@@ -50,14 +52,15 @@ def _data(filters):
 	f = {"is_cancelled": 0, "superseded_by": ["is", "not set"]}
 	if filters.get("cashier"):
 		f["cashier"] = filters["cashier"]
-	if filters.get("station"):
-		f["station"] = filters["station"]
 	if filters.get("company"):
 		f["company"] = filters["company"]
 	if filters.get("from_date") and filters.get("to_date"):
 		f["posting_date"] = ["between", [filters["from_date"], filters["to_date"]]]
 	elif filters.get("from_date"):
 		f["posting_date"] = [">=", filters["from_date"]]
+	err = apply_station_permission(f, filters)
+	if err:
+		return []
 
 	rows = frappe.get_all(
 		"Cashier Ledger Entry",

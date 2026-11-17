@@ -10,6 +10,8 @@ from frappe import _
 from frappe.query_builder.functions import Sum
 from frappe.utils import flt, today
 
+from forecourt.reports.common import permitted_stations
+
 
 def execute(filters=None):
 	filters = filters or {}
@@ -49,9 +51,18 @@ def _data(filters):
 	as_of = filters.get("date") or today()
 
 	# Collect till accounts from Station Till Account child table
+	# Station DocType: permission enforced via name field (station IS the name)
+	permitted = permitted_stations()
+	if permitted is not None and not permitted:
+		return []
+
 	station_f = {}
 	if filters.get("station"):
+		if permitted is not None and filters["station"] not in permitted:
+			return []
 		station_f["name"] = filters["station"]
+	elif permitted is not None:
+		station_f["name"] = ["in", permitted]
 	if filters.get("company"):
 		station_f["company"] = filters["company"]
 
