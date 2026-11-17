@@ -136,6 +136,12 @@ jobs:
         env:
           CI: 'Yes'
 
+      - name: Seed ERPNext test records
+        working-directory: /home/runner/frappe-bench
+        run: bench --site test_fms execute erpnext.setup.utils.before_tests
+        env:
+          CI: 'Yes'
+
       - name: Run integration tests
         working-directory: /home/runner/frappe-bench
         run: |
@@ -145,15 +151,33 @@ jobs:
           TYPE: server
 
   # ------------------------------------------------------------------
+  # Path filter — detects whether the upgrade test is needed
+  # ------------------------------------------------------------------
+  check-paths:
+    runs-on: ubuntu-latest
+    name: Detect patch-related changes
+    if: github.event_name == 'pull_request'
+    outputs:
+      patches: ${{ steps.filter.outputs.patches }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            patches:
+              - 'forecourt/patches/**'
+              - 'patches.txt'
+              - 'forecourt/**/*.json'
+
+  # ------------------------------------------------------------------
   # Upgrade test — installs previous release, migrates to current branch
   # ------------------------------------------------------------------
   upgrade:
     runs-on: ubuntu-latest
     name: Upgrade Migration Test
-    # Only run on PRs that touch patches.txt, patches/, or DocType JSON
-    if: |
-      github.event_name == 'pull_request' &&
-      contains(github.event.pull_request.changed_files, 'patches')
+    needs: check-paths
+    if: needs.check-paths.outputs.patches == 'true'
 
     services:
       mariadb:
