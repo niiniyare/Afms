@@ -6,13 +6,16 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
-from forecourt.reports.common import apply_date_filter, apply_station_permission
+from forecourt.reports.common import apply_date_filter, apply_station_permission, validate_date_range
 
 _PAYMENT_TYPES = ["Cash", "Mobile Money", "Card", "Credit", "Voucher"]
 
 
 def execute(filters=None):
 	filters = filters or {}
+	err = validate_date_range(filters.get("from_date"), filters.get("to_date"))
+	if err:
+		frappe.throw(err)
 	return _columns(), _data(filters)
 
 
