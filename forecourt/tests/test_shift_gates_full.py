@@ -50,9 +50,13 @@ _GETDATETIME_PATCHER = patch(
 )
 
 
+_sgf_saved: dict = {}
+
+
 def setUpModule():
 	import frappe
 
+	_sgf_saved.update(db=frappe.db, get_all=frappe.get_all, get_cached_doc=frappe.get_cached_doc)
 	_TRANS_PATCHER.start()
 	_FLT_PATCHER.start()
 	_GETDATETIME_PATCHER.start()
@@ -66,9 +70,20 @@ def setUpModule():
 
 
 def tearDownModule():
+	import frappe
+
 	_GETDATETIME_PATCHER.stop()
 	_FLT_PATCHER.stop()
 	_TRANS_PATCHER.stop()
+	for attr, val in _sgf_saved.items():
+		setattr(frappe, attr, val)
+	_sgf_saved.clear()
+	try:
+		from frappe.tests.utils.generators import get_modules as _gm
+
+		_gm.cache_clear()
+	except (ImportError, AttributeError):
+		pass
 
 
 def _make_shift(**kwargs):

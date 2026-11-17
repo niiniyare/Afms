@@ -21,9 +21,13 @@ _FLT_PATCHER = patch(
 )
 
 
+_sg_saved: dict = {}
+
+
 def setUpModule():
 	import frappe
 
+	_sg_saved.update(db=frappe.db, get_all=frappe.get_all)
 	_TRANS_PATCHER.start()
 	_FLT_PATCHER.start()
 	# frappe.db is an unbound LocalProxy without a site; replace with a mock.
@@ -35,8 +39,19 @@ def setUpModule():
 
 
 def tearDownModule():
+	import frappe
+
 	_FLT_PATCHER.stop()
 	_TRANS_PATCHER.stop()
+	for attr, val in _sg_saved.items():
+		setattr(frappe, attr, val)
+	_sg_saved.clear()
+	try:
+		from frappe.tests.utils.generators import get_modules as _gm
+
+		_gm.cache_clear()
+	except (ImportError, AttributeError):
+		pass
 
 
 def _make_shift(**kwargs):

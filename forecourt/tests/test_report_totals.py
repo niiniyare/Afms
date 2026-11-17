@@ -227,6 +227,12 @@ def tearDownModule():
 	for attr, val in _rpt_saved.items():
 		setattr(frappe, attr, val)
 	_rpt_saved.clear()
+	try:
+		from frappe.tests.utils.generators import get_modules as _gm
+
+		_gm.cache_clear()
+	except (ImportError, AttributeError):
+		pass
 
 
 # ------------------------------------------------------------------

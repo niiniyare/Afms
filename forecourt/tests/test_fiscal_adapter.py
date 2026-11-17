@@ -52,6 +52,12 @@ def tearDownModule() -> None:
 	for attr, val in _saved.items():
 		setattr(frappe, attr, val)
 	_saved.clear()
+	try:
+		from frappe.tests.utils.generators import get_modules as _gm
+
+		_gm.cache_clear()
+	except (ImportError, AttributeError):
+		pass
 
 
 def _real_get_attr(dotted: str) -> object:

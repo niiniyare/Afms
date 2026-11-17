@@ -89,6 +89,12 @@ def tearDownModule():
 		frappe.get_all = _original_frappe_get_all
 	if _original_frappe_get_cached_doc is not None:
 		frappe.get_cached_doc = _original_frappe_get_cached_doc
+	try:
+		from frappe.tests.utils.generators import get_modules as _gm
+
+		_gm.cache_clear()
+	except (ImportError, AttributeError):
+		pass
 
 
 # ── helpers ────────────────────────────────────────────────────────────────
