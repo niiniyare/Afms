@@ -19,6 +19,7 @@ from forecourt.reports.common import (
 	apply_shift_date_filter,
 	apply_station_permission,
 	summary_card,
+	total_row_rank,
 	validate_date_range,
 )
 
@@ -145,6 +146,11 @@ def _data(filters: dict) -> tuple[list[dict], list[dict]]:
 		)
 
 	avg_hours = flt(total_hours / hours_count, 1) if hours_count else 0.0
+
+	cols = _columns()
+	rank_row = total_row_rank(rows, cols) if rows else None
+	if rank_row:
+		rows.append(rank_row)
 
 	summary = [
 		summary_card(len(shifts), _("Shifts Expected"), datatype="Int"),
