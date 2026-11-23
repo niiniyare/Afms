@@ -1,0 +1,15 @@
+{
+  "add_total_row": 0,
+  "doctype": "Report",
+  "is_standard": "Yes",
+  "module": "Forecourt Shift",
+  "name": "Corrections Register",
+  "ref_doctype": "Shift Correction",
+  "report_name": "Corrections Register",
+  "report_type": "Script Report",
+  "roles": [
+    {"role": "Forecourt Director"},
+    {"role": "Forecourt Administrator"},
+    {"role": "Area Manager"}
+  ]
+}
