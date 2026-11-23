@@ -1,0 +1,16 @@
+{
+  "add_total_row": 0,
+  "doctype": "Report",
+  "is_standard": "Yes",
+  "module": "Forecourt Finance",
+  "name": "Staff Productivity",
+  "ref_doctype": "Forecourt Shift",
+  "report_name": "Staff Productivity",
+  "report_type": "Script Report",
+  "roles": [
+    {"role": "Forecourt Director"},
+    {"role": "Forecourt Administrator"},
+    {"role": "Area Manager"},
+    {"role": "Station Manager"}
+  ]
+}
