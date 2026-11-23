@@ -1,0 +1,17 @@
+{
+  "add_total_row": 0,
+  "doctype": "Report",
+  "is_standard": "Yes",
+  "module": "Wetstock",
+  "name": "Delivery Register",
+  "ref_doctype": "Purchase Receipt",
+  "report_name": "Delivery Register",
+  "report_type": "Script Report",
+  "roles": [
+    {"role": "Forecourt Director"},
+    {"role": "Forecourt Accountant"},
+    {"role": "Forecourt Administrator"},
+    {"role": "Area Manager"},
+    {"role": "Station Manager"}
+  ]
+}
