@@ -98,6 +98,8 @@ FMS_I401 = "FMS-I401"  # Payment feed message failed to parse or map
 FMS_C501 = "FMS-C501"  # Shift Correction needs director approval
 FMS_C502 = "FMS-C502"  # Shift-generated document cannot be cancelled directly
 FMS_C503 = "FMS-C503"  # Only latest closed shift at station can be cancelled
+FMS_C504 = "FMS-C504"  # Correction raises a sale; walk-in sale increase not supported
+FMS_C505 = "FMS-C505"  # Shift has no walk-in Sales Invoice to credit
 
 # ---------------------------------------------------------------------------
 # FMS-M6xx  Masters and settings (D36, proposed)
