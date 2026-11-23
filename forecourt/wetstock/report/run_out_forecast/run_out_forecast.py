@@ -10,7 +10,14 @@ import frappe
 from frappe import _
 from frappe.utils import add_days, flt, today
 
+from forecourt.reports.common import apply_station_permission
+
 _FORECAST_DAYS = 14  # rolling average window
+
+# Status values for the status column
+_STATUS_FORECAST = "Forecast"
+_STATUS_NO_SALES = "No recent sales"
+_STATUS_NO_STOCK = "No stock"
 
 
 def execute(filters=None):
@@ -51,7 +58,26 @@ def _columns():
 			"width": 110,
 		},
 		{"label": _("Est. Run-out Date"), "fieldname": "runout_date", "fieldtype": "Date", "width": 100},
+		{"label": _("Status"), "fieldname": "status", "fieldtype": "Data", "width": 120},
 	]
+
+
+def _forecast_row(stock_l: float, avg_daily: float, as_of: str) -> dict:
+	"""
+	Pure calculation: given current stock and average daily sales, return
+	the forecast fields (days_to_runout, runout_date, status).
+
+	Extracted for unit testing without DB access.
+	"""
+	if stock_l <= 0:
+		return {"days_to_runout": 0.0, "runout_date": as_of, "status": _STATUS_NO_STOCK}
+	if avg_daily <= 0:
+		# Tank has stock but no recorded sales in the lookback window —
+		# cannot produce a forecast without consumption data.
+		return {"days_to_runout": None, "runout_date": None, "status": _STATUS_NO_SALES}
+	days = flt(stock_l / avg_daily, 1)
+	runout = add_days(as_of, int(days))
+	return {"days_to_runout": days, "runout_date": runout, "status": _STATUS_FORECAST}
 
 
 def _data(filters):
@@ -59,12 +85,13 @@ def _data(filters):
 	window_start = add_days(as_of, -_FORECAST_DAYS)
 
 	base_f = {"is_cancelled": 0, "superseded_by": ["is", "not set"]}
-	if filters.get("station"):
-		base_f["station"] = filters["station"]
 	if filters.get("company"):
 		base_f["company"] = filters["company"]
 	if filters.get("tank"):
 		base_f["tank"] = filters["tank"]
+	err = apply_station_permission(base_f, filters)
+	if err:
+		return []
 
 	# Current stock: latest dip per tank
 	stock_f = {**base_f, "entry_type": "Shift"}
@@ -99,12 +126,7 @@ def _data(filters):
 	result = []
 	for tank, info in sorted(stock_map.items(), key=lambda kv: (kv[1]["station"] or "", kv[0])):
 		avg_daily = flt(sales_total.get(tank, 0) / _FORECAST_DAYS, 3)
-		if avg_daily > 0:
-			days = flt(info["stock_l"] / avg_daily, 1)
-			runout = add_days(as_of, int(days))
-		else:
-			days = 0.0
-			runout = None
+		fc = _forecast_row(info["stock_l"], avg_daily, as_of)
 		result.append(
 			{
 				"tank": info["tank"],
@@ -112,8 +134,9 @@ def _data(filters):
 				"station": info["station"],
 				"stock_l": info["stock_l"],
 				"avg_daily_l": avg_daily,
-				"days_to_runout": days,
-				"runout_date": runout,
+				"days_to_runout": fc["days_to_runout"],
+				"runout_date": fc["runout_date"],
+				"status": fc["status"],
 			}
 		)
 	return result

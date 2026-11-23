@@ -25,6 +25,7 @@ Scenario events:
 
 from __future__ import annotations
 
+import importlib
 import traceback
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
@@ -53,6 +54,48 @@ _STATION_BRAVO = "KE-NBO-BRAVO"
 
 _FLEET_CUSTOMER = "Golden Fleet Customer"
 _DELIVERY_SUPPLIER = "Golden Delivery Supplier"
+_DIRECTOR = "golden-director@test.example"
+
+_PRICE_CHANGE_DAY = 6
+_DELIVERY_DAY = 7
+_DELIVERY_L = 10000.0
+_RESOLUTION_DAY = 11
+_RESOLUTION_KES = 200.0
+_CREDIT_DAY = 12
+_CREDIT_SHIFT_NO = 1
+_CREDIT_L = 50.0
+_CORRECTION_DAY = 13
+_CORRECTION_PUMP = f"{_STATION_ALPHA}-P01"
+_CORRECTION_REDUCTION_KES = 1000.0
+
+_REPORTS = (
+	"forecourt.forecourt_finance.report.cash_collection.cash_collection",
+	"forecourt.forecourt_finance.report.cash_position_by_station.cash_position_by_station",
+	"forecourt.forecourt_finance.report.cashier_performance.cashier_performance",
+	"forecourt.forecourt_finance.report.cashier_statement.cashier_statement",
+	"forecourt.forecourt_finance.report.clearing_account_ageing.clearing_account_ageing",
+	"forecourt.forecourt_finance.report.credit_slips_register.credit_slips_register",
+	"forecourt.forecourt_finance.report.payment_mix_matrix.payment_mix_matrix",
+	"forecourt.forecourt_finance.report.payment_reconciliation.payment_reconciliation",
+	"forecourt.forecourt_finance.report.sales_by_cashier.sales_by_cashier",
+	"forecourt.forecourt_finance.report.sales_by_product.sales_by_product",
+	"forecourt.forecourt_finance.report.station_comparison.station_comparison",
+	"forecourt.forecourt_setup.report.fms_health.fms_health",
+	"forecourt.forecourt_shift.report.daily_station_report.daily_station_report",
+	"forecourt.forecourt_shift.report.exception_register.exception_register",
+	"forecourt.forecourt_shift.report.open_items.open_items",
+	"forecourt.forecourt_shift.report.sales_by_shift.sales_by_shift",
+	"forecourt.forecourt_shift.report.shift_reconciliation.shift_reconciliation",
+	"forecourt.wetstock.report.delivery_variance.delivery_variance",
+	"forecourt.wetstock.report.meter_drift.meter_drift",
+	"forecourt.wetstock.report.meter_movement.meter_movement",
+	"forecourt.wetstock.report.run_out_forecast.run_out_forecast",
+	"forecourt.wetstock.report.sales_by_pump_and_nozzle.sales_by_pump_and_nozzle",
+	"forecourt.wetstock.report.sales_by_tank.sales_by_tank",
+	"forecourt.wetstock.report.tank_stock_movement.tank_stock_movement",
+	"forecourt.wetstock.report.tank_stock_position.tank_stock_position",
+	"forecourt.wetstock.report.wetstock_variance.wetstock_variance",
+)
 
 # Volume per nozzle per shift (litres).
 # Must fit within tank capacity for 45 shifts with no extra deliveries:
@@ -66,6 +109,9 @@ _DIP_VARIANCE: dict[int, float] = {
 	3: -1.5,  # Day 3: small loss within tolerance
 	10: 1.5,  # Day 10: Alpha gain within tolerance
 }
+
+_DV_DAY = 16  # Day offset for dip-variance sub-scenarios (after 15-day main month)
+_DV_DIP_OFFSET = 5.05  # Physical surplus vs meter-expected (litres)
 
 _CHECKS_PASSED: list[str] = []
 _CHECKS_FAILED: list[str] = []
@@ -633,18 +679,20 @@ def _assert_gl_matches_ledger(company: str, month_start: date, month_end: date) 
           AND posting_date BETWEEN %s AND %s
           AND basis = 'Attributed'
           AND is_cancelled = 0
+          AND (superseded_by IS NULL OR superseded_by = '')
         """,
 		(company, str(month_start), str(sle_end)),
 	)[0][0]
 
-	# GL: debit side of ALL shift-linked SIs (walk-in + credit customers)
+	# GL: customer receivable side of ALL shift-linked SIs and their credit notes
 	gl_total = frappe.db.sql(
 		"""
-        SELECT IFNULL(SUM(gle.debit), 0)
+        SELECT IFNULL(SUM(gle.debit - gle.credit), 0)
         FROM `tabGL Entry` gle
         INNER JOIN `tabSales Invoice` si ON si.name = gle.voucher_no
         WHERE gle.company = %s
           AND gle.voucher_type = 'Sales Invoice'
+          AND gle.party_type = 'Customer'
           AND si.fms_forecourt_shift IS NOT NULL
           AND gle.posting_date BETWEEN %s AND %s
           AND gle.is_cancelled = 0
@@ -700,22 +748,8 @@ def _assert_stock_matches_dips(company: str, month_end: date) -> None:
 		)
 
 
-def _assert_reports_run(company: str, station: str, month_start: date, month_end: date) -> None:
-	"""Call execute() on all FMS reports and verify they return rows without exceptions."""
-	from forecourt.forecourt_finance.report.cashier_statement.cashier_statement import (
-		execute as cashier_stmt,
-	)
-	from forecourt.forecourt_shift.report.daily_station_report.daily_station_report import (
-		execute as daily,
-	)
-	from forecourt.forecourt_shift.report.sales_by_shift.sales_by_shift import (
-		execute as sales_shift,
-	)
-	from forecourt.wetstock.report.wetstock_variance.wetstock_variance import (
-		execute as wetstock,
-	)
-
-	filters: dict[str, Any] = {
+def _report_filters(company: str, station: str, month_start: date, month_end: date) -> dict[str, Any]:
+	return {
 		"company": company,
 		"station": station,
 		"date": str(month_start),  # daily_station_report uses "date" (single day)
@@ -723,25 +757,626 @@ def _assert_reports_run(company: str, station: str, month_start: date, month_end
 		"to_date": str(month_end),
 	}
 
-	for name, fn in (
-		("daily_station_report", daily),
-		("sales_by_shift", sales_shift),
-		("cashier_statement", cashier_stmt),
-		("wetstock_variance", wetstock),
-	):
+
+_EMPTY_BY_DESIGN: dict[tuple[str, str], str] = {
+	("open_items", _STATION_ALPHA): "all golden shifts submitted, no drafts or open items",
+	("open_items", _STATION_BRAVO): "all golden shifts submitted, no drafts or open items",
+	("payment_reconciliation", _STATION_ALPHA): "golden scenario imports no provider payments",
+	("payment_reconciliation", _STATION_BRAVO): "golden scenario imports no provider payments",
+	("delivery_variance", _STATION_BRAVO): "golden scenario delivers only to Station Alpha",
+	("credit_slips_register", _STATION_BRAVO): "golden scenario makes credit sales only at Station Alpha",
+}
+
+
+def _assert_reports_run(station: str, filters: dict[str, Any]) -> None:
+	"""Call execute() on every FMS report; rows expected unless the scenario makes them empty by design."""
+	for path in _REPORTS:
+		name = path.rsplit(".", 1)[-1]
 		try:
-			_columns, data = fn(filters)
+			data = importlib.import_module(path).execute(filters)[1]
+		except Exception:
+			_check(f"Report {name} runs ({station})", False, traceback.format_exc())
+			continue
+		_check(f"Report {name} runs ({station})", True)
+		reason = _EMPTY_BY_DESIGN.get((name, station))
+		if reason:
 			_check(
-				f"Report {name} runs ({station})",
-				True,
+				f"Report {name} empty by design ({station}: {reason})", len(data) == 0, f"rows={len(data)}"
 			)
-			_check(
-				f"Report {name} returns rows ({station})",
-				len(data) > 0,
-				"no rows returned",
-			)
-		except Exception as exc:
-			_check(f"Report {name} runs ({station})", False, str(exc))
+		else:
+			_check(f"Report {name} returns rows ({station})", len(data) > 0, "no rows returned")
+
+
+def _assert_shift_coverage(stations: tuple[str, ...]) -> None:
+	expected = _DAYS * _SHIFTS_PER_DAY
+	for station in stations:
+		count = frappe.db.count("Forecourt Shift", {"station": station, "docstatus": 1})
+		_check(f"Submitted shift count = {expected} ({station})", count == expected, f"count={count}")
+
+
+def _assert_shift_prices(shift_prices: dict[str, float]) -> None:
+	"""Each shift's attributed fuel sales must equal litres x the price in force for that shift."""
+	rows = frappe.get_all(
+		"Sales Ledger Entry",
+		filters={
+			"forecourt_shift": ["in", list(shift_prices)],
+			"basis": "Attributed",
+			"is_cancelled": 0,
+			"superseded_by": ["is", "not set"],
+		},
+		fields=["forecourt_shift", "item", "qty", "amount"],
+	)
+	totals: dict[tuple[str, str], tuple[float, float]] = {}
+	for r in rows:
+		qty, amount = totals.get((r.forecourt_shift, r.item), (0.0, 0.0))
+		totals[(r.forecourt_shift, r.item)] = (qty + flt(r.qty, 3), amount + flt(r.amount, 2))
+
+	mismatches: list[str] = []
+	for shift, pms_price in shift_prices.items():
+		for item, price in ((_FUEL_ITEM, pms_price), (_FUEL_ITEM_AGO, _PRICE_AGO)):
+			qty, amount = totals.get((shift, item), (0.0, 0.0))
+			if qty <= 0 or abs(amount - qty * price) > 0.5:
+				mismatches.append(f"{shift} {item}: qty={qty} amount={amount} expected price={price}")
+	_check(
+		f"Shift sales priced at price in force ({len(shift_prices)} shifts)",
+		not mismatches,
+		"; ".join(mismatches[:5]),
+	)
+
+
+def _assert_delivery(station: str, delivery_date: date, litres: float) -> None:
+	prs = frappe.get_all(
+		"Purchase Receipt",
+		filters={"station": station, "posting_date": delivery_date, "docstatus": 1},
+		pluck="name",
+	)
+	_check(f"One delivery GRN on {delivery_date} ({station})", len(prs) == 1, f"count={len(prs)}")
+	if not prs:
+		return
+
+	wle = frappe.get_all(
+		"Wetstock Ledger Entry",
+		filters={"voucher_type": "Purchase Receipt", "voucher_no": ["in", prs], "is_cancelled": 0},
+		fields=["receipt_l"],
+	)
+	received = sum(flt(r.receipt_l, 3) for r in wle)
+	_check(
+		f"Delivery litres in wetstock ledger ({station})",
+		abs(received - litres) < 0.5,
+		f"receipt_l={received}, expected {litres}",
+	)
+
+	sle = frappe.get_all(
+		"Stock Ledger Entry",
+		filters={"voucher_type": "Purchase Receipt", "voucher_no": ["in", prs], "is_cancelled": 0},
+		fields=["actual_qty"],
+	)
+	stock_in = sum(flt(r.actual_qty, 3) for r in sle)
+	_check(
+		f"Delivery litres in stock ledger ({station})",
+		abs(stock_in - litres) < 0.5,
+		f"actual_qty={stock_in}, expected {litres}",
+	)
+
+
+def _assert_cashier_resolution(shift: str, amount: float) -> None:
+	cle = frappe.get_all(
+		"Cashier Ledger Entry",
+		filters={
+			"forecourt_shift": shift,
+			"is_cancelled": 0,
+			"superseded_by": ["is", "not set"],
+			"resolution_action": ["is", "set"],
+		},
+		fields=["resolution_action", "resolution_amount"],
+	)
+	resolved = sum(flt(r.resolution_amount, 2) for r in cle)
+	_check(
+		f"Cashier shortage resolution recorded ({shift})",
+		abs(resolved - amount) < 0.01,
+		f"resolution_amount={resolved}, expected {amount}",
+	)
+
+	je_names = frappe.get_all(
+		"Journal Entry", filters={"fms_forecourt_shift": shift, "docstatus": 1}, pluck="name"
+	)
+	staff_lines = (
+		frappe.get_all(
+			"Journal Entry Account",
+			filters={"parent": ["in", je_names], "party_type": "Employee"},
+			fields=["debit"],
+		)
+		if je_names
+		else []
+	)
+	receivable = sum(flt(r.debit, 2) for r in staff_lines)
+	_check(
+		f"Shortage posted to cashier receivable ({shift})",
+		abs(receivable - amount) < 0.01,
+		f"employee debit={receivable}, expected {amount}, JEs={je_names}",
+	)
+
+
+def _assert_credit_sale(shift: str, litres: float, price: float) -> None:
+	sis = frappe.get_all(
+		"Sales Invoice",
+		filters={"fms_forecourt_shift": shift, "customer": _FLEET_CUSTOMER, "docstatus": 1},
+		fields=["grand_total", "outstanding_amount"],
+	)
+	expected = flt(litres * price, 2)
+	billed = sum(flt(r.grand_total, 2) for r in sis)
+	outstanding = sum(flt(r.outstanding_amount, 2) for r in sis)
+	_check(
+		f"Credit sale invoiced to fleet customer ({shift})",
+		bool(sis) and abs(billed - expected) < 0.5,
+		f"billed={billed}, expected {expected}, invoices={len(sis)}",
+	)
+	_check(
+		f"Credit sale outstanding on fleet customer ({shift})",
+		bool(sis) and abs(outstanding - expected) < 0.5,
+		f"outstanding={outstanding}, expected {expected}",
+	)
+
+
+def _ensure_user(email: str, first_name: str) -> None:
+	if frappe.db.exists("User", email):
+		return
+	frappe.get_doc(
+		{
+			"doctype": "User",
+			"email": email,
+			"first_name": first_name,
+			"send_welcome_email": 0,
+			"enabled": 1,
+			"user_type": "System User",
+			"roles": [{"role": "System Manager"}],
+		}
+	).insert(ignore_permissions=True)
+
+
+def _apply_meter_correction(station: str, shift: str) -> None:
+	"""Director-approved Shift Correction lowering one nozzle's closing e-cash reading.
+
+	Checks what the correction must leave behind: the approver is the director, the shift
+	is Corrected, unaffected nozzles keep their ledger rows, the replacement row carries the
+	new closing, and the nozzle's sales ledger matches the corrected meter.
+	"""
+	nozzle = frappe.db.get_value("Nozzle", {"pump": _CORRECTION_PUMP, "nozzle_no": 1}, "name")
+	row = frappe.db.get_value(
+		"Shift Meter Reading",
+		{"parent": shift, "parenttype": "Forecourt Shift", "nozzle": nozzle},
+		["name", "opening_elec_cash", "closing_elec_cash"],
+		as_dict=True,
+	)
+	if not row:
+		_check(f"Meter reading row found for correction ({shift})", False, f"nozzle={nozzle}")
+		return
+
+	old_closing = flt(row.closing_elec_cash, 2)
+	new_closing = flt(old_closing - _CORRECTION_REDUCTION_KES, 2)
+	correction = frappe.get_doc(
+		{
+			"doctype": "Shift Correction",
+			"forecourt_shift": shift,
+			"station": station,
+			"company": frappe.db.get_value("Forecourt Shift", shift, "company"),
+			"correction_type": "Meter reading",
+			"reason": "Golden scenario: closing e-cash read too high on P01-N1",
+			"items": [
+				{
+					"target_type": "Meter Reading",
+					"target_row": row.name,
+					"field": "closing_elec_cash",
+					"old_value": str(old_closing),
+					"new_value": str(new_closing),
+				}
+			],
+		}
+	)
+	correction.flags.ignore_permissions = True
+	correction.insert()
+
+	try:
+		correction.submit()
+	except Exception as exc:
+		_check("Preparer cannot approve own correction (FMS-C501)", "FMS-C501" in str(exc), str(exc))
+	else:
+		_check("Preparer cannot approve own correction (FMS-C501)", False, "submit succeeded")
+		return
+	correction.reload()
+
+	_ensure_user(_DIRECTOR, "Golden Director")
+	frappe.set_user(_DIRECTOR)
+	try:
+		correction.flags.ignore_permissions = True
+		correction.submit()
+	except Exception:
+		_check("Director-approved correction submits", False, traceback.format_exc())
+		return
+	finally:
+		frappe.set_user("Administrator")
+	_check("Director-approved correction submits", True)
+
+	_check(
+		"Correction records the director as approver",
+		frappe.db.get_value("Shift Correction", correction.name, "approved_by") == _DIRECTOR,
+	)
+	status = frappe.db.get_value("Forecourt Shift", shift, "status")
+	_check("Corrected shift status is Corrected", status == "Corrected", f"status={status}")
+
+	nozzle_count = frappe.db.count("Nozzle", {"pump": ["like", f"{station}-%"]})
+	active_nle = frappe.db.count(
+		"Nozzle Ledger Entry",
+		{"forecourt_shift": shift, "is_cancelled": 0, "superseded_by": ["is", "not set"]},
+	)
+	_check(
+		f"Unaffected nozzle ledger rows stay active ({shift})",
+		active_nle == nozzle_count,
+		f"active={active_nle}, expected {nozzle_count}",
+	)
+
+	replacement = frappe.get_all(
+		"Nozzle Ledger Entry",
+		filters={
+			"forecourt_shift": shift,
+			"correction": correction.name,
+			"is_cancelled": 0,
+			"nozzle": nozzle,
+		},
+		fields=["closing_elec_cash"],
+	)
+	_check(
+		f"Replacement nozzle ledger row carries corrected closing ({shift})",
+		bool(replacement) and abs(flt(replacement[0].closing_elec_cash, 2) - new_closing) < 0.01,
+		f"rows={replacement}, expected closing {new_closing}",
+	)
+
+	sales = frappe.get_all(
+		"Sales Ledger Entry",
+		filters={
+			"forecourt_shift": shift,
+			"nozzle": nozzle,
+			"basis": "Attributed",
+			"is_cancelled": 0,
+			"superseded_by": ["is", "not set"],
+		},
+		fields=["amount"],
+	)
+	sales_total = sum(flt(r.amount, 2) for r in sales)
+	expected_sales = flt(new_closing - flt(row.opening_elec_cash, 2), 2)
+	_check(
+		f"Corrected nozzle sales match corrected meter ({shift})",
+		abs(sales_total - expected_sales) < 0.5,
+		f"sales={sales_total}, expected {expected_sales}",
+	)
+
+
+# ---------------------------------------------------------------------------
+# Dip-variance correction scenario — Decision 1 verification
+# ---------------------------------------------------------------------------
+
+
+def _test_dip_variance_correction(alpha: StationSetup) -> None:
+	"""Verify meter correction against a shift that carries an independent dip-based Stock Recon.
+
+	Sub-test A (dip_offset=+5.05, SR expected):
+	  1. Original SI deducts metered quantity (update_stock=1).
+	  2. Dip-based SR adjusts stock to physical level.
+	  3. Correction credit note has update_stock=0.
+	  4. Stock after correction = stock after SR (credit note does not move stock).
+	  5. Final book stock = last WLE dip_l (mathematical consistency).
+	  6. Retry: no duplicate credit notes or SRs.
+
+	Sub-test B (dip_offset=0 → no SR; absent-SR case):
+	  7. Correction applies without SR (financial path independent of physical).
+	  8. No guard blocks correction due to absent SR.
+	"""
+	station = alpha.station
+
+	nozzle = frappe.db.get_value("Nozzle", {"pump": _CORRECTION_PUMP, "nozzle_no": 1}, "name")
+	if not nozzle:
+		_check("DV: nozzle found for DV scenario", False, f"pump={_CORRECTION_PUMP}")
+		return
+
+	tank = frappe.db.get_value("Nozzle", nozzle, "tank")
+	warehouse = frappe.db.get_value("Fuel Tank", tank, "warehouse") if tank else None
+	if not warehouse:
+		_check("DV: tank warehouse found for DV scenario", False, f"tank={tank}")
+		return
+
+	# ----- Sub-test A: shift with dip_offset > 0 (SR expected) -----
+
+	day_a = _DV_DAY
+	shift_start_a = datetime.combine(_MONTH_START + timedelta(days=day_a - 1), datetime.min.time())
+	shift_end_a = shift_start_a + timedelta(hours=_SHIFT_HOURS)
+
+	try:
+		shift_a = _make_and_close_shift(
+			alpha,
+			shift_start_a,
+			shift_end_a,
+			day_a,
+			0,
+			_PRICE_PMS_NEW,
+			_PRICE_AGO,
+			dip_offset=_DV_DIP_OFFSET,
+		)
+	except Exception:
+		_check("DV-A: shift with dip_offset=+5.05 closes", False, traceback.format_exc())
+		return
+	_check("DV-A: shift with dip_offset=+5.05 closes", True)
+
+	# Check 1: original SI has update_stock=1
+	si_a = frappe.db.get_value(
+		"Sales Invoice",
+		{"fms_forecourt_shift": shift_a, "docstatus": 1, "is_return": 0},
+		["name", "update_stock"],
+		as_dict=True,
+	)
+	_check(
+		"DV-A: original SI update_stock=1",
+		bool(si_a) and bool(si_a.update_stock),
+		f"si={si_a}",
+	)
+
+	# Check 2: SR posted; item qty = last WLE dip_l
+	sr_a_rows = frappe.get_all(
+		"Stock Reconciliation",
+		filters={"fms_forecourt_shift": shift_a, "docstatus": 1},
+		fields=["name"],
+	)
+	_check("DV-A: SR posted (dip_offset creates adjustment)", bool(sr_a_rows), f"shift={shift_a}")
+
+	if sr_a_rows:
+		wle_a = frappe.db.sql(
+			"SELECT dip_l FROM `tabWetstock Ledger Entry`"
+			" WHERE tank=%s AND is_cancelled=0 ORDER BY creation DESC LIMIT 1",
+			(tank,),
+		)
+		last_dip_a = flt(wle_a[0][0], 3) if wle_a else 0.0
+		# Join across all SRs for the shift — Alpha has multiple tanks → multiple SR docs
+		sr_items_a = frappe.db.sql(
+			"SELECT sri.qty FROM `tabStock Reconciliation Item` sri"
+			" INNER JOIN `tabStock Reconciliation` sr ON sr.name=sri.parent"
+			" WHERE sr.fms_forecourt_shift=%s AND sr.docstatus=1 AND sri.warehouse=%s",
+			(shift_a, warehouse),
+			as_dict=True,
+		)
+		sr_qty_a = flt(sr_items_a[0].qty, 3) if sr_items_a else 0.0
+		_check(
+			"DV-A: SR item qty = last WLE dip_l",
+			abs(sr_qty_a - last_dip_a) < 0.01,
+			f"sr_qty={sr_qty_a}, dip={last_dip_a}",
+		)
+
+	# Capture stock after SR (before correction)
+	stock_after_sr_a = flt(frappe.db.get_value("Bin", {"warehouse": warehouse}, "actual_qty") or 0, 3)
+
+	# Apply director-approved correction to shift_a
+	nozzle_row_a = frappe.db.get_value(
+		"Shift Meter Reading",
+		{"parent": shift_a, "parenttype": "Forecourt Shift", "nozzle": nozzle},
+		["name", "opening_elec_cash", "closing_elec_cash"],
+		as_dict=True,
+	)
+	if not nozzle_row_a:
+		_check("DV-A: meter row found for correction", False, f"shift={shift_a}")
+		return
+
+	old_closing_a = flt(nozzle_row_a.closing_elec_cash, 2)
+	new_closing_a = flt(old_closing_a - _CORRECTION_REDUCTION_KES, 2)
+
+	corr_a = frappe.get_doc(
+		{
+			"doctype": "Shift Correction",
+			"forecourt_shift": shift_a,
+			"station": station,
+			"company": frappe.db.get_value("Forecourt Shift", shift_a, "company"),
+			"correction_type": "Meter reading",
+			"reason": "DV-A: closing e-cash overcounted on P01-N1",
+			"items": [
+				{
+					"target_type": "Meter Reading",
+					"target_row": nozzle_row_a.name,
+					"field": "closing_elec_cash",
+					"old_value": str(old_closing_a),
+					"new_value": str(new_closing_a),
+				}
+			],
+		}
+	)
+	corr_a.flags.ignore_permissions = True
+	corr_a.insert()
+
+	try:
+		corr_a.submit()
+	except Exception as exc:
+		_check("DV-A: preparer blocked (FMS-C501)", "FMS-C501" in str(exc), str(exc))
+	else:
+		_check("DV-A: preparer blocked (FMS-C501)", False, "submit succeeded without director")
+		return
+	corr_a.reload()
+
+	_ensure_user(_DIRECTOR, "Golden Director")
+	frappe.set_user(_DIRECTOR)
+	try:
+		corr_a.flags.ignore_permissions = True
+		corr_a.submit()
+	except Exception:
+		_check("DV-A: director correction submits", False, traceback.format_exc())
+		return
+	finally:
+		frappe.set_user("Administrator")
+	_check("DV-A: director correction submits", True)
+
+	# Check 3: credit note has update_stock=0
+	cn_a_rows = frappe.get_all(
+		"Sales Invoice",
+		filters={"fms_forecourt_shift": shift_a, "is_return": 1, "docstatus": 1},
+		fields=["name", "update_stock"],
+	)
+	_check(
+		"DV-A: credit note update_stock=0",
+		bool(cn_a_rows) and all(r.update_stock == 0 for r in cn_a_rows),
+		f"cn={cn_a_rows}",
+	)
+
+	# Check 4: stock after correction = stock after SR (credit note does not move stock)
+	stock_after_correction_a = flt(frappe.db.get_value("Bin", {"warehouse": warehouse}, "actual_qty") or 0, 3)
+	_check(
+		"DV-A: stock unchanged by credit note (update_stock=0)",
+		abs(stock_after_correction_a - stock_after_sr_a) < 0.001,
+		f"after_sr={stock_after_sr_a}, after_correction={stock_after_correction_a}",
+	)
+
+	# Check 5: final book stock = last WLE dip_l
+	wle_final_a = frappe.db.sql(
+		"SELECT dip_l FROM `tabWetstock Ledger Entry`"
+		" WHERE tank=%s AND is_cancelled=0 ORDER BY creation DESC LIMIT 1",
+		(tank,),
+	)
+	final_dip_a = flt(wle_final_a[0][0], 3) if wle_final_a else None
+	if final_dip_a is not None:
+		_check(
+			"DV-A: final book stock = last dip (mathematical consistency)",
+			abs(stock_after_correction_a - final_dip_a) < 1.0,
+			f"stock={stock_after_correction_a}, dip={final_dip_a}",
+		)
+
+	# Check 6: retry — correction applied exactly once; no duplicate credit notes or SRs
+	applied_docs_a = frappe.db.get_value("Shift Correction", corr_a.name, "applied_documents") or ""
+	_check(
+		"DV-A: correction has applied_documents set (applied exactly once)",
+		bool(applied_docs_a.strip()),
+		f"applied_documents='{applied_docs_a}'",
+	)
+	_check(
+		"DV-A: exactly one credit note for DV-A shift",
+		frappe.db.count("Sales Invoice", {"fms_forecourt_shift": shift_a, "is_return": 1, "docstatus": 1})
+		== 1,
+	)
+	_check(
+		"DV-A: SR count unchanged after correction (no additional SR from correction)",
+		frappe.db.count("Stock Reconciliation", {"fms_forecourt_shift": shift_a, "docstatus": 1})
+		== len(sr_a_rows),
+		f"expected={len(sr_a_rows)}",
+	)
+
+	# ----- Sub-test B: shift with dip_offset=0 (no SR; absent-SR case) -----
+
+	day_b = _DV_DAY + 1
+	shift_start_b = datetime.combine(_MONTH_START + timedelta(days=day_b - 1), datetime.min.time())
+	shift_end_b = shift_start_b + timedelta(hours=_SHIFT_HOURS)
+
+	try:
+		shift_b = _make_and_close_shift(
+			alpha,
+			shift_start_b,
+			shift_end_b,
+			day_b,
+			0,
+			_PRICE_PMS_NEW,
+			_PRICE_AGO,
+			dip_offset=0.0,
+		)
+	except Exception:
+		_check("DV-B: shift with dip_offset=0 closes", False, traceback.format_exc())
+		return
+	_check("DV-B: shift with dip_offset=0 closes", True)
+
+	# Confirm no SR posted: dip = book stock exactly → EmptyStockReconciliationItemsError skipped
+	sr_b_rows = frappe.get_all(
+		"Stock Reconciliation",
+		filters={"fms_forecourt_shift": shift_b, "docstatus": 1},
+		fields=["name"],
+	)
+	_check(
+		"DV-B: no SR posted when dip equals book stock",
+		not sr_b_rows,
+		f"unexpected SRs={[r.name for r in sr_b_rows]}",
+	)
+
+	# Apply correction to shift_b — establish that correction works without SR
+	nozzle_row_b = frappe.db.get_value(
+		"Shift Meter Reading",
+		{"parent": shift_b, "parenttype": "Forecourt Shift", "nozzle": nozzle},
+		["name", "opening_elec_cash", "closing_elec_cash"],
+		as_dict=True,
+	)
+	if not nozzle_row_b:
+		_check("DV-B: meter row found", False, f"shift={shift_b}")
+		return
+
+	old_closing_b = flt(nozzle_row_b.closing_elec_cash, 2)
+	new_closing_b = flt(old_closing_b - _CORRECTION_REDUCTION_KES, 2)
+	stock_before_b = flt(frappe.db.get_value("Bin", {"warehouse": warehouse}, "actual_qty") or 0, 3)
+
+	corr_b = frappe.get_doc(
+		{
+			"doctype": "Shift Correction",
+			"forecourt_shift": shift_b,
+			"station": station,
+			"company": frappe.db.get_value("Forecourt Shift", shift_b, "company"),
+			"correction_type": "Meter reading",
+			"reason": "DV-B: absent SR — test correction is financial-only",
+			"items": [
+				{
+					"target_type": "Meter Reading",
+					"target_row": nozzle_row_b.name,
+					"field": "closing_elec_cash",
+					"old_value": str(old_closing_b),
+					"new_value": str(new_closing_b),
+				}
+			],
+		}
+	)
+	corr_b.flags.ignore_permissions = True
+	corr_b.insert()
+
+	try:
+		corr_b.submit()
+	except Exception as exc:
+		_check("DV-B: preparer blocked (FMS-C501)", "FMS-C501" in str(exc), str(exc))
+	else:
+		_check("DV-B: preparer blocked (FMS-C501)", False, "submit succeeded without director")
+		return
+	corr_b.reload()
+
+	frappe.set_user(_DIRECTOR)
+	try:
+		corr_b.flags.ignore_permissions = True
+		corr_b.submit()
+	except Exception:
+		_check("DV-B: director correction submits without SR", False, traceback.format_exc())
+		return
+	finally:
+		frappe.set_user("Administrator")
+	_check("DV-B: director correction submits without SR", True)
+
+	# Credit note posted (financial correction applied regardless of SR)
+	cn_b_rows = frappe.get_all(
+		"Sales Invoice",
+		filters={"fms_forecourt_shift": shift_b, "is_return": 1, "docstatus": 1},
+		fields=["name", "update_stock"],
+	)
+	_check(
+		"DV-B: credit note posted without SR (financial path independent of physical)",
+		bool(cn_b_rows),
+		f"shift={shift_b}",
+	)
+	_check(
+		"DV-B: credit note update_stock=0 (no stock movement when SR absent)",
+		bool(cn_b_rows) and all(r.update_stock == 0 for r in cn_b_rows),
+		f"cn={cn_b_rows}",
+	)
+
+	# Stock unchanged (no SR, no stock movement from credit note → no guard needed)
+	stock_after_b = flt(frappe.db.get_value("Bin", {"warehouse": warehouse}, "actual_qty") or 0, 3)
+	_check(
+		"DV-B: stock unchanged by correction (no SR, update_stock=0 — no guard needed)",
+		abs(stock_after_b - stock_before_b) < 0.001,
+		f"before={stock_before_b}, after={stock_after_b}",
+	)
 
 
 # ---------------------------------------------------------------------------
@@ -756,7 +1391,7 @@ def _cancel_docs_by_shift_pattern(doctype: str) -> None:
 	try:
 		for station in (_STATION_ALPHA, _STATION_BRAVO):
 			names = frappe.db.sql_list(
-				f"SELECT name FROM `tab{doctype}` WHERE fms_forecourt_shift LIKE %s AND docstatus=1",
+				f"SELECT name FROM `tab{doctype}` WHERE fms_forecourt_shift LIKE %s AND docstatus=1",  # nosec B608
 				(f"%{station}%",),
 			)
 			for name in names:
@@ -775,7 +1410,7 @@ def _cancel_docs_by_station(doctype: str) -> None:
 	"""Cancel all submitted documents of doctype linked to golden stations."""
 	stations = (_STATION_ALPHA, _STATION_BRAVO)
 	names = frappe.db.sql_list(
-		f"SELECT name FROM `tab{doctype}` WHERE station IN (%s, %s) AND docstatus=1",
+		f"SELECT name FROM `tab{doctype}` WHERE station IN (%s, %s) AND docstatus=1",  # nosec B608
 		stations,
 	)
 	for name in names:
@@ -800,6 +1435,7 @@ def _reset_golden_data() -> None:
 	# This handles orphaned docs from previous runs where shifts were deleted without cancellation.
 	_cancel_docs_by_shift_pattern("Sales Invoice")
 	_cancel_docs_by_shift_pattern("Stock Reconciliation")
+	_cancel_docs_by_shift_pattern("Journal Entry")
 
 	shift_names = frappe.db.sql_list(
 		"SELECT name FROM `tabForecourt Shift` WHERE station IN (%s, %s)", stations
@@ -811,7 +1447,7 @@ def _reset_golden_data() -> None:
 		if shift_names:
 			ph = ", ".join(["%s"] * len(shift_names))
 			si_names = frappe.db.sql_list(
-				f"SELECT name FROM `tabSales Invoice` WHERE fms_forecourt_shift IN ({ph}) AND docstatus=1",
+				f"SELECT name FROM `tabSales Invoice` WHERE fms_forecourt_shift IN ({ph}) AND docstatus=1",  # nosec B608
 				shift_names,
 			)
 			for name in si_names:
@@ -831,7 +1467,7 @@ def _reset_golden_data() -> None:
 		if golden_warehouses:
 			wh_ph = ", ".join(["%s"] * len(golden_warehouses))
 			sr_names = frappe.db.sql_list(
-				f"SELECT DISTINCT parent FROM `tabStock Reconciliation Item`"
+				f"SELECT DISTINCT parent FROM `tabStock Reconciliation Item`"  # nosec B608
 				f" WHERE warehouse IN ({wh_ph}) AND parenttype='Stock Reconciliation'",
 				golden_warehouses,
 			)
@@ -847,6 +1483,18 @@ def _reset_golden_data() -> None:
 	finally:
 		frappe.flags.fms_correction = False
 
+	correction_names = frappe.db.sql_list(
+		"SELECT name FROM `tabShift Correction` WHERE station IN (%s, %s)", stations
+	)
+	if correction_names:
+		ph = ", ".join(["%s"] * len(correction_names))
+		for child in ("Shift Correction Item", "Shift Resolution"):
+			frappe.db.sql(
+				f"DELETE FROM `tab{child}` WHERE parenttype='Shift Correction' AND parent IN ({ph})",  # nosec B608
+				correction_names,
+			)
+		frappe.db.sql(f"DELETE FROM `tabShift Correction` WHERE name IN ({ph})", correction_names)  # nosec B608
+
 	if shift_names:
 		ph = ", ".join(["%s"] * len(shift_names))
 		for child in (
@@ -861,10 +1509,10 @@ def _reset_golden_data() -> None:
 			"Shift Resolution",
 		):
 			frappe.db.sql(
-				f"DELETE FROM `tab{child}` WHERE parenttype='Forecourt Shift' AND parent IN ({ph})",
+				f"DELETE FROM `tab{child}` WHERE parenttype='Forecourt Shift' AND parent IN ({ph})",  # nosec B608
 				shift_names,
 			)
-		frappe.db.sql(f"DELETE FROM `tabForecourt Shift` WHERE name IN ({ph})", shift_names)
+		frappe.db.sql(f"DELETE FROM `tabForecourt Shift` WHERE name IN ({ph})", shift_names)  # nosec B608
 	for station in stations:
 		frappe.db.sql(
 			"UPDATE `tabNozzle` n INNER JOIN `tabPump` p ON p.name = n.pump"
@@ -987,10 +1635,12 @@ def run() -> None:
 	month_start = _MONTH_START
 	month_end = month_start + timedelta(days=_DAYS - 1)
 	shift_names: list[str] = []
+	shift_prices: dict[str, float] = {}
+	correction_shift = resolution_shift = credit_shift = ""
 
 	# --- run scenario ---
 	for day in range(_DAYS):
-		price = _PRICE_PMS_NEW if day >= 6 else _PRICE_PMS  # price change on Day 6
+		price = _PRICE_PMS_NEW if day >= _PRICE_CHANGE_DAY else _PRICE_PMS
 
 		for shift_no in range(_SHIFTS_PER_DAY):
 			start, end = _shift_window(day, shift_no)
@@ -1005,19 +1655,38 @@ def run() -> None:
 						shift_no=shift_no,
 						price_pms=price,
 						price_ago=_PRICE_AGO,
-						has_delivery=(day == 7 and shift_no == 0 and setup.station == _STATION_ALPHA),
-						delivery_l=10000.0,
+						has_delivery=(
+							day == _DELIVERY_DAY and shift_no == 0 and setup.station == _STATION_ALPHA
+						),
+						delivery_l=_DELIVERY_L,
 						has_own_use=False,  # own use needs supporting DocTypes not yet in golden setup
 						own_use_l=0.0,
-						has_credit_sale=(day == 12 and shift_no == 1 and setup.station == _STATION_ALPHA),
-						credit_l=50.0,  # must be < total PMS metered (4 nozzles * 100L = 400L)
+						has_credit_sale=(
+							day == _CREDIT_DAY
+							and shift_no == _CREDIT_SHIFT_NO
+							and setup.station == _STATION_ALPHA
+						),
+						credit_l=_CREDIT_L,  # must be < total PMS metered (4 nozzles * 100L = 400L)
 						credit_customer=fleet,
 						dip_offset=_DIP_VARIANCE.get(day, 0.0),
 						cash_short=(
-							200.0 if day == 11 and shift_no == 0 and setup.station == _STATION_BRAVO else 0.0
+							_RESOLUTION_KES
+							if day == _RESOLUTION_DAY and shift_no == 0 and setup.station == _STATION_BRAVO
+							else 0.0
 						),
 					)
 					shift_names.append(name)
+					shift_prices[name] = price
+					if day == _CORRECTION_DAY and shift_no == 0 and setup.station == _STATION_ALPHA:
+						correction_shift = name
+					if day == _RESOLUTION_DAY and shift_no == 0 and setup.station == _STATION_BRAVO:
+						resolution_shift = name
+					if (
+						day == _CREDIT_DAY
+						and shift_no == _CREDIT_SHIFT_NO
+						and setup.station == _STATION_ALPHA
+					):
+						credit_shift = name
 					_check(f"Shift close day={day} shift={shift_no} station={setup.station}", True)
 				except Exception:
 					_check(
@@ -1029,11 +1698,27 @@ def run() -> None:
 
 	frappe.db.commit()
 
-	# --- assertions ---
+	# --- assertions on the closed month ---
+	_assert_shift_coverage((_STATION_ALPHA, _STATION_BRAVO))
+	_assert_shift_prices(shift_prices)
+	_assert_delivery(_STATION_ALPHA, _MONTH_START + timedelta(days=_DELIVERY_DAY), _DELIVERY_L)
+	_assert_cashier_resolution(resolution_shift, _RESOLUTION_KES)
+	_assert_credit_sale(credit_shift, _CREDIT_L, _PRICE_PMS_NEW)
+
+	# --- director-approved correction, then the same ledger checks must still hold ---
+	_apply_meter_correction(_STATION_ALPHA, correction_shift)
+	frappe.db.commit()
+
 	for setup in (alpha, bravo):
 		_assert_gl_matches_ledger(setup.company, month_start, month_end)
 		_assert_stock_matches_dips(setup.company, month_end)
-		_assert_reports_run(setup.company, setup.station, month_start, month_end)
+		_assert_reports_run(
+			setup.station, _report_filters(setup.company, setup.station, month_start, month_end)
+		)
+
+	# --- dip-variance correction scenario (Decision 1 verification) ---
+	_test_dip_variance_correction(alpha)
+	frappe.db.commit()
 
 	# --- summary ---
 	total = len(_CHECKS_PASSED) + len(_CHECKS_FAILED)

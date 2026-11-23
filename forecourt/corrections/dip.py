@@ -116,7 +116,8 @@ def apply(correction) -> None:
 			stock_rec.submit()
 			applied.append(f"Stock Reconciliation: {stock_rec.name}")
 
-		# 4. Update next shift opening if still open (D22, proposed)
+		# 4. Next shift: update the draft dip row, or re-base the closed
+		# shift's Wetstock Ledger opening row (D22, proposed)
 		if correction.next_shift:
 			next_shift = frappe.get_doc("Forecourt Shift", correction.next_shift)
 			if next_shift.docstatus == 0:
@@ -125,9 +126,73 @@ def apply(correction) -> None:
 						row.db_set("opening_l", new_dip_l, update_modified=False)
 						applied.append(f"Updated next shift opening dip: {correction.next_shift}")
 						break
+			else:
+				_rebase_next_shift_wle(correction, next_shift, target_dip.tank, new_dip_l, applied)
 
 	correction.db_set(
 		"applied_documents",
 		"\n".join(applied) if applied else "",
 		update_modified=False,
 	)
+
+
+def _rebase_next_shift_wle(
+	correction, next_shift, tank: str, new_opening_l: float, applied: list[str]
+) -> None:
+	"""Supersede the closed next shift's Wetstock Ledger row for the tank and
+	write a copy re-based to the corrected opening. The dip stays as read, so
+	expected moves by the opening delta and variance moves the opposite way."""
+	rows = frappe.get_all(
+		"Wetstock Ledger Entry",
+		filters={
+			"forecourt_shift": next_shift.name,
+			"tank": tank,
+			"entry_type": "Shift",
+			"is_cancelled": 0,
+			"superseded_by": ["is", "not set"],
+		},
+		fields=[
+			"name",
+			"item",
+			"opening_l",
+			"receipt_l",
+			"sales_l",
+			"own_use_l",
+			"expected_l",
+			"dip_l",
+		],
+	)
+	for old in rows:
+		frappe.db.set_value(
+			"Wetstock Ledger Entry", old["name"], "superseded_by", correction.name, update_modified=False
+		)
+		applied.append(f"Superseded next shift Wetstock Ledger Entry: {old['name']}")
+
+		opening_delta = flt(new_opening_l - flt(old["opening_l"], 3), 3)
+		expected_l = flt(flt(old["expected_l"], 3) + opening_delta, 3)
+		dip_l = flt(old["dip_l"], 3)
+
+		wle = frappe.new_doc("Wetstock Ledger Entry")
+		wle.company = next_shift.company
+		wle.station = next_shift.station
+		wle.posting_date = str(get_datetime(next_shift.shift_end).date())
+		wle.forecourt_shift = next_shift.name
+		wle.voucher_type = "Shift Correction"
+		wle.voucher_no = correction.name
+		wle.entry_type = "Shift"
+		wle.tank = tank
+		wle.item = old["item"]
+		wle.shift_start = next_shift.shift_start
+		wle.shift_end = next_shift.shift_end
+		wle.opening_l = flt(new_opening_l, 3)
+		wle.receipt_l = flt(old["receipt_l"], 3)
+		wle.sales_l = flt(old["sales_l"], 3)
+		wle.own_use_l = flt(old["own_use_l"], 3)
+		wle.expected_l = expected_l
+		wle.dip_l = dip_l
+		wle.variance_l = flt(dip_l - expected_l, 3)
+		wle.variance_pct = flt((dip_l - expected_l) / expected_l * 100 if expected_l else 0.0, 4)
+		wle.correction = correction.name
+		wle.flags.ignore_permissions = True
+		wle.insert(ignore_permissions=True)
+		applied.append(f"Re-based next shift Wetstock Ledger Entry: {wle.name}")

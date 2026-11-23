@@ -33,6 +33,11 @@ jobs:
           pip install semgrep
           semgrep ci --config ./frappe-semgrep-rules/rules --config r/python.lang.correctness
 
+      - name: Run Bandit security scan
+        run: |
+          pip install bandit[toml]
+          bandit -r forecourt/ -c pyproject.toml -ll
+
   deps-vulnerable-check:
     name: 'Vulnerable Dependency Check'
     runs-on: ubuntu-latest

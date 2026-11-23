@@ -38,27 +38,46 @@ _SETTINGS = SimpleNamespace(
 	approval_multiplier=2.0,
 )
 
+_PATCHERS: list = []
+
+
+def _make_db_mock():
+	db = MagicMock()
+	db.get_value.return_value = None
+	db.exists.return_value = False
+	db.count.return_value = 0
+	return db
+
 
 def setUpModule():
 	import frappe
 
-	_TRANS_PATCHER.start()
-	_FLT_PATCHER.start()
-	_GETDT_PATCHER.start()
-	frappe.db = MagicMock()
-	frappe.db.get_value.return_value = None
-	frappe.db.exists.return_value = False
-	frappe.db.count.return_value = 0
-	frappe.get_all = MagicMock(return_value=[])
-	frappe.get_cached_doc = MagicMock(return_value=_SETTINGS)
-	# Replace LocalProxy so tests can set attributes without a bound site.
-	frappe.flags = SimpleNamespace(fms_background_close=False, in_test=True)
+	# patch.object guarantees exact restore of every replaced attribute,
+	# including the flags/db LocalProxy objects.
+	_PATCHERS[:] = [
+		_TRANS_PATCHER,
+		_FLT_PATCHER,
+		_GETDT_PATCHER,
+		patch.object(frappe, "db", _make_db_mock()),
+		patch.object(frappe, "get_all", MagicMock(return_value=[])),
+		patch.object(frappe, "get_cached_doc", MagicMock(return_value=_SETTINGS)),
+		# Replace LocalProxy so tests can set attributes without a bound site.
+		patch.object(frappe, "flags", SimpleNamespace(fms_background_close=False, in_test=True)),
+	]
+	for p in _PATCHERS:
+		p.start()
 
 
 def tearDownModule():
-	_GETDT_PATCHER.stop()
-	_FLT_PATCHER.stop()
-	_TRANS_PATCHER.stop()
+	for p in reversed(_PATCHERS):
+		p.stop()
+	_PATCHERS.clear()
+	try:
+		from frappe.tests.utils.generators import get_modules as _gm
+
+		_gm.cache_clear()
+	except (ImportError, AttributeError):
+		pass
 
 
 # ── helpers ────────────────────────────────────────────────────────────────
@@ -642,23 +661,23 @@ class TestOverLimitCreditGate(unittest.TestCase):
 	def _run(self, credit_sales):
 		ForecourtShift = _import_shift()
 		doc = _make_shift(credit_sales=credit_sales)
-		errors: list[str] = []
-		ForecourtShift._gate_credit_over_limit(doc, errors)
-		return errors
+		items: list[dict] = []
+		ForecourtShift._gate_credit_over_limit(doc, items)
+		return items
 
 	def test_blocks_unapproved_over_limit(self):
 		credit = [_row(customer="CUST-001", slip_no="SLP-001", over_limit=1, over_limit_approved_by=None)]
-		errors = self._run(credit)
-		self.assertEqual(len(errors), 1)
-		self.assertIn("FMS-S107", errors[0])
-		self.assertIn("CUST-001", errors[0])
+		items = self._run(credit)
+		self.assertEqual(len(items), 1)
+		self.assertEqual(items[0]["code"], "FMS-S107")
+		self.assertIn("CUST-001", items[0]["message"])
 
 	def test_passes_approved_over_limit(self):
 		credit = [
 			_row(customer="CUST-001", slip_no="SLP-001", over_limit=1, over_limit_approved_by="DIR-001")
 		]
-		errors = self._run(credit)
-		self.assertEqual(errors, [])
+		items = self._run(credit)
+		self.assertEqual(items, [])
 
 	def test_passes_within_limit(self):
 		credit = [_row(customer="CUST-001", slip_no="SLP-001", over_limit=0, over_limit_approved_by=None)]

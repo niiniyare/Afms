@@ -105,5 +105,49 @@
     "is_public": 1,
     "is_standard": 1,
     "module": "Wetstock"
+  },
+  {
+    "doctype": "Number Card",
+    "name": "FMS - Draft GRNs",
+    "label": "Draft GRNs",
+    "type": "Document Type",
+    "document_type": "Purchase Receipt",
+    "function": "Count",
+    "filters_json": "[[\"Purchase Receipt\",\"docstatus\",\"=\",0,false],[\"Purchase Receipt\",\"fms_forecourt_shift\",\"is\",\"set\",false]]",
+    "is_public": 1,
+    "is_standard": 1,
+    "module": "Forecourt Shift"
+  },
+  {
+    "doctype": "Number Card",
+    "name": "FMS - My Open Shift",
+    "label": "My Open Shift",
+    "type": "Custom",
+    "method": "forecourt.forecourt_shift.number_cards.get_my_open_shift_count",
+    "is_public": 0,
+    "is_standard": 1,
+    "module": "Forecourt Shift"
+  },
+  {
+    "doctype": "Number Card",
+    "name": "FMS - My Balance",
+    "label": "My Balance",
+    "type": "Custom",
+    "method": "forecourt.forecourt_shift.number_cards.get_my_balance",
+    "is_public": 0,
+    "is_standard": 1,
+    "module": "Forecourt Shift"
+  },
+  {
+    "doctype": "Number Card",
+    "name": "FMS - Failed Integration Messages",
+    "label": "Failed Integration Messages",
+    "type": "Document Type",
+    "document_type": "Integration Inbox",
+    "function": "Count",
+    "filters_json": "[[\"Integration Inbox\",\"status\",\"=\",\"Failed\",false]]",
+    "is_public": 1,
+    "is_standard": 1,
+    "module": "Forecourt Integrations"
   }
 ]

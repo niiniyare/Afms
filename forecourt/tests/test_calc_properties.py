@@ -165,5 +165,78 @@ class TestAttributionProperties(unittest.TestCase):
 				)
 
 
+class TestCalibrationExactChartPointProperty(unittest.TestCase):
+	"""TC-PBT-004: for any point that is exactly on the chart, interpolate() returns that point's volume exactly."""
+
+	def test_every_chart_point_returns_its_exact_volume(self) -> None:
+		"""TC-PBT-004: interpolation at an exact chart row returns the chart value, not an approximation.
+
+		This guards against floating-point drift in the interpolation formula.
+		100 random strictly increasing charts, 2-12 rows each.
+		"""
+		rng = random.Random(SEED + 7)
+		for run in range(RUNS):
+			n = rng.randint(2, 12)
+			depths = sorted({round(rng.uniform(0, 5000), 1) for _ in range(n * 2)})[:n]
+			if len(depths) < 2:
+				continue
+			vols = [0.0]
+			for _ in range(len(depths) - 1):
+				vols.append(vols[-1] + rng.uniform(0.1, 500))
+			rows = list(zip(depths, vols, strict=True))
+			for depth, expected_vol in rows:
+				got = interpolate(depth, rows)
+				self.assertEqual(
+					got,
+					expected_vol,
+					msg=f"run={run}: interpolate({depth}, ...) returned {got} not {expected_vol}",
+				)
+
+	def test_interpolation_between_exact_points_is_bounded(self) -> None:
+		"""TC-PBT-004 corollary: an interpolated value is always between its two bracketing chart values."""
+		rng = random.Random(SEED + 8)
+		for run in range(RUNS):
+			n = rng.randint(2, 10)
+			depths = sorted({round(rng.uniform(0, 5000), 1) for _ in range(n * 2)})[:n]
+			if len(depths) < 2:
+				continue
+			vols = [0.0]
+			for _ in range(len(depths) - 1):
+				vols.append(vols[-1] + rng.uniform(0.1, 500))
+			rows = list(zip(depths, vols, strict=True))
+			for i in range(len(rows) - 1):
+				d0, v0 = rows[i]
+				d1, v1 = rows[i + 1]
+				mid_depth = (d0 + d1) / 2
+				mid_vol = interpolate(mid_depth, rows)
+				self.assertGreaterEqual(mid_vol, v0 - 1e-9, msg=f"run={run}")
+				self.assertLessEqual(mid_vol, v1 + 1e-9, msg=f"run={run}")
+
+
+class TestDriftSymmetryProperty(unittest.TestCase):
+	"""TC-PBT-003 drift part: drift(A, B) = -drift(B, A) for all meter pairs."""
+
+	def test_evol_vs_mvol_drift_is_antisymmetric(self) -> None:
+		"""Drift A-B must equal the negation of drift B-A for 100 random meter pairs."""
+		from forecourt.calc.drift import evol_vs_mvol
+
+		rng = random.Random(SEED + 9)
+		for _ in range(RUNS):
+			a = rng.uniform(0, 10000)
+			b = rng.uniform(0, 10000)
+			self.assertAlmostEqual(evol_vs_mvol(a, b), -evol_vs_mvol(b, a), places=9)
+
+	def test_within_tolerance_is_symmetric_around_zero(self) -> None:
+		"""within_tolerance(d, sales) == within_tolerance(-d, sales) for all d and sales."""
+		rng = random.Random(SEED + 10)
+		for _ in range(RUNS):
+			drift = rng.uniform(-500, 500)
+			sales = rng.uniform(0, 50000)
+			self.assertEqual(
+				drift_ok(drift, sales),
+				drift_ok(-drift, sales),
+			)
+
+
 if __name__ == "__main__":
 	unittest.main()

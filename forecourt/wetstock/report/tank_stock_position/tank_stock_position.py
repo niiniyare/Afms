@@ -6,6 +6,8 @@ import frappe
 from frappe import _
 from frappe.utils import flt, today
 
+from forecourt.reports.common import apply_station_permission
+
 
 def execute(filters=None):
 	filters = filters or {}
@@ -58,12 +60,13 @@ def _columns():
 
 def _data(filters):
 	f = {"entry_type": "Shift", "is_cancelled": 0, "superseded_by": ["is", "not set"]}
-	if filters.get("station"):
-		f["station"] = filters["station"]
 	if filters.get("company"):
 		f["company"] = filters["company"]
 	if filters.get("tank"):
 		f["tank"] = filters["tank"]
+	err = apply_station_permission(f, filters)
+	if err:
+		return []
 
 	# Get latest Shift entry per tank (most recent posting_date + shift)
 	rows = frappe.get_all(

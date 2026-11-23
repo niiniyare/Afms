@@ -6,7 +6,10 @@ from collections import defaultdict
 from datetime import timedelta
 
 import frappe
+from frappe import _
 from frappe.utils import flt, get_datetime
+
+from forecourt.errors import FMS_C505, FMSValidationError
 
 
 def post_credit_invoices(shift) -> list[str]:
@@ -220,6 +223,67 @@ def _make_invoice(
 	si.insert(ignore_permissions=True)
 	si.submit()
 	return si.name
+
+
+def post_walkin_credit_note(shift, item: str, qty: float, rate: float, warehouse: str) -> str:
+	"""Credit note against the walk-in invoice for a meter correction. No stock movement.
+
+	Runs as Administrator: the approver of a correction may lack read access to the
+	receivable account, and ERPNext checks account permissions even with ignore_permissions.
+	"""
+	session_user = frappe.session.user
+	frappe.set_user("Administrator")
+	try:
+		return _post_walkin_credit_note(shift, item, qty, rate, warehouse)
+	finally:
+		frappe.set_user(session_user)
+
+
+def _post_walkin_credit_note(shift, item: str, qty: float, rate: float, warehouse: str) -> str:
+	station = frappe.get_cached_doc("Station", shift.station)
+	against = frappe.db.get_value(
+		"Sales Invoice",
+		{
+			"fms_forecourt_shift": shift.name,
+			"customer": station.walk_in_customer,
+			"docstatus": 1,
+			"is_return": 0,
+		},
+		"name",
+	)
+	if not against:
+		raise FMSValidationError(
+			FMS_C505, _("No walk-in Sales Invoice found for shift {0}.").format(shift.name)
+		)
+
+	posting_dt = get_datetime(shift.shift_end) - timedelta(minutes=1)
+
+	cn = frappe.new_doc("Sales Invoice")
+	cn.company = shift.company
+	cn.customer = station.walk_in_customer
+	cn.is_return = 1
+	cn.return_against = against
+	cn.posting_date = str(posting_dt.date())
+	cn.posting_time = posting_dt.strftime("%H:%M:%S")
+	cn.set_posting_time = 1
+	cn.update_stock = 0
+	cn.ignore_pricing_rule = 1
+	cn.fms_forecourt_shift = shift.name
+	cn.station = shift.station
+	cn.append(
+		"items",
+		{
+			"item_code": item,
+			"qty": -abs(flt(qty, 3)),
+			"rate": flt(rate, 2),
+			"price_list_rate": flt(rate, 2),
+			"warehouse": warehouse,
+		},
+	)
+	cn.flags.ignore_permissions = True
+	cn.insert(ignore_permissions=True)
+	cn.submit()
+	return cn.name
 
 
 def _make_delivery_note(

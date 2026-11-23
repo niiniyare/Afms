@@ -10,9 +10,19 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
+from forecourt.reports.common import (
+	apply_date_filter,
+	apply_shift_date_filter,
+	apply_station_permission,
+	validate_date_range,
+)
+
 
 def execute(filters=None):
 	filters = filters or {}
+	err = validate_date_range(filters.get("from_date"), filters.get("to_date"))
+	if err:
+		frappe.throw(err)
 	return _columns(), _data(filters)
 
 
@@ -52,16 +62,20 @@ def _columns():
 
 def _data(filters):
 	date_f: dict = {}
-	if filters.get("from_date") and filters.get("to_date"):
-		date_f["posting_date"] = ["between", [filters["from_date"], filters["to_date"]]]
-	elif filters.get("from_date"):
-		date_f["posting_date"] = [">=", filters["from_date"]]
+	apply_date_filter(date_f, filters)
 
 	company_f = {}
 	if filters.get("company"):
 		company_f["company"] = filters["company"]
 
 	base_f = {"is_cancelled": 0, "superseded_by": ["is", "not set"], **company_f}
+	err = apply_station_permission(base_f, filters)
+	if err:
+		return []
+
+	# Shift count filter — same station restriction
+	shift_f = {"docstatus": 1, **company_f}
+	apply_station_permission(shift_f, filters)
 
 	# Sales ledger
 	sle_rows = frappe.get_all(
@@ -85,11 +99,7 @@ def _data(filters):
 	)
 
 	# Shift count
-	shift_f = {"docstatus": 1, **company_f}
-	if filters.get("from_date") and filters.get("to_date"):
-		shift_f["shift_date"] = ["between", [filters["from_date"], filters["to_date"]]]
-	elif filters.get("from_date"):
-		shift_f["shift_date"] = [">=", filters["from_date"]]
+	apply_shift_date_filter(shift_f, filters)
 	shift_rows = frappe.get_all(
 		"Forecourt Shift",
 		filters=shift_f,

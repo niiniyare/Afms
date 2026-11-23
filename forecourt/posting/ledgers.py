@@ -68,6 +68,7 @@ def write_shift_nozzle_ledger(shift) -> list[str]:
 		doc.voucher_type = "Forecourt Shift"
 		doc.voucher_no = shift.name
 		doc.nozzle = row.nozzle
+		doc.dispenser = frappe.db.get_value("Nozzle", row.nozzle, "pump")
 		doc.tank = row.tank
 		doc.item = row.item
 		doc.cashier = row.cashier

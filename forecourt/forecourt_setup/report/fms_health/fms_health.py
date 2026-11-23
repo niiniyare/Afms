@@ -6,6 +6,8 @@ import frappe
 from frappe import _
 from frappe.utils import add_days, flt, getdate, now_datetime, nowdate
 
+from forecourt.reports.common import permitted_stations
+
 
 def execute(filters=None):
 	return _columns(), _data(filters or {})
@@ -35,9 +37,16 @@ def _columns():
 
 
 def _data(filters: dict) -> list[dict]:
+	permitted = permitted_stations()
+	if permitted is not None and not permitted:
+		return []
+
+	station_filter = filters.get("station")
+	if station_filter and permitted is not None and station_filter not in permitted:
+		return []
+
 	rows: list[dict] = []
 	today = getdate(nowdate())
-	station_filter = filters.get("station")
 
 	rows.extend(_check_no_shift_today(today, station_filter))
 	rows.extend(_check_stale_draft_shifts(today, station_filter))
@@ -46,6 +55,11 @@ def _data(filters: dict) -> list[dict]:
 	rows.extend(_check_old_clearing_items(today, station_filter))
 	rows.extend(_check_failed_inbox())
 	rows.extend(_check_calibration_charts(today, station_filter))
+
+	# Post-filter: restrict rows with a station to the permitted set
+	# (Payment Entry/Integration Inbox rows have station=None and pass through)
+	if permitted is not None:
+		rows = [r for r in rows if r.get("station") is None or r.get("station") in permitted]
 
 	return rows
 
@@ -313,6 +327,12 @@ def _active_stations(station_filter=None) -> list[str]:
 	f = {}
 	if station_filter:
 		f["name"] = station_filter
+	else:
+		permitted = permitted_stations()
+		if permitted is not None:
+			if not permitted:
+				return []
+			f["name"] = ["in", permitted]
 	return frappe.get_all("Station", filters=f, pluck="name") if frappe.db.table_exists("Station") else []
 
 

@@ -158,16 +158,14 @@ fixtures = [
 	},
 ]
 
-# Each item in the list will be shown as an app in the apps page
-# add_to_apps_screen = [
-# 	{
-# 		"name": "forecourt",
-# 		"logo": "/assets/forecourt/logo.png",
-# 		"title": "Forecourt Management",
-# 		"route": "/forecourt",
-# 		"has_permission": "forecourt.api.permission.has_app_permission",
-# 	}
-# ]
+add_to_apps_screen = [
+	{
+		"name": "forecourt",
+		"title": "FMS",
+		"logo": "/assets/forecourt/images/fms-logo.png",
+		"route": "/app/forecourt",
+	}
+]
 
 # The dock, the rail down the left of the desk, is a document rather than a hook. Author it in
 # Manage Dock on a developer-mode site and press Export to App, and it is written to
@@ -188,7 +186,10 @@ extend_bootinfo = "forecourt.boot.get_bootinfo"
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/forecourt/css/forecourt.css"
-app_include_js = "/assets/forecourt/js/station_default.js"
+app_include_js = [
+	"/assets/forecourt/js/station_default.js",
+	"/assets/forecourt/js/report_filters.js",
+]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/forecourt/css/forecourt.css"
@@ -249,7 +250,8 @@ app_include_js = "/assets/forecourt/js/station_default.js"
 # ------------
 
 # before_install = "forecourt.install.before_install"
-# after_install = "forecourt.install.after_install"
+after_install = "forecourt.install.after_install"
+after_migrate = "forecourt.install.after_migrate"
 
 # Uninstallation
 # ------------

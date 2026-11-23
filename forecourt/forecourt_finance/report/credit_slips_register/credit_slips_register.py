@@ -9,9 +9,14 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
+from forecourt.reports.common import apply_shift_date_filter, apply_station_permission, validate_date_range
+
 
 def execute(filters=None):
 	filters = filters or {}
+	err = validate_date_range(filters.get("from_date"), filters.get("to_date"))
+	if err:
+		frappe.throw(err)
 	return _columns(), _data(filters)
 
 
@@ -57,14 +62,12 @@ def _columns():
 def _data(filters):
 	# Pull credit sale rows from submitted Forecourt Shifts
 	shift_f = {"docstatus": 1}
-	if filters.get("station"):
-		shift_f["station"] = filters["station"]
 	if filters.get("company"):
 		shift_f["company"] = filters["company"]
-	if filters.get("from_date") and filters.get("to_date"):
-		shift_f["shift_date"] = ["between", [filters["from_date"], filters["to_date"]]]
-	elif filters.get("from_date"):
-		shift_f["shift_date"] = [">=", filters["from_date"]]
+	apply_shift_date_filter(shift_f, filters)
+	err = apply_station_permission(shift_f, filters)
+	if err:
+		return []
 
 	shifts = frappe.get_all(
 		"Forecourt Shift",
@@ -73,14 +76,31 @@ def _data(filters):
 		order_by="shift_date asc",
 	)
 
+	shift_names = [s.name for s in shifts]
+	shift_meta = {s.name: s for s in shifts}
+
+	if not shift_names:
+		return []
+
+	# Batch fetch all child rows in one query — avoids N+1 per shift
+	all_credit_sales = frappe.get_all(
+		"Shift Credit Sale",
+		filters={"parent": ["in", shift_names]},
+		fields=["parent", "slip_no", "customer", "vehicle", "item", "qty", "amount"],
+		order_by="parent asc, slip_no asc",
+	)
+
+	# Group by parent shift for gap detection
+	from collections import defaultdict
+
+	by_shift: dict[str, list] = defaultdict(list)
+	for cs in all_credit_sales:
+		by_shift[cs.parent].append(cs)
+
 	result = []
-	for shift in shifts:
-		credit_sales = frappe.get_all(
-			"Shift Credit Sale",
-			filters={"parent": shift.name},
-			fields=["slip_no", "customer", "vehicle", "item", "qty", "amount"],
-			order_by="slip_no asc",
-		)
+	for shift_name in [s.name for s in shifts]:
+		shift = shift_meta[shift_name]
+		credit_sales = by_shift.get(shift_name, [])
 		prev_slip = None
 		for cs in credit_sales:
 			gap_flag = ""

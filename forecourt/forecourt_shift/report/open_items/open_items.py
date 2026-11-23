@@ -11,6 +11,8 @@ import frappe
 from frappe import _
 from frappe.utils import today
 
+from forecourt.reports.common import apply_station_permission
+
 
 def execute(filters=None):
 	filters = filters or {}
@@ -45,16 +47,17 @@ def _data(filters):
 	as_of = today()
 	result = []
 
-	station_filter = {}
-	if filters.get("station"):
-		station_filter["station"] = filters["station"]
+	shift_f: dict = {"docstatus": 0}
 	if filters.get("company"):
-		station_filter["company"] = filters["company"]
+		shift_f["company"] = filters["company"]
+	err = apply_station_permission(shift_f, filters)
+	if err:
+		return []
 
 	# Draft / open Forecourt Shifts
 	for s in frappe.get_all(
 		"Forecourt Shift",
-		filters={"docstatus": 0, **station_filter},
+		filters=shift_f,
 		fields=["name", "station", "shift_date", "status"],
 		order_by="shift_date asc",
 	):
@@ -78,63 +81,89 @@ def _data(filters):
 	_pr_has_station = frappe.get_meta("Purchase Receipt").has_field("custom_station")
 	fuel_items = [r.name for r in frappe.get_all("Item", filters={"fms_is_fuel": 1}, fields=["name"])]
 	if fuel_items:
+		from frappe.utils import date_diff
+
 		grn_fields = ["name", "posting_date"]
 		if _pr_has_station:
 			grn_fields.append("custom_station as station")
 		grn_filters = {"docstatus": 0, "is_return": 0}
-		if station_filter.get("company"):
-			grn_filters["company"] = station_filter["company"]
-		if _pr_has_station and station_filter.get("station"):
-			grn_filters["custom_station"] = station_filter["station"]
-		for grn in frappe.get_all(
+		if filters.get("company"):
+			grn_filters["company"] = filters["company"]
+		if _pr_has_station and shift_f.get("station"):
+			grn_filters["custom_station"] = shift_f["station"]
+		elif _pr_has_station and isinstance(shift_f.get("station"), list):
+			grn_filters["custom_station"] = shift_f["station"]
+		grns = frappe.get_all(
 			"Purchase Receipt",
 			filters=grn_filters,
 			fields=grn_fields,
 			order_by="posting_date asc",
-		):
-			from frappe.utils import date_diff
-
-			# Only include GRNs that have fuel items
-			has_fuel = frappe.db.exists(
-				"Purchase Receipt Item",
-				{"parent": grn.name, "item_code": ["in", fuel_items]},
-			)
-			if has_fuel:
-				age = date_diff(as_of, grn.posting_date or as_of) if grn.posting_date else 0
-				result.append(
-					{
-						"item_type": "Draft GRN",
-						"name": grn.name,
-						"doctype_name": "Purchase Receipt",
-						"station": grn.get("station"),
-						"date": grn.posting_date,
-						"status": "Draft",
-						"age_days": age,
-					}
+		)
+		if grns:
+			# Batch-fetch which GRNs contain fuel items — one query instead of N
+			grn_names = [g.name for g in grns]
+			fuel_grn_names = set(
+				frappe.get_all(
+					"Purchase Receipt Item",
+					filters={"parent": ["in", grn_names], "item_code": ["in", fuel_items]},
+					pluck="parent",
 				)
+			)
+			for grn in grns:
+				if grn.name in fuel_grn_names:
+					age = date_diff(as_of, grn.posting_date or as_of) if grn.posting_date else 0
+					result.append(
+						{
+							"item_type": "Draft GRN",
+							"name": grn.name,
+							"doctype_name": "Purchase Receipt",
+							"station": grn.get("station"),
+							"date": grn.posting_date,
+							"status": "Draft",
+							"age_days": age,
+						}
+					)
 
 	# Shift Corrections awaiting approval
-	for sc in frappe.get_all(
+	from frappe.utils import date_diff
+
+	sc_f: dict = {"docstatus": 0}
+	if filters.get("company"):
+		sc_f["company"] = filters["company"]
+	if shift_f.get("station"):
+		sc_f["station"] = shift_f["station"]
+	corrections = frappe.get_all(
 		"Shift Correction",
-		filters={"docstatus": 0, **station_filter},
+		filters=sc_f,
 		fields=["name", "forecourt_shift", "correction_type", "workflow_state"],
 		order_by="creation asc",
-	):
-		shift_date = frappe.db.get_value("Forecourt Shift", sc.forecourt_shift, "shift_date")
-		station = frappe.db.get_value("Forecourt Shift", sc.forecourt_shift, "station")
-		from frappe.utils import date_diff
-
-		age = date_diff(as_of, shift_date or as_of) if shift_date else 0
-		result.append(
-			{
-				"item_type": "Pending Correction",
-				"name": sc.name,
-				"doctype_name": "Shift Correction",
-				"station": station,
-				"date": shift_date,
-				"status": sc.workflow_state or "Pending",
-				"age_days": age,
-			}
-		)
+	)
+	if corrections:
+		# Batch-fetch parent shift dates and stations — one query instead of 2xN
+		sc_shift_names = list({sc.forecourt_shift for sc in corrections if sc.forecourt_shift})
+		shift_lookup = {
+			s.name: s
+			for s in frappe.get_all(
+				"Forecourt Shift",
+				filters={"name": ["in", sc_shift_names]},
+				fields=["name", "shift_date", "station"],
+			)
+		}
+		for sc in corrections:
+			parent = shift_lookup.get(sc.forecourt_shift, frappe._dict())
+			shift_date = parent.get("shift_date")
+			station = parent.get("station")
+			age = date_diff(as_of, shift_date or as_of) if shift_date else 0
+			result.append(
+				{
+					"item_type": "Pending Correction",
+					"name": sc.name,
+					"doctype_name": "Shift Correction",
+					"station": station,
+					"date": shift_date,
+					"status": sc.workflow_state or "Pending",
+					"age_days": age,
+				}
+			)
 
 	return result

@@ -2,9 +2,10 @@
 from __future__ import annotations
 
 import frappe
+from frappe.tests.utils import FrappeTestCase
 
 from forecourt.tests.factories import (
-	FMSTestCase,
+	make_fuel_item,
 	make_fuel_tank,
 	make_nozzle,
 	make_pump,
@@ -12,7 +13,7 @@ from forecourt.tests.factories import (
 )
 
 
-class TestStationSetup(FMSTestCase):
+class TestStationInfra(FrappeTestCase):
 	def test_fuel_tank_creates_warehouse(self) -> None:
 		station = make_station(code="KE-TST-WH")
 		tank = make_fuel_tank(station=station.name, tank_code="T1")
@@ -55,5 +56,16 @@ class TestStationSetup(FMSTestCase):
 
 	def test_fuel_tank_capacity_must_be_positive(self) -> None:
 		station = make_station(code="KE-TST-CAP")
+		item = make_fuel_item()
+		doc = frappe.get_doc(
+			{
+				"doctype": "Fuel Tank",
+				"station": station.name,
+				"tank_code": "T-CAP",
+				"item": item.name,
+				"capacity_l": 0,
+			}
+		)
+		doc.flags.ignore_permissions = True
 		with self.assertRaises(frappe.ValidationError):
-			make_fuel_tank(station=station.name, tank_code="T1", capacity_l=0)
+			doc.insert()

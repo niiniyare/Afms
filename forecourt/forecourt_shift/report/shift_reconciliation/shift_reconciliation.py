@@ -11,9 +11,14 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
+from forecourt.reports.common import apply_date_filter, apply_station_permission, validate_date_range
+
 
 def execute(filters=None):
 	filters = filters or {}
+	err = validate_date_range(filters.get("from_date"), filters.get("to_date"))
+	if err:
+		frappe.throw(err)
 	return _columns(), _data(filters)
 
 
@@ -94,15 +99,15 @@ def _columns():
 
 def _data(filters: dict) -> list[dict]:
 	f: dict = {"is_cancelled": 0, "superseded_by": ["is", "not set"]}
-	for field in ("company", "station", "cashier"):
+	for field in ("company", "cashier"):
 		if filters.get(field):
 			f[field] = filters[field]
 	if filters.get("forecourt_shift"):
 		f["forecourt_shift"] = filters["forecourt_shift"]
-	if filters.get("from_date") and filters.get("to_date"):
-		f["posting_date"] = ["between", [filters["from_date"], filters["to_date"]]]
-	elif filters.get("from_date"):
-		f["posting_date"] = [">=", filters["from_date"]]
+	apply_date_filter(f, filters)
+	err = apply_station_permission(f, filters)
+	if err:
+		return []
 
 	rows = frappe.get_all(
 		"Cashier Ledger Entry",

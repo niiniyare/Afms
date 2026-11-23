@@ -10,21 +10,19 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
+from forecourt.reports.common import apply_date_filter, apply_station_permission, validate_date_range
+
 
 def execute(filters=None):
 	filters = filters or {}
+	err = validate_date_range(filters.get("from_date"), filters.get("to_date"))
+	if err:
+		frappe.throw(err)
 	return _columns(), _data(filters)
 
 
 def _columns():
 	return [
-		{
-			"label": _("Station"),
-			"fieldname": "station",
-			"fieldtype": "Link",
-			"options": "Station",
-			"width": 120,
-		},
 		{"label": _("Date"), "fieldname": "posting_date", "fieldtype": "Date", "width": 90},
 		{
 			"label": _("Shift"),
@@ -33,6 +31,7 @@ def _columns():
 			"options": "Forecourt Shift",
 			"width": 160,
 		},
+		{"label": _("Type"), "fieldname": "row_type", "fieldtype": "Data", "width": 70},
 		{
 			"label": _("Nozzle"),
 			"fieldname": "nozzle",
@@ -128,15 +127,15 @@ def _columns():
 
 def _data(filters: dict) -> list[dict]:
 	f: dict = {"is_cancelled": 0, "superseded_by": ["is", "not set"]}
-	for field in ("company", "station", "nozzle", "dispenser", "item"):
+	for field in ("company", "nozzle", "dispenser", "item"):
 		if filters.get(field):
 			f[field] = filters[field]
-	if filters.get("from_date") and filters.get("to_date"):
-		f["posting_date"] = ["between", [filters["from_date"], filters["to_date"]]]
-	elif filters.get("from_date"):
-		f["posting_date"] = [">=", filters["from_date"]]
+	apply_date_filter(f, filters)
+	err = apply_station_permission(f, filters)
+	if err:
+		return []
 
-	return frappe.get_all(
+	rows = frappe.get_all(
 		"Nozzle Ledger Entry",
 		filters=f,
 		fields=[
@@ -156,6 +155,43 @@ def _data(filters: dict) -> list[dict]:
 			"net_l",
 			"drift_l",
 			"drift_pct",
+			"creation",
 		],
 		order_by="posting_date asc, station asc, nozzle asc",
 	)
+	shift_starts = _shift_starts({r.forecourt_shift for r in rows if r.forecourt_shift})
+	pumps = _nozzle_pumps({r.nozzle for r in rows if not r.dispenser})
+	for r in rows:
+		r.dispenser = r.dispenser or pumps.get(r.nozzle)
+		r.row_type = _("Shift") if r.forecourt_shift else _("Change")
+		if not r.forecourt_shift:
+			for fieldname in _DELTA_FIELDS:
+				r[fieldname] = None
+		r.sort_time = str(shift_starts.get(r.forecourt_shift) or r.creation)
+	rows.sort(key=lambda r: (str(r.posting_date), r.station or "", r.nozzle or "", r.sort_time))
+	return rows
+
+
+_DELTA_FIELDS = ("ecash_delta", "evol_delta", "net_l", "drift_l", "drift_pct")
+
+
+def _shift_starts(names: set[str]) -> dict[str, object]:
+	if not names:
+		return {}
+	shifts = frappe.get_all(
+		"Forecourt Shift",
+		filters={"name": ["in", list(names)]},
+		fields=["name", "shift_start"],
+	)
+	return {s.name: s.shift_start for s in shifts}
+
+
+def _nozzle_pumps(names: set[str]) -> dict[str, str]:
+	if not names:
+		return {}
+	nozzles = frappe.get_all(
+		"Nozzle",
+		filters={"name": ["in", list(names)]},
+		fields=["name", "pump"],
+	)
+	return {n.name: n.pump for n in nozzles}

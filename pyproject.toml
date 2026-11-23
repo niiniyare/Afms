@@ -64,3 +64,12 @@ typing-modules = ["frappe.types.DF"]
 quote-style = "double"
 indent-style = "tab"
 docstring-code-format = true
+
+[tool.bandit]
+exclude_dirs = ["forecourt/tests", "forecourt/calc"]
+skips = [
+    "B101",  # assert_used — assert is Frappe convention
+    "B311",  # random — not used for cryptography in this app
+    "B404",  # import_subprocess — not in core paths
+    "B603",  # subprocess_without_shell_equals_true
+]

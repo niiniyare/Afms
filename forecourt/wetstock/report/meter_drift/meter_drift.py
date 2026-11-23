@@ -6,9 +6,14 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
+from forecourt.reports.common import apply_date_filter, apply_station_permission, validate_date_range
+
 
 def execute(filters=None):
 	filters = filters or {}
+	err = validate_date_range(filters.get("from_date"), filters.get("to_date"))
+	if err:
+		frappe.throw(err)
 	return _columns(), _data(filters)
 
 
@@ -48,20 +53,18 @@ def _columns():
 
 def _data(filters):
 	f = {"is_cancelled": 0, "superseded_by": ["is", "not set"]}
-	if filters.get("station"):
-		f["station"] = filters["station"]
 	if filters.get("company"):
 		f["company"] = filters["company"]
 	if filters.get("nozzle"):
 		f["nozzle"] = filters["nozzle"]
 	if filters.get("dispenser"):
 		f["dispenser"] = filters["dispenser"]
-	if filters.get("from_date") and filters.get("to_date"):
-		f["posting_date"] = ["between", [filters["from_date"], filters["to_date"]]]
-	elif filters.get("from_date"):
-		f["posting_date"] = [">=", filters["from_date"]]
+	apply_date_filter(f, filters)
 	if filters.get("has_drift"):
 		f["drift_l"] = ["!=", 0]
+	err = apply_station_permission(f, filters)
+	if err:
+		return []
 
 	rows = frappe.get_all(
 		"Nozzle Ledger Entry",

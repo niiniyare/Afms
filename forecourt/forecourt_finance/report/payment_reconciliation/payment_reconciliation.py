@@ -10,9 +10,14 @@ from __future__ import annotations
 import frappe
 from frappe import _
 
+from forecourt.reports.common import apply_station_permission, validate_date_range
+
 
 def execute(filters=None):
 	filters = filters or {}
+	err = validate_date_range(filters.get("from_date"), filters.get("to_date"))
+	if err:
+		frappe.throw(err)
 	return _columns(), _data(filters)
 
 
@@ -61,9 +66,25 @@ def _columns():
 
 def _data(filters: dict) -> list[dict]:
 	f: dict = {}
-	for field in ("station", "provider", "status"):
+	for field in ("provider", "status"):
 		if filters.get(field):
 			f[field] = filters[field]
+
+	# Date filter on transaction_time (Datetime); apply at query level to avoid
+	# fetching unbounded result sets.  transaction_time stores full ISO datetime
+	# but date string comparison works because ISO format sorts lexicographically.
+	fd = filters.get("from_date")
+	td = filters.get("to_date")
+	if fd and td:
+		f["transaction_time"] = ["between", [fd + " 00:00:00", td + " 23:59:59"]]
+	elif fd:
+		f["transaction_time"] = [">=", fd + " 00:00:00"]
+	elif td:
+		f["transaction_time"] = ["<=", td + " 23:59:59"]
+
+	err = apply_station_permission(f, filters)
+	if err:
+		return []
 
 	rows = frappe.get_all(
 		"Payment Feed Entry",
@@ -82,16 +103,9 @@ def _data(filters: dict) -> list[dict]:
 		order_by="transaction_time asc",
 	)
 
-	from_date = filters.get("from_date")
-	to_date = filters.get("to_date")
 	result = []
 	for row in rows:
-		txn_date = (row.get("transaction_time") or "")[:10]
-		if from_date and txn_date < from_date:
-			continue
-		if to_date and txn_date > to_date:
-			continue
-		row["transaction_date"] = txn_date
+		row["transaction_date"] = (row.get("transaction_time") or "")[:10]
 		result.append(row)
 
 	return result
