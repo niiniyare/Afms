@@ -5,7 +5,7 @@
 **Companion documents:** [catalogue.md](catalogue.md) (DocTypes and fields, authoritative for names) · [../TASKS.md](../TASKS.md) (build order and progress) · [../CLAUDE.md](../CLAUDE.md) (rules for developers and agents)
 **Platform:** Frappe Framework v16, ERPNext v16 (HRMS v16 optional)
 **Audience:** owner, developers, implementers, accountants
-**Status:** proposal for review. Nothing here is built yet.
+**Status:** in build. Phases 0–3 core (sections A–J of TASKS.md) are implemented; decisions D16–D36 remain Proposed until owner sign-off.
 
 This guide redesigns the Forecourt Management System (FMS) from first principles on ERPNext. It does not carry over the earlier Odoo design. It covers what an FMS is, wetstock, shifts, cashiers, financial management, how ERPNext supports each part, how the data model stays easy to query, how the system grows into automation (handheld POS, tank gauges, pump controllers, mobile money and tax integrations), and how the design compares with forecourt systems already on the market.
 

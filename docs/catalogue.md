@@ -1,11 +1,24 @@
 # FMS DocType Catalogue
 
-**Version:** 1.1 (documentation review: forward links, approval workflow, proposed decisions D16–D36 of the design guide)
-**Date:** 2026-10-20
+**Version:** 1.2 (grouping of modules and DocTypes, workspaces, dashboards, navigation and shortcuts; proposed non-fuel and Mode B DocTypes listed)
+**Date:** 2026-11-06
 **App:** `forecourt` (Frappe Framework v16, ERPNext v16, HRMS v16 optional)
 **Companion documents:** [fms.md](fms.md) (the design guide: the *why*), [../TASKS.md](../TASKS.md) (the task list: the *build order*), [../CLAUDE.md](../CLAUDE.md) (rules for developers and agents)
 
 This catalogue lists every DocType the FMS app defines, every custom field it adds to ERPNext DocTypes, and how they are grouped in workspaces and navigation. DocTypes are ordered **from least dependent to most dependent**, which is also the order in which they are built (see the task list). A few fields link *forward* to a DocType built later; they are added by the later task (section 3.1). If this catalogue and the design guide disagree on a field name or a DocType name, this catalogue wins. The design guide wins on behaviour.
+
+**Changes in 1.2**
+
+| Change | Where |
+|---|---|
+| Modules table gains **Forecourt Services** (proposed, from [fms-nonfuel.md](fms-nonfuel.md)) and the Mode B DocTypes in Forecourt Integrations | 2.1 |
+| New: **DocTypes grouped by module and by user task**, with where each one is reached in the Desk | 2.3, 2.4 |
+| New: **personas mapped to roles**. Workspaces in 1.1 named roles that section 2.2 does not define (Area Manager, Forecourt Administrator, Forecourt Director, Forecourt Investor). 1.2 uses the 2.2 roles and proposes two new ones. | 2.5 |
+| Proposed number cards and charts for non-fuel, services and Mode B | 13.2, 13.3 |
+| Section 14 rewritten: navigation principles, workspace tree, every workspace's layout, **dashboards**, form navigation, list views, shortcuts, notifications, onboarding, tablet use | 14 |
+| Totals: current totals unchanged, proposed totals added | 15 |
+
+**Status marks used in 1.2.** Items marked **(P)** are *proposed*: they come from fms-nonfuel.md (decisions D37 to D62) or from this revision, and are not yet accepted. They are listed so that navigation can be designed once. They are built only after the owner confirms them, and the task list gets their tasks then (prefix FMS-Q, fms-nonfuel.md section 20).
 
 ---
 
@@ -24,7 +37,7 @@ This catalogue lists every DocType the FMS app defines, every custom field it ad
 11. [Integrations](#11-integrations)
 12. [Custom fields and records on ERPNext DocTypes](#12-custom-fields-and-records-on-erpnext-doctypes)
 13. [Reports, number cards and charts](#13-reports-number-cards-and-charts)
-14. [Workspaces and navigation](#14-workspaces-and-navigation)
+14. [Workspaces, dashboards and navigation](#14-workspaces-dashboards-and-navigation)
 15. [Summary table](#15-summary-table)
 
 ---
@@ -71,13 +84,18 @@ Each DocType section has an **attributes** table using the DocType JSON property
 
 ### 2.1 Modules
 
-| Module | Folder | Contains |
-|---|---|---|
-| Forecourt Setup | `forecourt/forecourt_setup/` | Settings, Station, Station Group, reference masters |
-| Wetstock | `forecourt/wetstock/` | Tanks, charts, islands, pumps, nozzles, dips, transfers, meter changes, GRN delivery dips |
-| Forecourt Shift | `forecourt/forecourt_shift/` | Shift templates, Forecourt Shift and its child tables, price changes, corrections |
-| Forecourt Finance | `forecourt/forecourt_finance/` | Ledgers, customer vehicles, finance reports |
-| Forecourt Integrations | `forecourt/forecourt_integrations/` | Payment providers, Integration Inbox, Payment Feed Entry, imports |
+A module is where a DocType's code lives (its folder) and which workspace it belongs to by default. Users never see module names directly: they see workspaces (section 14). The module split therefore follows **who maintains the code**, and the workspace split follows **who does the work**.
+
+| Module | Folder | Contains | Main workspace |
+|---|---|---|---|
+| Forecourt Setup | `forecourt/forecourt_setup/` | Settings, Station, Station Group, reference masters | Forecourt Setup |
+| Wetstock | `forecourt/wetstock/` | Tanks, charts, islands, pumps, nozzles, dips, transfers, meter changes, GRN delivery dips, the Wetstock Ledger. **(P)** Dry Stock Count, the shelf counterpart of Tank Dip | Wetstock |
+| Forecourt Shift | `forecourt/forecourt_shift/` | Shift templates, Forecourt Shift and its child tables, price changes, corrections | Forecourt, Shifts |
+| Forecourt Finance | `forecourt/forecourt_finance/` | Ledgers (Nozzle, Sales, Cashier), customer vehicles, finance reports. **(P)** Dry Stock Ledger Entry | Forecourt Finance |
+| Forecourt Integrations | `forecourt/forecourt_integrations/` | Payment providers, Integration Inbox, Payment Feed Entry, imports. **(P)** Forecourt Device, FCC Transaction (Mode B) | Devices and Integrations |
+| **(P)** Forecourt Services | `forecourt/forecourt_services/` | Service Type, Service Job (car wash, tyre services), from fms-nonfuel.md section 8 | Shop and Services |
+
+Six modules (five accepted, one proposed). Seven workspaces in 1.1, nine in 1.2, ten with the proposals (section 14.2). A module can feed more than one workspace (Forecourt Shift feeds *Forecourt* and *Shifts*), and a workspace can show DocTypes from several modules (*Shop and Services* shows Wetstock's Dry Stock Count next to Forecourt Services).
 
 ### 2.2 Roles
 
@@ -113,6 +131,118 @@ Assign these to FMS users where their permissions match the intended responsibil
 | HR Manager | Head-office HR staff |
 | Customer | Customer portal users |
 | Supplier | Supplier portal users |
+
+### 2.3 DocTypes by module
+
+Every FMS DocType, grouped by module, with its kind and the place a user reaches it from. Child tables are listed under their parent. *Ws* is the workspace (section 14), *Dash* a dashboard (14.5), *Form* a button or the Connections tab of another form (14.6).
+
+**Forecourt Setup**
+
+| DocType | Kind | Reached from |
+|---|---|---|
+| Forecourt Settings | Single | Ws Forecourt Setup |
+| Forecourt Company Settings | Master | Ws Forecourt Setup |
+| Station Group | Tree | Ws Forecourt Setup |
+| Station (+ Station Till Account, Station Payment Terminal, **(P)** Station Stock Location) | Master | Ws Forecourt Setup; awesomebar by station code; every station-linked form |
+| Variance Reason | Master | Ws Forecourt Setup |
+| Expense Type (+ Expense Type Account) | Master | Ws Forecourt Setup |
+| Own Use Purpose (+ Own Use Purpose Account) | Master | Ws Forecourt Setup |
+| **(P)** Stock Adjustment Reason (+ Stock Adjustment Reason Account) | Master | Ws Forecourt Setup |
+| **(P)** LPG Product | Master | Ws Shop and Services |
+
+**Wetstock**
+
+| DocType | Kind | Reached from |
+|---|---|---|
+| Fuel Tank | Master | Ws Wetstock; Form: Station Connections |
+| Tank Calibration Chart (+ Tank Calibration Row) | Master | Ws Wetstock; Form: Fuel Tank Connections |
+| Island | Master | Ws Wetstock; Form: Station Connections |
+| Pump | Master | Ws Wetstock; Form: Island Connections |
+| Nozzle | Master | Ws Wetstock; Form: Pump and Fuel Tank Connections |
+| Meter Change | Transaction | Ws Wetstock; Form: Nozzle button *Meter Change* |
+| Tank Dip | Transaction | Ws Forecourt (*Spot Dip*), Ws Wetstock; Form: Fuel Tank button *Spot Dip* |
+| Tank Transfer | Transaction | Ws Wetstock |
+| GRN Delivery Dip | Child of Purchase Receipt | Purchase Receipt form, *Fuel Delivery* section |
+| Wetstock Ledger Entry | Ledger | Reports only (Wetstock Variance, Tank Stock Position) |
+| **(P)** Dry Stock Count (+ Dry Stock Count Item) | Transaction | Ws Shop and Services; Ws Forecourt Operations (*Spot Audit*) |
+
+**Forecourt Shift**
+
+| DocType | Kind | Reached from |
+|---|---|---|
+| Forecourt Shift Template (+ Shift Template Cashier, Shift Template Nozzle, **(P)** Shift Template Item Assignment) | Master | Ws Shifts |
+| Fuel Price Change (+ Fuel Price Change Item) | Transaction | Ws Shifts, Ws Forecourt Operations (approval) |
+| Forecourt Shift (+ Shift Price, Shift Meter Reading, Shift Tank Dip, Shift Cashier, Shift Cash Count, Shift Credit Sale, Shift Item Sale, Shift Collection, Shift Resolution; **(P)** Shift Stock Count, Shift Stock Count Detail, Shift Service, Shift FCC Exception) | Transaction | Ws Forecourt (*New Shift*, *Open Shifts*), Ws Shifts; Form: Station button *New Shift* |
+| Shift Correction (+ Shift Correction Item) | Transaction | Ws Shifts; Form: Forecourt Shift button *Correct* |
+
+**Forecourt Finance**
+
+| DocType | Kind | Reached from |
+|---|---|---|
+| Customer Vehicle (+ Customer Vehicle Item, Customer Vehicle Driver) | Master | Ws Forecourt Finance; Form: Customer Connections |
+| Nozzle Ledger Entry | Ledger | Reports only |
+| Sales Ledger Entry | Ledger | Reports only |
+| Cashier Ledger Entry | Ledger | Reports only (Cashier Statement) |
+| **(P)** Dry Stock Ledger Entry | Ledger | Reports only |
+
+**Forecourt Integrations**
+
+| DocType | Kind | Reached from |
+|---|---|---|
+| Payment Provider | Master | Ws Devices and Integrations |
+| Integration Inbox | Log | Ws Devices and Integrations; FMS Health |
+| Payment Feed Entry | Log | Ws Forecourt Finance (*Unmatched payments*); Form: Shift Collection row |
+| Payment Import Batch | Transaction | Ws Forecourt (*Import Payments*), Ws Forecourt Finance |
+| **(P)** Forecourt Device | Master | Ws Devices and Integrations; Form: Station Connections |
+| **(P)** FCC Transaction | Log | Ws Devices and Integrations; Form: Forecourt Shift (*Unpaid fuel*), Nozzle Connections |
+
+**(P) Forecourt Services**
+
+| DocType | Kind | Reached from |
+|---|---|---|
+| Service Type (+ Service Type Consumable) | Master | Ws Shop and Services |
+| Service Job (+ Service Job Line, Service Job Part) | Transaction | Ws Shop and Services (*New Service Job*), Ws Forecourt; Form: Forecourt Shift *Services* tab |
+
+**ERPNext DocTypes the FMS puts in its workspaces** (not FMS DocTypes, opened with FMS filters or Stock Entry types): Purchase Receipt (fuel and shop GRNs), Stock Entry (*Fuel Own Use*, **(P)** *Dry Stock Adjustment*, *Service Consumption*), Sales Invoice, Delivery Note, POS Invoice, Payment Entry, Journal Entry, Customer, Item, Item Price, Bank Reconciliation Tool, Process Statement of Accounts, Employee.
+
+### 2.4 DocTypes by user task
+
+The same DocTypes, grouped the way people think about their work. Workspaces (section 14) are laid out in these groups, so a user looks for a *task*, not a *module*.
+
+| Task group | When | DocTypes and records | Workspace |
+|---|---|---|---|
+| **Run the shift** | Every shift | Forecourt Shift; Payment Import Batch; Tank Dip (spot); **(P)** Dry Stock Count (Handover) | Forecourt, Shifts |
+| **Receive stock** | Each delivery | Purchase Receipt (fuel, with GRN Delivery Dips; shop items); Stock Entry (delivery shortage) | Forecourt, Wetstock, Shop and Services |
+| **Record what is not a sale** | When it happens | Stock Entry: Fuel Own Use; **(P)** Dry Stock Adjustment; Tank Transfer; Meter Change | Forecourt, Wetstock, Shop and Services |
+| **Sell services** **(P)** | During the day | Service Job | Shop and Services |
+| **Change prices** | When EPRA or the company changes them | Fuel Price Change; Item Price | Shifts |
+| **Approve** | Daily | Forecourt Shift (Pending Approval), Fuel Price Change, Shift Correction, **(P)** large adjustments | Forecourt Operations |
+| **Fix a closed shift** | Rarely | Shift Correction | Shifts |
+| **Money and credit** | Daily, monthly | Payment Feed Entry, Payment Entry, Customer, Customer Vehicle, Sales Invoice (credit), bank reconciliation | Forecourt Finance |
+| **Check stock** | Daily, monthly | Tank Dip, **(P)** Dry Stock Count (Spot Audit, Full Stock Take), stock reports | Wetstock, Shop and Services, Forecourt Operations |
+| **Watch devices** **(P)** | Mode B, daily | Forecourt Device, FCC Transaction, Integration Inbox | Devices and Integrations |
+| **Set up a station** | Once, then rarely | Station, Fuel Tank, Tank Calibration Chart, Island, Pump, Nozzle, Forecourt Shift Template, masters, settings | Forecourt Setup |
+| **See how the business is doing** | Daily, weekly | Reports, dashboards | Forecourt Group, dashboards |
+
+### 2.5 Personas, roles and home workspaces
+
+fms.md section 14.1 and section 2.2 above use different role names (fms-nonfuel.md review item R21). Workspaces are built on the **2.2 roles**. The table maps each persona to them, so every workspace's `roles` list is something that actually exists.
+
+| Persona | Role(s) in 2.2 | Name in fms.md 14.1 | Home workspace (`default_workspace`) |
+|---|---|---|---|
+| Station manager | Station Manager, Assistant Station Manager | Station Manager | **Forecourt** |
+| Shift supervisor | Forecourt Supervisor | (Supervisor) | **Shifts** |
+| Cashier on the Desk | Site Cashier | Forecourt Cashier | **My Shift** |
+| Sales operator, attendant | Forecourt Sales Operator | (Forecourt Cashier) | **My Shift** |
+| Accountant | Station Accountant | Station Accountant | **Forecourt Finance** |
+| Area manager | **(P) Area Manager** (new custom role) | Area Manager | **Forecourt Operations** |
+| Director, investor | Business Executive | Forecourt Director, Forecourt Investor | **Forecourt Group** |
+| Administrator | **(P) Forecourt Administrator** (new custom role), System Manager | Forecourt Administrator | **Forecourt Setup** |
+| Integration user | Integration Service Account | | none (API only) |
+
+**Proposed role additions (P).** *Area Manager* and *Forecourt Administrator* are used throughout the design guide (approvals, masters) and have no 2.2 role. Approvals in particular need a role that is not the Station Manager (segregation of duties, design guide 6.2). They are added to the role fixtures when R21 is settled. *Business Executive* covers both directors and investors for workspace access; the director's approval of Shift Corrections is a workflow permission given to the users concerned. Some DocType permission rows in sections 8 and 10 (Fuel Price Change, Shift Correction) still use the fms.md names *Area Manager*, *Forecourt Director* and *Accountant*; they are renamed to the 2.2 roles in the same change that settles R21.
+
+**Setting the home workspace.** The user's **default workspace** is set when the user is created, from the first matching role in the table above (a small `after_insert` hook on User, or set by the administrator). The user can change it. *To verify in the build task:* the exact v16 field name for the user's default workspace and default app.
 
 ---
 
@@ -1098,7 +1228,10 @@ All shipped as fixtures (`Custom Field`, `Property Setter`) filtered by `module 
 | Role | The seven FMS roles | |
 | Workflow, Workflow State, Workflow Action Master | Forecourt Shift Approval (on `approval_state`), Fuel Price Change, Shift Correction | |
 | Variance Reason, Own Use Purpose | Default lists | |
-| Number Card, Dashboard Chart, Workspace | Section 13 and 14 | |
+| Number Card, Dashboard Chart, Workspace, Dashboard | Sections 13 and 14 | |
+| Notification, Auto Email Report | Section 14.9 and 14.5 | Disabled by default, enabled per company |
+| Module Profile | Forecourt Station Staff, Forecourt Accounts, Forecourt Executive (section 14.11) | |
+| Module Onboarding, Onboarding Step | Section 14.10 | |
 
 **Controller hooks on ERPNext DocTypes** (`doc_events` in `hooks.py`, never class overrides)
 
@@ -1134,7 +1267,7 @@ All shipped as fixtures (`Custom Field`, `Property Setter`) filtered by `module 
 | Delivery Variance | Script | Wetstock | Wetstock Ledger (Delivery) |
 | Meter Drift | Script | Wetstock | Nozzle Ledger |
 | Cashier Statement | Script | Forecourt Finance | Cashier Ledger, GL (Staff Shortage Receivable) |
-| Cashier Performance | Script | Forecourt Finance | Cashier Ledger |
+| Cashier Variance Ranking | Script | Forecourt Finance | Cashier Ledger |
 | Credit Slips Register | Query | Forecourt Finance | Shift Credit Sale |
 | Clearing Account Ageing | Script | Forecourt Finance | Payment Entry, GL |
 | Cash Position by Station | Script | Forecourt Finance | GL |
@@ -1157,6 +1290,18 @@ All shipped as fixtures (`Custom Field`, `Property Setter`) filtered by `module 
 | Unmatched payments | Payment Feed Entry | Count | status Unmatched |
 | Corrections pending | Shift Correction | Count | Pending Director Approval |
 | Tanks below reorder | Custom method | | Run-out within 2 days |
+| Draft GRNs | Purchase Receipt | Count | docstatus 0, station dimension set (new in 1.2) |
+| My open shift (cashier) | Forecourt Shift | Count | docstatus 0, current user's Employee in Shift Cashier (custom method, new in 1.2) |
+| My balance (cashier) | Cashier Ledger Entry | Sum of difference | current user's Employee, this month (custom method, new in 1.2) |
+| **(P)** Dry stock sales today | Dry Stock Ledger Entry (Mode A), Sales Ledger Entry (Mode B) | Sum | today |
+| **(P)** Service sales today | Sales Ledger Entry | Sum amount | today, `quantity_source` Service Job |
+| **(P)** Open Service Jobs | Service Job | Count | docstatus 0 |
+| **(P)** Items below reorder | Custom method | | ERPNext reorder levels, station locations |
+| **(P)** Count exceptions this month | Dry Stock Ledger Entry | Count | this month, flags set |
+| **(P)** Live sales now (Mode B) | Sales Invoice | Sum grand_total | today, `fms_sale_source` Device |
+| **(P)** Unpaid fuel transactions (Mode B) | FCC Transaction | Count | status Unpaid |
+| **(P)** Devices offline (Mode B) | Forecourt Device | Count | Active, `last_seen` older than 10 minutes (custom method) |
+| Failed integration messages | Integration Inbox | Count | status Failed (new in 1.2) |
 
 ### 13.3 Dashboard charts
 
@@ -1168,90 +1313,334 @@ All shipped as fixtures (`Custom Field`, `Property Setter`) filtered by `module 
 | Cashier differences (30 days) | Bar | Cashier Ledger Entry, group by cashier |
 | Delivery variance by supplier | Bar | Wetstock Ledger Entry (Delivery) |
 | Station comparison: litres per day | Bar | Nozzle Ledger Entry, group by station |
+| Sales by hour today | Bar | Sales Ledger Entry, group by hour (custom method, new in 1.2) |
+| **(P)** Sales by stream (30 days): fuel, dry stock, services | Donut | Sales Ledger Entry |
+| **(P)** Shop margin by item group (30 days) | Bar | Sales Ledger Entry, GL (custom method) |
+| **(P)** Service jobs per day by type | Line | Service Job |
+| **(P)** Tank and shelf variance by station | Bar | Wetstock and Dry Stock Ledgers (custom method) |
+| **(P)** Unreceipted sales by cashier (Mode B) | Bar | Sales Ledger Entry, `quantity_source` Unreceipted |
 
 All cards and charts respect User Permissions, so the same card shows one station to a manager and the whole group to a director.
 
 ---
 
-## 14. Workspaces and navigation
+## 14. Workspaces, dashboards and navigation
 
-### 14.1 Workspace tree (sidebar)
+The aim of this section: **a user opens the Desk and sees, on one screen, what needs doing now, and reaches any daily task in three clicks or fewer.** It applies Frappe's standard tools (Workspaces, Number Cards, Dashboard Charts, Dashboards, Connections, list settings, Notifications, Module Onboarding, Module Profiles). No custom navigation framework is built.
+
+### 14.1 Navigation principles
+
+| # | Principle | In practice |
+|---|---|---|
+| U1 | **One home per persona** | Each user lands on the workspace of their role (2.5). A cashier never starts on the setup screen. |
+| U2 | **To-do first** | The first shortcuts of a working workspace show live counts (`stats_filter`): *Open Shifts 2*, *Pending Approval 1*, *Unmatched Payments 14*. A count of zero means nothing is waiting. |
+| U3 | **Three clicks** | Home → shortcut → document for every daily task. Anything used less than weekly is a link card, not a shortcut. |
+| U4 | **Same words everywhere** | *New X* creates. *Open X* lists drafts. *Pending X* lists items waiting for approval. *X Register* lists all. *Approve X* is the approver's list. |
+| U5 | **Daily work apart from setup** | Masters are created in *Forecourt Setup*. Working workspaces show a master only as a link where people need to look it up. |
+| U6 | **Ledgers are read through reports** | Ledger DocTypes (`in_create`) never appear as shortcuts. Users read them through reports and dashboards. |
+| U7 | **Station first** | Each station user has a default Station (User Permission with *Is Default*). New documents fill the station in. Lists, cards and charts show only the user's stations. |
+| U8 | **Show only what the user can use** | Workspaces carry `roles`. A Module Profile hides ERPNext modules station staff do not use (14.11). Mode B items live in their own workspace until a station uses them. |
+| U9 | **One layout to learn** | Working workspaces: shortcuts, then number cards, then quick list, then link cards. Management workspaces: number cards, then charts, then shortcuts, then link cards. Link cards always in the order *Today*, *Records*, *Reports*, *Setup*. |
+| U10 | **No dead ends** | Every generated document links back to its shift. Every master links to its transactions (Connections, 14.6). Every report row opens its source. |
+
+### 14.2 Workspace tree (sidebar)
 
 In v16 the Desk sidebar lists workspaces by app; FMS workspaces set `app` = `forecourt` and use `parent_page` for nesting, with `sequence_id` for order. Each public workspace sets `module` and `roles` so it only appears to the right people.
 
 ```
-Forecourt                      (parent, Station Manager home)
-├── Shifts                     (daily operations)
-├── Wetstock                   (tanks, pumps, deliveries)
-├── Forecourt Finance          (cash, payments, credit)
-├── Forecourt Operations       (area manager: approvals, exceptions, comparisons)
-├── Forecourt Group            (directors and investors: dashboards)
-└── Forecourt Setup            (administrator)
+Forecourt                         (parent; Station Manager home)
+├── My Shift                      (cashiers and sales operators)                     new in 1.2
+├── Shifts                        (supervisor home; shifts, prices, corrections)
+├── Wetstock                      (tanks, pumps, deliveries, dips)
+├── Shop and Services             (dry stock, counts, Service Jobs, LPG)              (P)
+├── Forecourt Finance             (accountant home; payments, cash, credit)
+├── Forecourt Operations          (area manager home; approvals, exceptions, audits)
+├── Forecourt Group               (executives; dashboards and financials)
+├── Devices and Integrations      (inbox, providers, imports; Mode B devices)       new in 1.2
+└── Forecourt Setup               (administrator; settings and masters)
 ```
 
-### 14.2 Workspace contents
+| seq | Workspace | `module` | `roles` (2.5) | For |
+|---|---|---|---|---|
+| 1 | Forecourt | Forecourt Shift | Station Manager, Assistant Station Manager, Forecourt Supervisor, (P) Area Manager | Running the station today |
+| 2 | My Shift | Forecourt Shift | Site Cashier, Forecourt Sales Operator | A cashier's own shift and statement |
+| 3 | Shifts | Forecourt Shift | Station Manager, Assistant Station Manager, Forecourt Supervisor, (P) Area Manager | Shift records, templates, prices, corrections |
+| 4 | Wetstock | Wetstock | Station Manager, Assistant Station Manager, Forecourt Supervisor, Station Accountant, (P) Area Manager | Fuel stock and equipment |
+| 5 | (P) Shop and Services | Forecourt Services | Station Manager, Assistant Station Manager, Forecourt Supervisor, Forecourt Sales Operator, Site Cashier, (P) Area Manager | Non-fuel stock and services (fms-nonfuel.md). Replaces the *Services* workspace named in fms-nonfuel.md 18.3. |
+| 6 | Forecourt Finance | Forecourt Finance | Station Accountant, Station Manager (read), (P) Area Manager | Money, credit, cashier balances |
+| 7 | Forecourt Operations | Forecourt Shift | (P) Area Manager, Business Executive (read) | Approvals, exceptions, audits, comparisons |
+| 8 | Forecourt Group | Forecourt Finance | Business Executive | Group performance |
+| 9 | Devices and Integrations | Forecourt Integrations | (P) Forecourt Administrator, Station Accountant, Station Manager (read) | Integration health; Mode B devices |
+| 10 | Forecourt Setup | Forecourt Setup | (P) Forecourt Administrator, System Manager | Settings, network, equipment, masters |
 
-**Forecourt** (module Forecourt Shift; roles Station Manager, Area Manager, Forecourt Administrator; icon `fuel` or nearest available)
+**Icons.** Each workspace sets an icon from the v16 icon set, chosen once and reused on its dashboard: fuel pump (Forecourt), user (My Shift), clock (Shifts), droplet (Wetstock), shopping bag (Shop and Services), wallet (Finance), check-circle (Operations), bar chart (Group), plug (Devices and Integrations), settings (Setup). *To verify in the build task:* the nearest names in the installed icon set.
+
+### 14.3 Workspace contents
+
+Each workspace is listed with its blocks in screen order. In the shortcut tables, **Count** is the `stats_filter` shown on the shortcut, and **Colour** follows 14.4.
+
+#### Forecourt (Station Manager home)
 
 | Block | Content |
 |---|---|
+| Shortcuts | see table |
 | Number cards | Open shifts · Litres sold today · Fuel sales today · Unmatched payments |
-| Shortcuts | **New Shift** (Forecourt Shift, new) · **Open Shifts** (list, docstatus 0) · **New GRN** (Purchase Receipt, new) · **Fuel Own Use** (Stock Entry, new, type Fuel Own Use) · **Spot Dip** (Tank Dip, new) · **Daily Station Report** |
-| Chart | Litres per day by product |
-| Quick list | Recent Forecourt Shifts (status, station) |
-| Link cards | *Today*: Forecourt Shift, Purchase Receipt (fuel), Stock Entry (Fuel Own Use), Payment Import Batch · *Reports*: Shift Report, Daily Station Report, Open Items |
+| Chart | Sales by hour today (or Litres per day by product) |
+| Quick list | Forecourt Shift: last 5, with station, template and status |
+| Link cards | *Today*: Forecourt Shift, Purchase Receipt (fuel), Stock Entry (Fuel Own Use), Tank Dip, Payment Import Batch · *Records*: Customer, Customer Vehicle, Fuel Price Change · *Reports*: Shift Report, Daily Station Report, Open Items, Sales by Cashier |
 
-**Shifts** (module Forecourt Shift; roles Station Manager, Area Manager)
+| Shortcut | Opens | Count | Colour |
+|---|---|---|---|
+| **New Shift** | Forecourt Shift, new | | Blue |
+| **Open Shifts** | Forecourt Shift list, docstatus 0 | docstatus 0 | Orange |
+| **Pending Approval** | Forecourt Shift list, `approval_state` Pending Approval | same | Red |
+| **Import Payments** | Payment Import Batch, new | | Blue |
+| **New GRN** | Purchase Receipt, new | | Blue |
+| **Draft GRNs** | Purchase Receipt list, docstatus 0 | docstatus 0 | Orange |
+| **Fuel Own Use** | Stock Entry, new, type Fuel Own Use | | Blue |
+| **Spot Dip** | Tank Dip, new | | Blue |
+| **(P) New Service Job** | Service Job, new | | Blue |
+| **Daily Station Report** | Report | | Grey |
+
+#### My Shift (cashiers and sales operators) — new in 1.2
+
+Desk users with the Site Cashier or Forecourt Sales Operator role (2.2) see only their own work. Rows are limited to their own Employee by a permission query on the ledgers and a User Permission on Employee.
 
 | Block | Content |
 |---|---|
-| Shortcuts | New Shift · Shifts awaiting approval · Fuel Price Change · Shift Correction |
-| Link cards | *Shift*: Forecourt Shift, Forecourt Shift Template, Fuel Price Change, Shift Correction · *Reports*: Sales by Shift, Sales by Cashier, Exception Register |
+| Shortcuts | **My Open Shift** (Forecourt Shift list where the user's Employee is in Shift Cashier, docstatus 0; count) · **My Statement** (Cashier Statement, filtered to the user) · **My Credit Slips** (Credit Slips Register, filtered) · **Fuel Own Use** (Stock Entry, new, type Fuel Own Use; Forecourt Sales Operator only) · **(P) New Service Job** · **(P) Stock Count** (Dry Stock Count, new, type Handover) |
+| Number cards | My open shift · My balance |
+| Link cards | *Reports*: Cashier Statement, Sales by Cashier (own) |
 
-**Wetstock** (module Wetstock; roles Station Manager, Area Manager, Forecourt Administrator)
+In Mode B the cashier works on the PDQ or POS app, not the Desk (fms-nonfuel.md section 11). This workspace stays for statements and for stations still on Mode A.
+
+#### Shifts (supervisor home)
 
 | Block | Content |
 |---|---|
+| Shortcuts | **New Shift** · **Open Shifts** (count, orange) · **Pending Approval** (count, red) · **Shift Templates** · **New Price Change** (Fuel Price Change, new) · **Pending Price Changes** (count, red) · **Shift Corrections** (list; count of drafts) · **Exception Register** |
+| Number cards | Open shifts · Shifts awaiting approval |
+| Quick list | Fuel Price Change: last 5 |
+| Link cards | *Today*: Forecourt Shift, Fuel Price Change · *Records*: Forecourt Shift Template, Shift Correction · *Reports*: Sales by Shift, Sales by Cashier, Exception Register, Shift Report · *Setup*: Variance Reason, Expense Type |
+
+#### Wetstock
+
+| Block | Content |
+|---|---|
+| Shortcuts | **New GRN** (fuel) · **Draft GRNs** (count, orange) · **Spot Dip** · **Tank Transfer** · **Meter Change** · **Fuel Own Use** · **Tank Stock Position** · **Wetstock Variance** |
 | Number cards | Tank variance this month (L) · Tanks below reorder |
-| Chart | Cumulative tank variance % · Delivery variance by supplier |
-| Link cards | *Equipment*: Fuel Tank, Tank Calibration Chart, Island, Pump, Nozzle · *Movements*: Purchase Receipt (fuel), Tank Dip, Tank Transfer, Meter Change, Stock Entry (Fuel Own Use) · *Reports*: Tank Stock Position, Wetstock Variance, Delivery Variance, Meter Drift, Sales by Tank, Sales by Pump and Nozzle, Run-out Forecast |
+| Charts | Cumulative tank variance % · Delivery variance by supplier |
+| Link cards | *Today*: Purchase Receipt (fuel), Tank Dip, Stock Entry (Fuel Own Use) · *Records*: Fuel Tank, Tank Calibration Chart, Island, Pump, Nozzle, Meter Change, Tank Transfer · *Reports*: Tank Stock Position, Wetstock Variance, Delivery Variance, Meter Drift, Sales by Tank, Sales by Pump and Nozzle, Run-out Forecast |
 
-**Forecourt Finance** (module Forecourt Finance; roles Station Accountant, Area Manager, Station Manager read)
-
-| Block | Content |
-|---|---|
-| Number cards | Unmatched payments · Cash short this month |
-| Chart | Payment mix (30 days) · Cashier differences |
-| Link cards | *Payments*: Payment Feed Entry, Payment Import Batch, Payment Entry, Bank Reconciliation Tool · *Credit*: Customer, Customer Vehicle, Process Statement of Accounts · *Reports*: Sales by Product, Payment Mix Matrix, Cashier Statement, Clearing Account Ageing, Cash Position by Station, Credit Slips Register, Accounts Receivable |
-
-**Forecourt Operations** (module Forecourt Shift; roles Area Manager, Forecourt Director)
+#### (P) Shop and Services
 
 | Block | Content |
 |---|---|
-| Number cards | Shifts awaiting approval · Corrections pending · Tank variance this month |
-| Chart | Station comparison: litres per day |
-| Link cards | *Approvals*: Forecourt Shift (Pending Approval), Fuel Price Change (Pending), Shift Correction (Pending) · *Reports*: Exception Register, Station Comparison, Cashier Performance, Wetstock Variance, Meter Drift |
+| Shortcuts | **New Service Job** · **Open Service Jobs** (count, orange) · **Stock Count** (Dry Stock Count, new) · **Stock Adjustment** (Stock Entry, new, type Dry Stock Adjustment) · **New Shop GRN** (Purchase Receipt, new) · **Shop Stock Position** · **Items below reorder** (count) |
+| Number cards | Dry stock sales today · Service sales today · Open Service Jobs · Items below reorder |
+| Charts | Sales by stream (30 days) · Service jobs per day by type |
+| Link cards | *Today*: Service Job, Dry Stock Count, Stock Entry (Dry Stock Adjustment) · *Records*: Service Type, LPG Product, Item, Item Price, Stock Adjustment Reason · *Reports*: Dry Stock Sales by Cashier, Dry Stock Count Exceptions, Shop Stock Position, Expiry and Batch, Service Sales by Type, Job Ticket Register, Consumables Yield, LPG Cylinder Reconciliation, Slow Movers and Dead Stock |
 
-**Forecourt Group** (module Forecourt Finance; roles Forecourt Director, Forecourt Investor)
-
-| Block | Content |
-|---|---|
-| Number cards | Fuel sales today · Litres sold today · Cash position (custom) · Receivables (ERPNext card) |
-| Charts | Station comparison · Litres per day by product · Payment mix |
-| Link cards | *Financials*: Profit and Loss Statement, Balance Sheet, Consolidated Trial Balance, Accounts Receivable · *FMS*: Station Comparison, Daily Station Report, Wetstock Variance |
-
-**Forecourt Setup** (module Forecourt Setup; roles Forecourt Administrator, System Manager)
+#### Forecourt Finance (accountant home)
 
 | Block | Content |
 |---|---|
-| Link cards | *Settings*: Forecourt Settings, Forecourt Company Settings · *Network*: Station Group, Station · *Masters*: Variance Reason, Expense Type, Own Use Purpose, Payment Provider · *Integrations*: Integration Inbox · *Health*: FMS Health |
-| Onboarding | Module Onboarding steps: create company settings → station → tanks → charts → islands → pumps → nozzles → shift template → first shift |
+| Number cards | Unmatched payments · Cash short this month · Accounts Receivable (ERPNext card) · Failed integration messages |
+| Charts | Payment mix (30 days) · Cashier differences (30 days) |
+| Shortcuts | **Unmatched Payments** (Payment Feed Entry, status Unmatched; count, orange) · **Import Payments** · **Bank Reconciliation Tool** · **Cashier Statement** · **Credit Slips Register** · **Clearing Account Ageing** · **Statement of Accounts** (Process Statement of Accounts) |
+| Link cards | *Today*: Payment Feed Entry, Payment Import Batch, Payment Entry · *Records*: Customer, Customer Vehicle, Sales Invoice, Journal Entry · *Reports*: Sales by Product, Payment Mix Matrix, Cashier Statement, Clearing Account Ageing, Cash Position by Station, Credit Slips Register, Accounts Receivable, (P) Margin by Item Group |
 
-### 14.3 Other navigation
+#### Forecourt Operations (area manager home)
 
-- **Awesomebar shortcuts:** "New Forecourt Shift", "New GRN" through standard search; `search_fields` above make stations, tanks and nozzles findable by code.
-- **Form links:** every child row's link fields open the master; the shift's Connections tab lists generated documents; GRN, Payment Entry and Stock Entry show a "Forecourt Shift" link at the top when set.
-- **List view settings:** Forecourt Shift list shows station, date, template, status colour indicator (Open grey, Counting orange, Reconciled blue, Pending Approval red, Closed green, Corrected purple).
+| Block | Content |
+|---|---|
+| Number cards | Shifts awaiting approval · Corrections pending · Tank variance this month (L) · (P) Count exceptions this month |
+| Charts | Station comparison: litres per day · (P) Tank and shelf variance by station |
+| Shortcuts | **Approve Shifts** (count, red) · **Approve Price Changes** (count, red) · **Approve Corrections** (count, red) · **Spot Dip** · **(P) Spot Audit** (Dry Stock Count, new, type Spot Audit) · **Exception Register** · **Station Comparison** · **Operations Dashboard** |
+| Link cards | *Approvals*: Forecourt Shift (Pending Approval), Fuel Price Change (Pending), Shift Correction (Pending) · *Reports*: Exception Register, Station Comparison, Cashier Variance Ranking, Wetstock Variance, Meter Drift, (P) Dry Stock Count Exceptions, (P) Write-off and Adjustment Trend, (P) Unreceipted Sales by Cashier |
+
+#### Forecourt Group (executives)
+
+| Block | Content |
+|---|---|
+| Number cards | Fuel sales today · Litres sold today · Cash position (custom) · Accounts Receivable (ERPNext card) · (P) Live sales now |
+| Charts | Station comparison: litres per day · Litres per day by product · Payment mix · (P) Sales by stream |
+| Shortcuts | **Group Dashboard** · **Station Comparison** · **Daily Station Report** · **Profit and Loss** · **Balance Sheet** |
+| Link cards | *Financials*: Profit and Loss Statement, Balance Sheet, Consolidated Trial Balance, Accounts Receivable · *FMS*: Station Comparison, Daily Station Report, Wetstock Variance, (P) Margin by Item Group |
+
+#### Devices and Integrations — new in 1.2
+
+Integration Inbox and Payment Provider move here from *Forecourt Setup*, so integration problems are watched where they are fixed. *Forecourt Setup* keeps a link to this workspace.
+
+| Block | Content |
+|---|---|
+| Number cards | Failed integration messages · Unmatched payments · (P) Devices offline · (P) Unpaid fuel transactions |
+| Shortcuts | **Failed Messages** (Integration Inbox, status Failed; count, red) · **Payment Providers** · **FMS Health** · **(P) Devices** (Forecourt Device list) · **(P) Unpaid Fuel** (FCC Transaction, status Unpaid; count, orange) · **(P) Device Health Dashboard** |
+| Link cards | *Integrations*: Integration Inbox, Payment Provider, Payment Feed Entry, Payment Import Batch · *(P) Devices*: Forecourt Device, FCC Transaction · *Reports*: FMS Health, (P) Device Health, (P) Nozzle Completeness, (P) Offline Sales, (P) Voids and Refunds |
+
+#### Forecourt Setup (administrator)
+
+| Block | Content |
+|---|---|
+| Shortcuts | **New Station** · **Station onboarding** (the onboarding panel, 14.10) · **Forecourt Settings** · **Company Settings** |
+| Link cards | *Settings*: Forecourt Settings, Forecourt Company Settings · *Network*: Station Group, Station · *Equipment*: Fuel Tank, Tank Calibration Chart, Island, Pump, Nozzle, Forecourt Shift Template · *Masters*: Variance Reason, Expense Type, Own Use Purpose, (P) Stock Adjustment Reason, (P) Service Type, (P) LPG Product · *Integrations*: Devices and Integrations workspace · *Health*: FMS Health |
+| Onboarding | Module Onboarding (14.10) |
+
+Equipment appears both here (to create it) and in *Wetstock* (to look it up). That is the one deliberate duplication: setup and daily use are different moments for different people.
+
+### 14.4 Shortcut conventions
+
+| Item | Rule |
+|---|---|
+| Label | Verb first, at most three words: *New Shift*, *Open Shifts*, *Approve Corrections* |
+| Type | `DocType` with `doc_view` *New* for create shortcuts, *List* for lists; `Report` for reports; `Dashboard` for dashboards |
+| Count | `stats_filter` in JSON, same filter as the list it opens, `format` = `{} open`, `{} waiting`, `{} failed` |
+| Colour | **Blue**: create · **Orange**: work waiting for this user · **Red**: approval waiting or something blocked · **Grey**: report or reference |
+| Limit | At most 10 shortcuts per workspace. The first four are the most frequent tasks of the home persona. |
+| Filters on lists | Shortcuts to lists pass filters through `stats_filter` and the list opens with the same filters, so the count and the list always agree |
+
+### 14.5 Dashboards
+
+Workspaces are for **doing**; dashboards are for **looking**. Each dashboard is a standard Frappe **Dashboard** record (shipped as a fixture) made of the number cards and charts of section 13, opened from the shortcut of the same name. Every card and chart respects User Permissions, so the same dashboard shows one station to a manager and the whole group to an executive.
+
+| Dashboard | Opened from | For | Number cards | Charts |
+|---|---|---|---|---|
+| **Station Dashboard** | Forecourt; Station form (*View → Station Dashboard*) | Station Manager | Open shifts · Litres sold today · Fuel sales today · Unmatched payments · Draft GRNs · Tanks below reorder | Sales by hour today · Litres per day by product · Payment mix · Cashier differences |
+| **Wetstock Dashboard** | Wetstock | Station Manager, Area Manager | Tank variance this month · Tanks below reorder | Cumulative tank variance % · Delivery variance by supplier · Litres per day by product |
+| **(P) Shop and Services Dashboard** | Shop and Services | Station Manager | Dry stock sales today · Service sales today · Open Service Jobs · Items below reorder · Count exceptions this month | Sales by stream · Shop margin by item group · Service jobs per day by type |
+| **Cash and Payments Dashboard** | Forecourt Finance | Station Accountant | Unmatched payments · Cash short this month · Accounts Receivable · Failed integration messages | Payment mix · Cashier differences |
+| **Operations Dashboard** | Forecourt Operations | Area Manager | Shifts awaiting approval · Corrections pending · Tank variance this month · Count exceptions this month | Station comparison · Cumulative tank variance % · Tank and shelf variance by station · Unreceipted sales by cashier |
+| **Group Dashboard** | Forecourt Group | Business Executive | Fuel sales today · Litres sold today · Cash position · Accounts Receivable · Live sales now | Station comparison · Litres per day by product · Payment mix · Sales by stream |
+| **(P) Device Health Dashboard** | Devices and Integrations | Administrator, Station Manager | Devices offline · Unpaid fuel transactions · Failed integration messages | Live sales by hour (Mode B) |
+
+**Chart defaults.** Time-series charts: last 30 days, daily, with *Station* as the first filter. Charts that compare stations group by station and are hidden from single-station users by role. Number cards that are money show the company currency; litres show `L`.
+
+**Scheduled reports.** The *Daily Station Report* is sent by **Auto Email Report** to Business Executive users every morning, and *FMS Health* to the administrator (design guide 12.6 and 15.4). Both are fixtures, disabled by default, switched on per company.
+
+### 14.6 Form navigation
+
+**Connections tab.** Each FMS DocType declares its `links` in the DocType JSON, so its form shows the related documents with counts and a *New* button. Child-table links use `parent_doctype` and `table_fieldname`.
+
+| Form | Connections (grouped) |
+|---|---|
+| Station | *Equipment*: Fuel Tank, Island, Pump, Nozzle · *Shifts*: Forecourt Shift, Forecourt Shift Template · *Stock*: Purchase Receipt, Tank Dip, (P) Dry Stock Count · *(P) Services and devices*: Service Job, Forecourt Device |
+| Fuel Tank | Tank Calibration Chart, Nozzle, Tank Dip, Tank Transfer, Purchase Receipt (through GRN Delivery Dip) |
+| Pump | Nozzle |
+| Nozzle | Meter Change, Forecourt Shift (through Shift Meter Reading), (P) FCC Transaction |
+| Forecourt Shift Template | Forecourt Shift |
+| Forecourt Shift | *Generated*: Sales Invoice, Delivery Note, Payment Entry, Journal Entry, Stock Reconciliation, Stock Entry · *Pulled*: Purchase Receipt, (P) Service Job, (P) Dry Stock Count, (P) FCC Transaction · *After close*: Shift Correction |
+| Fuel Price Change | Forecourt Shift (`applied_to_shift`) |
+| Customer | Customer Vehicle (plus the standard ERPNext connections) |
+| Employee | Forecourt Shift (through Shift Cashier) |
+| (P) Service Type | Service Job |
+| (P) Service Job | Sales Invoice |
+| (P) Forecourt Device | Sales Invoice (`fms_device`), FCC Transaction (`controller`) |
+
+**Buttons on forms.** Custom buttons are grouped under *Create* and *View* so they sit in the same place on every form.
+
+| Form | Create | View | Other |
+|---|---|---|---|
+| Station | New Shift · Spot Dip · New GRN | Station Dashboard · Daily Station Report · Tank Stock Position | |
+| Forecourt Shift | Shift Correction (closed shifts only) | Shift Report · Exception Register (this shift) · Sales by Cashier (this shift) | **Validate** (runs the gates and lists errors with their FMS codes) · **Import Payments** · **Refresh pulled documents** |
+| Fuel Tank | Spot Dip · Tank Transfer | Wetstock Variance · Tank Stock Position | |
+| Nozzle | Meter Change | Meter Drift · Sales by Pump and Nozzle | |
+| Purchase Receipt (fuel) | Record delivery shortage (design guide 5.4) | Delivery Variance · Forecourt Shift (when pulled) | |
+| Customer | Customer Vehicle | Credit Slips Register · Statement of Accounts | |
+| Employee (cashier) | | Cashier Statement | |
+| (P) Service Job | | Sales Invoice (when paid) | Print job card |
+| (P) Dry Stock Count | | Dry Stock Count Exceptions | |
+
+**Back to the shift.** Every native document with `fms_forecourt_shift` set shows the shift as a link at the top of the form (a form indicator), so nobody is stranded inside a generated invoice.
+
+### 14.7 List views
+
+| DocType | List columns (`in_list_view`) | Standard filters | Indicator | Saved filters (shipped) | Other views |
+|---|---|---|---|---|---|
+| Forecourt Shift | station, shift_date, shift_template, status, approval_state | station, shift_date, status | Open grey, Counting orange, Reconciled blue, Pending Approval red, Closed green, Corrected purple | *Today* · *Open* · *Pending approval* · *This week* | Calendar on `shift_start`; Kanban by `status` for the area manager |
+| Fuel Price Change | station, effective_at, workflow state | status, effective_at | Draft grey, Pending red, Approved green | *Pending* | |
+| Shift Correction | forecourt_shift, correction_type, status | status | Draft grey, Pending Director Approval red, Applied green | *Pending* | |
+| Tank Dip | tank, dipped_at, volume_l, difference_l, purpose | station, tank, purpose | | *This week* | |
+| Purchase Receipt (FMS filter) | supplier, station, posting_date, status | station | standard | *Draft fuel GRNs* | |
+| Payment Feed Entry | provider, amount, transaction_time, status | status, provider, station | Unmatched orange, Matched green, Ignored grey, (P) Used green | *Unmatched* | |
+| Integration Inbox | provider, direction, status, attempts | status, provider | Failed red, Received grey, Processed green, Ignored grey | *Failed* | |
+| (P) Service Job | ticket_no, service, vehicle_plate, cashier, total_amount, status | station, status, performed_at | Draft grey, Submitted orange, Paid green, Used by shift blue | *Open* · *Today* | Kanban by status at the bay |
+| (P) Dry Stock Count | count_type, station, counted_at | count_type, station | | *Spot audits this month* | |
+| (P) Forecourt Device | device_type, station, status, last_seen | station, status | Active green, Suspended orange, Revoked red | *Offline* | |
+| (P) FCC Transaction | pump, nozzle, volume, amount, status, ended_at | station, status | Unpaid orange, Paid green, Unreceipted red | *Unpaid* | |
+
+Default sort is `creation desc` (v16 default) except Forecourt Shift (`shift_start desc`) and Tank Dip (`dipped_at desc`).
+
+### 14.8 Search and keyboard shortcuts
+
+**Awesomebar.** `search_fields` make records findable by what people know: station code, shift number, tank code, nozzle number, vehicle plate (Customer Vehicle), (P) ticket number (Service Job) and device id (Forecourt Device). Typing *new shift*, *new grn* or *spot dip* offers the create action through the standard search.
+
+**Standard Desk shortcuts.** The Desk's built-in keyboard shortcuts apply on every FMS form, for example *Ctrl+S* to save and *Ctrl+B* for a new document of the current type. The Desk's *Keyboard Shortcuts* dialog lists them. *To verify in the build task:* the full list in the installed version.
+
+**FMS shortcuts on the Forecourt Shift form** (registered with `frappe.ui.keys.add_shortcut`, so they also appear in the Keyboard Shortcuts dialog):
+
+| Keys | Action |
+|---|---|
+| *Enter* in a reading, dip, count or cash grid | Next row, same column (design guide 6.4) |
+| *Alt+1* to *Alt+7* | Jump to the shift's tabs in screen order |
+| *Ctrl+Shift+V* | Validate: run the gates and show the error list |
+| *Ctrl+Shift+I* | Import payments |
+| *Ctrl+Shift+R* | Open the Shift Report |
+
+These are checked for clashes with the browser and the tablet keyboard in the tablet review task (FMS-K03) before release.
+
+### 14.9 Notifications and to-dos
+
+The bell and the email inbox tell people what needs them, so they do not have to look.
+
+| Event | Who | How |
+|---|---|---|
+| Shift sent for approval | Area Manager of the station's group | Workflow Action (standard) and email |
+| Shift approved or rejected | User who prepared it | Notification, system and email |
+| Fuel Price Change waiting for approval | Area Manager | Workflow Action |
+| Shift Correction waiting for a director | Users with director approval rights | Workflow Action |
+| Tank variance beyond the approval threshold | Station Manager and Area Manager | Notification on Wetstock Ledger Entry insert (custom method) |
+| Shift still open 2 hours after its template's end time | Station Manager | Scheduled Notification |
+| Integration message failed three times | Administrator | Notification on Integration Inbox |
+| (P) Device offline for 30 minutes | Station Manager | Scheduled job and Notification |
+| Daily summaries | Executives, administrator | Auto Email Report (14.5) |
+
+All are shipped as **Notification** fixtures, disabled by default, and enabled per company. Exceptions that need follow-up are assigned as **ToDo** to a person from the Exception Register.
+
+### 14.10 Onboarding
+
+Each working workspace carries a short **Module Onboarding** panel that disappears once its steps are done.
+
+| Workspace | Steps |
+|---|---|
+| Forecourt Setup | Company settings → station → tanks → calibration charts → islands → pumps → nozzles → shift template → (P) stock locations and count policies → (P) service types → first shift |
+| Forecourt | Open the first shift → enter readings → enter dips → enter cash → validate → submit |
+| Forecourt Finance | Map tills and terminals on the Station → import the first mobile money statement → match a payment → run the Cashier Statement |
+| (P) Devices and Integrations | Register a device → set its POS Profile → test a sale on the training station |
+
+### 14.11 Hiding what people do not need
+
+- **Module Profiles** (fixtures): *Forecourt Station Staff* hides the ERPNext modules station users do not use (for example Manufacturing, Projects, Quality, Support, Website, CRM). *Forecourt Accounts* keeps Accounts, Stock, Buying and Selling. *Forecourt Executive* keeps only read access to Accounts and the FMS workspaces. Each FMS user gets the profile of their persona (2.5).
+- Standard ERPNext workspaces (Accounting, Stock, Selling, Buying) stay available to accountants and administrators, who need them.
+- **Default app.** Station users have the `forecourt` app as their default app, so the Desk opens on FMS workspaces. *To verify in the build task:* the v16 setting for the default app per user.
+
+### 14.12 Tablets and small screens
+
+- On a tablet the workspace becomes one column, so block order matters. Working workspaces put **shortcuts first** (principle U9), so the manager's first screen is the task list.
+- The shift form keeps its tab order and the *Enter*-moves-down grids. Shift close in under 10 minutes on a tablet is a release check (design guide 16.3).
+- When the dedicated **Shift Close page** is built (design guide 16.4, backlog epic P4), the *Open Shifts* shortcut opens it instead of the Desk form. Nothing else in the navigation changes.
+- Mode B cashiers use the PDQ or POS app, which has its own screens (fms-nonfuel.md 11.4).
+
+### 14.13 Build notes
+
+| Item | Where |
+|---|---|
+| Workspaces, Number Cards, Dashboard Charts, Dashboards | Fixtures, filtered by `module = Forecourt …` (section 12) |
+| Notifications, Auto Email Reports, Module Profiles, Module Onboarding | Fixtures, disabled where noted |
+| Connections | `links` in each DocType JSON |
+| Form buttons and keyboard shortcuts | Client scripts in `forecourt/public/js/` (one file per DocType) |
+| Default workspace on user creation | `after_insert` hook on User (2.5) |
+| Count shortcuts | `stats_filter` in workspace JSON; checked in the workspace task so each count equals its list |
+| Tasks | Section H of TASKS.md (reports and workspaces). (P) items go to FMS-Q when accepted. |
 
 ---
 
@@ -1291,5 +1680,21 @@ Forecourt                      (parent, Station Manager home)
 
 Child tables of FMS DocTypes (20): Expense Type Account, Own Use Purpose Account, Station Till Account, Station Payment Terminal, Customer Vehicle Item, Customer Vehicle Driver, Tank Calibration Row, Shift Template Cashier, Shift Template Nozzle, Fuel Price Change Item, Shift Price, Shift Meter Reading, Shift Tank Dip, Shift Cashier, Shift Cash Count, Shift Credit Sale, Shift Item Sale, Shift Collection, Shift Resolution (also used on Shift Correction), Shift Correction Item.
 
-**Totals:** 28 numbered DocTypes in the table above (27 standalone DocTypes plus GRN Delivery Dip), 20 further child tables, custom fields on 11 ERPNext DocTypes, 22 reports (one is a print format), 9 number cards, 6 charts, 7 workspaces, 3 workflows.
+**Totals (accepted):** 28 numbered DocTypes in the table above (27 standalone DocTypes plus GRN Delivery Dip), 20 further child tables, custom fields on 11 ERPNext DocTypes, 22 reports (one is a print format), 13 number cards, 7 charts, 9 workspaces, 5 dashboards, 3 workflows. (1.1 had 9 cards, 6 charts, 7 workspaces and no dashboards; 1.2 adds the cards *Draft GRNs*, *My open shift*, *My balance* and *Failed integration messages*, the chart *Sales by hour today*, the workspaces *My Shift* and *Devices and Integrations*, and the dashboards of 14.5.)
 
+**Proposed (P), not yet accepted** (from [fms-nonfuel.md](fms-nonfuel.md), decisions D37 to D62). Numbers are given when the owner accepts them.
+
+| # | DocType | Level | Module | Kind | Submittable | Naming |
+|---|---|---|---|---|---|---|
+| P1 | Stock Adjustment Reason (+ Stock Adjustment Reason Account) | 0 | Forecourt Setup | Master | | field:reason |
+| P2 | LPG Product | 0 | Forecourt Setup | Master | | field:name |
+| P3 | Service Type (+ Service Type Consumable) | 1 | Forecourt Services | Master | | field:service_type |
+| P4 | Forecourt Device | 1 | Forecourt Integrations | Master | | field:device_id |
+| P5 | Dry Stock Count (+ Dry Stock Count Item) | 4 | Wetstock | Transaction | ✓ | format:DSC-{station}-{YYYY}-{#####} |
+| P6 | Service Job (+ Service Job Line, Service Job Part) | 4 | Forecourt Services | Transaction | ✓ | format:SJ-{station}-{YYYY}-{#####} |
+| P7 | FCC Transaction | Int | Forecourt Integrations | Log | | format:FCC-{station}-{#######} |
+| P8 | Dry Stock Ledger Entry | 6 | Forecourt Finance | Ledger | | hash |
+
+Proposed child tables (11): Stock Adjustment Reason Account, Service Type Consumable, Station Stock Location, Shift Template Item Assignment, Dry Stock Count Item, Service Job Line, Service Job Part, Shift Stock Count, Shift Stock Count Detail, Shift Service, Shift FCC Exception.
+
+**Totals with the proposals:** 36 numbered DocTypes, 31 further child tables, 6 modules, 22 number cards, 12 charts, 10 workspaces, 7 dashboards, 2 new roles (Area Manager, Forecourt Administrator). The proposed reports are listed in fms-nonfuel.md section 18.1.

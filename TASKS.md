@@ -21,14 +21,15 @@
 | E. Station movements | 10 | 10 |
 | F. Forecourt Shift (Phase 1 core) | 18 | 18 |
 | G. Shift Correction | 6 | 6 |
-| H. Reports and workspaces | 12 | 11 |
+| H. Reports and workspaces | 12 | 12 |
 | I. Approvals, roles and permissions | 6 | 6 |
 | J. Payment import and integrations | 8 | 8 |
 | K. Quality, scenarios and UAT | 7 | 0 |
 | L. CI/CD | 4 | 0 |
 | M. Deployment and operations | 8 | 0 |
 | N. Pilot and go-live | 5 | 0 |
-| **Total (Phases 0–3)** | **124** | **99** |
+| R. Reporting framework and new reports | 18 | 0 |
+| **Total (Phases 0–3)** | **142** | **100** |
 | P. Later phases (backlog) | 8 epics | — |
 
 Update the *Done* column in the same commit that ticks a task.
@@ -871,7 +872,7 @@ Decisions UX-01 and Q-11 confirmed 2026-11-06. FMS-U01 gap audit complete (2026-
 | ~~FMS-U06~~ ✓ | M | U03 | `get_close_readiness` whitelisted method; gates refactored to structured items; readiness panel HTML on Overview tab — 2026-11-06 |
 | ~~FMS-U07~~ ✓ | S | U06 | *Close Shift* primary action, confirm summary, duplicate protection, error code S120 — `close.py` wrapped in `fms_error_wrapper`, FMS-S120 for duplicate protection, `_show_close_confirm_dialog` with shift totals summary — 2026-11-06 |
 | ~~FMS-U08~~ ✓ | L | U01 | 5 new: Meter Movement (MTR-01, Wetstock), Tank Stock Movement (WET-02, Wetstock), Shift Reconciliation (SHF-04, Forecourt Shift), Payment Reconciliation (PAY-01, Finance), Cash Collection (CSH-03, Finance); extended: Cashier Performance +total_short/total_excess/max_shortage; Sales by Pump and Nozzle +shifts/avg_l_per_shift/station_pct — 2026-11-06 |
-| FMS-U09 | M | U08 | 4 dashboards (Station, Operations, Finance, Group) + KPI Number Cards per decisions.md UX-01 |
+| ~~FMS-U09~~ ✓ | M | U08 | All 7 workspaces: content block label bug fixed (document name → child-row label), shortcut blocks and link-card blocks added, "new document" shortcuts converted to URL type (no spurious count badge), all 7 workspaces added to fixtures. Group workspace is missing 2 catalogue cards (Cash position custom + Receivables ERPNext card) — pending fixture development. Owner to verify in browser. — 2026-11-06 |
 | ~~FMS-U10~~ ✓ | S | U01 | `fms_error_wrapper` context manager added to `errors.py`; S117–S120, P399 codes added 2026-11-06 |
 | ~~FMS-U11~~ ✓ | S | U01 | Permissions: added Supervisor + Asst Station Manager (submit), upgraded Director (write+submit), removed Business Executive; field descriptions on 6 key fields; Cashier Variance Ranking → Cashier Performance (report, workspace, catalogue, fms.md) — 2026-11-06 |
 | FMS-U12 | S | U02–U11 | Usability walk-through: 10-min close on tablet, 3-click daily task check; findings into bug log |
@@ -890,8 +891,8 @@ The catalogue is at `docs/reporting-catalogue.md`. These tasks follow sections 3
 
 | Task | Size | Depends on | Scope |
 |---|---|---|---|
-| FMS-R01 | M | — | Audit the 22 built reports against the catalogue; list name, filter, column and totals differences |
-| FMS-R02 | L | R01 | `forecourt/reports/common.py` (permitted_stations, permitted_companies, totals profiles T-ADD/WTD/BAL/REG/RANK/PIVOT, tree rows) + `report_filters.js` (standard filter order, dependent filters, comparison presets) |
+| ~~FMS-R01~~ ✓ | M | — | Audit the 22 built reports against the catalogue; list name, filter, column and totals differences |
+| ~~FMS-R02~~ ✓ | L | R01 | `forecourt/reports/common.py` (permitted_stations, permitted_companies, totals profiles T-ADD/WTD/BAL/REG/RANK/PIVOT, tree rows) + `report_filters.js` (standard filter order, dependent filters, comparison presets) |
 | FMS-R03 | L | R02 | Migrate built reports onto the framework; apply (ext.) changes: SHF-02, SHF-03, SAL-01, SAL-03, MTR-03, WET-03, DLV-02, CSH-02, CRD-01, CTL-01, FIN-03, FCS-01 |
 | FMS-R04 | L | R02 | Shift and cash: SHF-04 Shift Reconciliation, SHF-06 Late Closes, SHF-07 Monthly Station Report, CSH-03 Cash Collection, CSH-05 Banking Register, CSH-06 Shortage Recovery, CSH-07 Cash Count by Currency |
 | FMS-R05 | L | R02 | Meters and wetstock: MTR-01 Meter Movement, MTR-04 Meter Change Register, MTR-05 Nozzle Idle Analysis, WET-02 Tank Stock Movement, WET-04 Leak Indicator, WET-05 Water-in-Tank, WET-06 Delivery Accuracy, WET-07 Tank Calibration Status, WET-08 Inventory Value |
@@ -970,7 +971,17 @@ Add bugs here as they are found. Each bug becomes a task with the same format.
 
 | ID | Found in | Description | Task | Status |
 |---|---|---|---|---|
-| | | | | |
+| FMS-BUG-001 | FMS-K01 golden run | Meter-reading correction supersedes every nozzle ledger row of the shift and leaves the corrected nozzle's sales ledger at the uncorrected amount (`forecourt/corrections/meter.py`) | FMS-BUG-001 | Fixed on `task/FMS-BUG-001-meter-correction-supersede`, awaiting merge |
+| FMS-BUG-002 | Audit 2026-11-17 | Dip correction does not supersede Wetstock Ledger rows or recompute variance symmetrically with the meter path (`forecourt/corrections/dip.py`) | RM-004 | Open |
+| FMS-BUG-003 | Audit 2026-11-17 | `patches.txt` referenced missing module `forecourt.patches.v0_0.rename_forecourt_settings_meter_fields`; upgrade CI job never ran (`contains()` on a file count) | RM-002/RM-003 | Fixed on main, awaiting push |
+| FMS-BUG-004 | Audit 2026-11-17 | Repo hygiene: `.pyc` files tracked under report dirs; `.gitignore` ignored the whole `forecourt/` app dir blocking new files | RM-006 | Fixed on main, awaiting push |
+
+- [ ] **FMS-BUG-001 · Bug fix · Meter correction supersedes all nozzle rows and not the sales ledger** · M · FMS-K01
+  - **Skills:** frappe-agent-debugger, frappe-errors-controllers
+  - **Description:** The golden run's director-approved correction lowers the closing e-cash of one nozzle by 1,000 KES on the shift. `corrections/meter.py` supersedes every unsuperseded Nozzle Ledger Entry of that shift, so 1 active row remains instead of 6. The nozzle's attributed Sales Ledger amount stays at 19,800 instead of 18,800. Design guide 6.8 requires superseding only the affected rows for both shifts, writing corrected rows, adjusting walk-in sales with a Credit Note or extra Sales Invoice, and recalculating cashier balances. The golden checks do not yet cover the walk-in adjustment, cashier recalculation or next-shift opening update.
+  - **Expectation:** Only the corrected nozzle's rows are superseded; its corrected Sales Ledger rows match the corrected meter; the walk-in delta is posted; checks "Unaffected nozzle ledger rows stay active" and "Corrected nozzle sales match corrected meter" pass.
+  - **Verify (CLI):** `bench --site test_fms execute forecourt.tests.golden.run` prints "all checks passed".
+  - **Commit:** `fix(corrections): supersede only the corrected meter rows`
 
 Template:
 

@@ -25,6 +25,10 @@ def close_shift(shift_name: str) -> str:
 def _do_close_shift(shift_name: str) -> str:
 	frappe.has_permission("Forecourt Shift", "submit", shift_name, throw=True)
 
+	# Row lock serialises concurrent close attempts: the second caller blocks
+	# here until the first commits, then sees docstatus/status already changed.
+	frappe.db.get_value("Forecourt Shift", shift_name, "status", for_update=True)
+
 	shift = frappe.get_doc("Forecourt Shift", shift_name)
 	if shift.docstatus != 0:
 		frappe.throw(_("[FMS-F16] Shift {0} is already submitted.").format(shift_name))

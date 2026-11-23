@@ -8,6 +8,17 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- UI/UX round (FMS-U02–U11): consolidated Forecourt workspace with six child workspaces, New Shift dialog, close-readiness panel, Close Shift flow with background close, five new reports, structured gate items, `fms_error_wrapper` and error codes S116–S120/P399
+- Golden-month end-to-end scenario (FMS-K01 groundwork)
+- GitHub Actions CI: calc unit tests, integration tests, upgrade migration test
+
+### Fixed
+- Meter-reading correction: supersede only the corrected nozzle's ledger rows, recompute volume and amount, credit the walk-in invoice for the delta; error codes FMS-C504/C505 (FMS-BUG-001)
+- `patches.txt` referenced a missing v0_0 patch module; restored from history (FMS-BUG-003)
+- Upgrade Migration CI job never executed due to an always-false condition (FMS-BUG-003)
+- Repo hygiene: untracked compiled bytecode, removed stray root file, removed `.gitignore` rule that ignored the app directory (FMS-BUG-004)
+
 ---
 
 ## [0.1.0] — 2026-10-27
