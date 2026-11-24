@@ -104,7 +104,7 @@ def _check_stale_draft_shifts(today, station_filter) -> list[dict]:
 
 	backdating_limit = 2
 	cutoff = add_days(today, -backdating_limit)
-	f = {"docstatus": 0, "shift_date": ["<", cutoff]}
+	f = {"docstatus": 0, "status": ["!=", "Abandoned"], "shift_date": ["<", cutoff]}
 	if station_filter:
 		f["station"] = station_filter
 

@@ -2,7 +2,6 @@
 
 Codes used:
   FMS-S116  Another draft shift is open at this station.
-  FMS-S117  Previous shift is not yet closed.
   FMS-S118  No price for a fuel item at this station on the shift date.
   FMS-S119  No active shift template for this station.
 """
@@ -13,7 +12,8 @@ import frappe
 from frappe import _
 from frappe.utils import add_days, format_datetime, getdate, today
 
-from forecourt.errors import FMS_S116, FMS_S117, FMS_S118, FMS_S119
+from forecourt.errors import FMS_S118, FMS_S119
+from forecourt.forecourt_shift.openings import draft_conflict_message, open_drafts
 
 
 @frappe.whitelist()
@@ -62,37 +62,10 @@ def create_shift(station: str, shift_template: str, shift_date: str) -> dict:
 			title=_("Cannot Create Shift"),
 		)
 
-	# S116: no other draft shift open at this station.
-	open_shift = frappe.db.get_value(
-		"Forecourt Shift",
-		{"station": station, "docstatus": 0, "status": ["not in", ["Closed", "Corrected"]]},
-		"name",
-	)
-	if open_shift:
-		frappe.throw(
-			_(
-				"[{0}] Shift {1} is already open at {2}. "
-				"Close it before opening another one, or open it to continue."
-			).format(FMS_S116, open_shift, station),
-			title=_("Cannot Create Shift"),
-		)
-
-	# S117: last non-cancelled shift must be submitted (docstatus = 1).
-	last_draft = frappe.db.get_value(
-		"Forecourt Shift",
-		{"station": station, "docstatus": 0},
-		["name", "status"],
-		order_by="shift_start desc",
-		as_dict=True,
-	)
-	if last_draft:
-		frappe.throw(
-			_(
-				"[{0}] The previous shift {1} is not closed yet. "
-				"Its closing values are this shift's openings. Close it first."
-			).format(FMS_S117, last_draft.name),
-			title=_("Cannot Create Shift"),
-		)
+	# S116: no other unabandoned draft shift at this station.
+	drafts = open_drafts(station)
+	if drafts:
+		frappe.throw(draft_conflict_message(station, drafts), title=_("Cannot Create Shift"))
 
 	# S118: at least one active fuel item at this station must have a price.
 	_check_fuel_prices(station, shift_date, shift_template)

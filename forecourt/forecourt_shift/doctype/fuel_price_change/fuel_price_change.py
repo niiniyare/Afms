@@ -121,7 +121,7 @@ class FuelPriceChange(Document):
 
 		open_shift_name = frappe.db.get_value(
 			"Forecourt Shift",
-			{"station": self.station, "docstatus": 0},
+			{"station": self.station, "docstatus": 0, "status": ["!=", "Abandoned"]},
 			"name",
 			order_by="shift_start desc",
 		)

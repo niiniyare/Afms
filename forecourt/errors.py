@@ -53,11 +53,13 @@ FMS_S112 = "FMS-S112"  # Price segment has no meter readings
 FMS_S113 = "FMS-S113"  # Draft Fuel Own Use entry in shift window
 FMS_S114 = "FMS-S114"  # Duplicate mobile money / card reference
 FMS_S115 = "FMS-S115"  # Test volume above nozzle per-shift limit (D29, proposed)
-FMS_S116 = "FMS-S116"  # Approver cannot be the preparer; approval pending or rejected
-FMS_S117 = "FMS-S117"  # New Shift: open shift already exists at station (reserved FMS-U05)
-FMS_S118 = "FMS-S118"  # New Shift: no shift template active for station (reserved FMS-U05)
-FMS_S119 = "FMS-S119"  # New Shift: previous shift not closed (reserved FMS-U05)
+FMS_S116 = "FMS-S116"  # Another draft shift is open at this station
+FMS_S117 = "FMS-S117"  # Reserved
+FMS_S118 = "FMS-S118"  # No price for a fuel item at this station on the shift date
+FMS_S119 = "FMS-S119"  # No active shift template for the station
 FMS_S120 = "FMS-S120"  # Close Shift already in progress for this shift (reserved FMS-U07)
+FMS_S121 = "FMS-S121"  # Opening meter reading or tank opening litres changed on a shift
+FMS_S122 = "FMS-S122"  # Draft shift cannot be abandoned, or an abandoned shift was edited/submitted
 
 # ---------------------------------------------------------------------------
 # FMS-W1xx  Meters and drift
@@ -65,6 +67,7 @@ FMS_S120 = "FMS-S120"  # Close Shift already in progress for this shift (reserve
 
 FMS_W102 = "FMS-W102"  # Meter value exceeds nozzle maximum
 FMS_W103 = "FMS-W103"  # Meter drift beyond tolerance without reason
+FMS_W104 = "FMS-W104"  # Previous shift is still a draft; opening values may be provisional
 
 # ---------------------------------------------------------------------------
 # FMS-T2xx  Tanks, dips and deliveries

@@ -19,6 +19,9 @@
   "col_break_status",
   "approved_by_user",
   "previous_shift",
+  "abandoned_by",
+  "abandoned_at",
+  "abandon_reason",
   "section_snapshot",
   "shift_title",
   "col_break_snap",
@@ -134,7 +137,7 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Open\nCounting\nReconciled\nPending Approval\nClosing\nClosed\nCorrected",
+   "options": "Open\nCounting\nReconciled\nPending Approval\nClosing\nClosed\nCorrected\nAbandoned",
    "default": "Open",
    "read_only": 1,
    "in_list_view": 1,
@@ -169,6 +172,31 @@
    "label": "Previous Shift",
    "options": "Forecourt Shift",
    "read_only": 1
+  },
+  {
+   "fieldname": "abandoned_by",
+   "fieldtype": "Link",
+   "label": "Abandoned By",
+   "options": "User",
+   "read_only": 1,
+   "no_copy": 1,
+   "depends_on": "eval:doc.status=='Abandoned'"
+  },
+  {
+   "fieldname": "abandoned_at",
+   "fieldtype": "Datetime",
+   "label": "Abandoned At",
+   "read_only": 1,
+   "no_copy": 1,
+   "depends_on": "eval:doc.status=='Abandoned'"
+  },
+  {
+   "fieldname": "abandon_reason",
+   "fieldtype": "Small Text",
+   "label": "Abandon Reason",
+   "read_only": 1,
+   "no_copy": 1,
+   "depends_on": "eval:doc.status=='Abandoned'"
   },
   {
    "fieldname": "section_snapshot",

@@ -47,7 +47,7 @@ def _data(filters):
 	as_of = today()
 	result = []
 
-	shift_f: dict = {"docstatus": 0}
+	shift_f: dict = {"docstatus": 0, "status": ["!=", "Abandoned"]}
 	if filters.get("company"):
 		shift_f["company"] = filters["company"]
 	err = apply_station_permission(shift_f, filters)

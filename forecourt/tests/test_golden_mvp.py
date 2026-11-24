@@ -33,6 +33,7 @@ from forecourt.tests.factories import (
 	make_pump,
 	make_station,
 	make_station_group,
+	map_company_settings_to_defaults,
 )
 
 
@@ -45,6 +46,7 @@ class TestGoldenMVP(FMSTestCase):
 
 		# ── 1. FMS accounts + FCS + Modes of Payment ─────────────────────────
 		accounts = create_default_accounts(company)
+		map_company_settings_to_defaults(company, accounts)
 		frappe.clear_document_cache("Forecourt Company Settings", company)
 
 		# ── 2. Variance Reason (required on Shift Resolution) ─────────────────
@@ -78,17 +80,25 @@ class TestGoldenMVP(FMSTestCase):
 		ago = make_fuel_item("GOLD-AGO", item_name="Gold AGO", stock_uom="Litre")
 
 		# ── 7. Tanks → warehouses auto-created by Fuel Tank controller ────────
-		pms_tank = make_fuel_tank(station=station.name, tank_code="T-PMS", item=pms.name)
-		ago_tank = make_fuel_tank(station=station.name, tank_code="T-AGO", item=ago.name)
+		pms_tank = make_fuel_tank(station=station.name, tank_code="T-PMS", item=pms.name, opening_dip_l=8000)
+		ago_tank = make_fuel_tank(station=station.name, tank_code="T-AGO", item=ago.name, opening_dip_l=5200)
 
 		# ── 8. Pumps + nozzles ────────────────────────────────────────────────
 		p1 = make_pump(station=station.name, pump_code="P01")
 		p2 = make_pump(station=station.name, pump_code="P02")
 
-		n1 = make_nozzle(pump=p1.name, tank=pms_tank.name, nozzle_no=1)
-		n2 = make_nozzle(pump=p1.name, tank=pms_tank.name, nozzle_no=2)
-		n3 = make_nozzle(pump=p2.name, tank=ago_tank.name, nozzle_no=1)
-		n4 = make_nozzle(pump=p2.name, tank=ago_tank.name, nozzle_no=2)
+		n1 = make_nozzle(
+			pump=p1.name, tank=pms_tank.name, nozzle_no=1, opening_date="2026-11-01", opening_ecash=10000
+		)
+		n2 = make_nozzle(
+			pump=p1.name, tank=pms_tank.name, nozzle_no=2, opening_date="2026-11-01", opening_ecash=5000
+		)
+		n3 = make_nozzle(
+			pump=p2.name, tank=ago_tank.name, nozzle_no=1, opening_date="2026-11-01", opening_ecash=20000
+		)
+		n4 = make_nozzle(
+			pump=p2.name, tank=ago_tank.name, nozzle_no=2, opening_date="2026-11-01", opening_ecash=25000
+		)
 
 		# ── 9. Shift Template (required field) ────────────────────────────────
 		tmpl = frappe.get_doc(
@@ -294,14 +304,12 @@ class TestGoldenMVP(FMSTestCase):
 		shift.flags.ignore_permissions = True
 		shift.insert()
 
-		# Set tank dip values on the auto-created rows (before_insert created them
-		# with opening_l = 0 / dip_l = 0 since no previous shift exists).
+		# Openings (8000 / 5200 L) come from Fuel Tank.opening_dip_l; only the
+		# closing dips are entered.
 		for row in shift.tank_dips:
 			if row.tank == pms_tank.name:
-				row.opening_l = 8000
 				row.dip_l = 6780
 			elif row.tank == ago_tank.name:
-				row.opening_l = 5200
 				row.dip_l = 4290
 		shift.flags.ignore_permissions = True
 		shift.save()

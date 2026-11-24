@@ -211,7 +211,7 @@
    "fieldname": "basis_meter",
    "fieldtype": "Select",
    "label": "Basis Meter",
-   "options": "Elec Cash\nElec Vol\nMan Vol\nHighest"
+   "options": "Elec Cash\nElec Mtr\nMan Mtr\nHighest"
   },
   {
    "fieldname": "gross_l",

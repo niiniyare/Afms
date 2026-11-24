@@ -50,8 +50,12 @@ from forecourt.errors import (
 	FMS_S114,
 	FMS_S115,
 	FMS_S116,
+	FMS_S121,
+	FMS_S122,
 	FMS_W103,
+	FMS_W104,
 )
+from forecourt.forecourt_shift import openings as shift_openings
 
 
 class ForecourtShift(Document):
@@ -641,11 +645,19 @@ class ForecourtShift(Document):
 	# ------------------------------------------------------------------ F08 helpers
 
 	def _compute_credit_sale_rates(self) -> None:
-		"""Set rate and amount on credit sale rows from the shift's price segments."""
+		"""Set rate and amount on credit sale rows from the shift's price segments.
+
+		When sold_at is not recorded, fall back to shift_start so the row always
+		gets a rate instead of silently leaving rate = 0.
+		"""
 		for row in self.credit_sales:
-			if not (row.item and row.sold_at):
+			if not row.item:
 				continue
-			rate = self._get_segment_price(row.item, get_datetime(row.sold_at))
+			# Use sold_at when available; fall back to shift_start for walk-up entries
+			at_dt = get_datetime(row.sold_at) if row.sold_at else get_datetime(self.shift_start)
+			if not at_dt:
+				continue
+			rate = self._get_segment_price(row.item, at_dt)
 			if rate:
 				row.rate = flt(rate)
 				row.amount = flt(flt(row.qty) * row.rate, 2)
@@ -774,6 +786,8 @@ class ForecourtShift(Document):
 
 	# ------------------------------------------------------------------ F03 / F05 / F06 / F08 / F09 / F10 / F11 / F17
 	def validate(self) -> None:
+		self._guard_abandoned()  # FMS-S122
+		self._protect_openings()  # FMS-S121
 		self._compute_item_sale_amounts()
 		self._pull_own_use_for_nozzles()  # F06
 		self._compute_meter_rows()
@@ -784,6 +798,8 @@ class ForecourtShift(Document):
 		self._pull_grn_receipts()  # F05
 		self._pull_own_use_for_tanks()  # F05
 		self._compute_tank_dip_rows()
+		self._propagate_tank_resolution_reasons()  # BUG-05
+		self._sync_cashier_rows()  # BUG-03
 		self._compute_cashier_rows()
 		self._compute_resolution_approval()  # F11
 		self._set_approval_state()  # I03
@@ -954,6 +970,7 @@ class ForecourtShift(Document):
 		self._gate_tank_variance_approved(items)
 		self._gate_shift_approval(items)
 		self._gate_test_volume(items)
+		self._gate_previous_shift_open(items)  # BUG-06
 
 		state = "Ready"
 		for item in items:
@@ -967,6 +984,27 @@ class ForecourtShift(Document):
 				state = "Attention"
 
 		return {"state": state, "items": items}
+
+	def _gate_previous_shift_open(self, items: list[dict]) -> None:
+		"""Attention: previous shift at station is still a draft (BUG-06 / FMS-W104)."""
+		if not self.previous_shift:
+			return
+		ps_docstatus = frappe.db.get_value("Forecourt Shift", self.previous_shift, "docstatus")
+		if ps_docstatus == 0:
+			items.append(
+				{
+					"code": FMS_W104,
+					"severity": "attention",
+					"area": _("Previous Shift"),
+					"message": _(
+						"[{0}] Previous shift {1} has not been submitted yet. "
+						"Opening values for this shift may be provisional."
+					).format(FMS_W104, self.previous_shift),
+					"fix": _("Submit or discard the previous shift first."),
+					"tab": None,
+					"table": None,
+				}
+			)
 
 	def reconcile(self) -> str:
 		"""Run reconcile checks; set status to Reconciled or Pending Approval.
@@ -1100,12 +1138,23 @@ class ForecourtShift(Document):
 	# ------------------------------------------------------------------ F02
 	def before_insert(self) -> None:
 		"""Pre-fill the shift from the template and previous shift."""
+		# Enforce one-draft-per-station.  create_shift() checks this via S116, but
+		# a user can also click the standard Frappe + button — this gate catches that.
+		if self.station:
+			drafts = shift_openings.open_drafts(self.station)
+			if drafts:
+				frappe.throw(
+					shift_openings.draft_conflict_message(self.station, drafts),
+					title=_("Cannot Create Shift"),
+				)
 		self._find_previous_shift()
 		self._snapshot_station_settings()
 		self._compute_shift_window()
 		self._create_price_rows()
 		self._create_reading_rows()
+		self._create_cashier_rows()
 		self._create_tank_rows()
+		self._apply_opening_balances()
 		self._set_title()
 
 	# ------------------------------------------------------------------ F03 helpers
@@ -1406,6 +1455,16 @@ class ForecourtShift(Document):
 				in_tol = calc_reconciliation.within_tolerance(rec.variance, flt(row.sales_l))
 				row.within_tolerance = int(in_tol)
 				row.needs_approval = int(not in_tol)
+			# Set flag server-side so it is consistent after save/reload (BUG-05)
+			if row.dip_l:
+				if row.needs_approval:
+					row.flag = "Approval"
+				elif row.within_tolerance:
+					row.flag = "Within"
+				else:
+					row.flag = "Outside"
+			else:
+				row.flag = ""
 
 	def _compute_cashier_rows(self) -> None:
 		# fuel_amount per cashier from meter readings
@@ -1519,14 +1578,55 @@ class ForecourtShift(Document):
 	# ------------------------------------------------------------------ F02 helpers
 
 	def _find_previous_shift(self) -> None:
-		prev = frappe.get_all(
-			"Forecourt Shift",
-			filters={"station": self.station, "docstatus": 1},
-			fields=["name"],
-			order_by="shift_start desc",
-			limit=1,
-		)
-		self.previous_shift = prev[0].name if prev else None
+		self.previous_shift = shift_openings.latest_submitted_shift(self.station)
+
+	def _create_cashier_rows(self) -> None:
+		"""Create Shift Cashier rows from the template roster (BUG-03)."""
+		if not self.shift_template:
+			return
+		if self.cashiers:
+			return  # already populated (e.g. partial save before insert)
+		tpl = frappe.get_cached_doc("Forecourt Shift Template", self.shift_template)
+		for cashier_row in tpl.cashiers:
+			if not cashier_row.cashier:
+				continue
+			self.append(
+				"cashiers",
+				{
+					"cashier": cashier_row.cashier,
+					"float_amount": flt(cashier_row.float_amount),
+				},
+			)
+
+	def _sync_cashier_rows(self) -> None:
+		"""Ensure every cashier referenced in meter_readings/collections/credit_sales
+		has a Shift Cashier row (BUG-03).  Adds missing rows with zero float.
+		"""
+		present = {row.cashier for row in self.cashiers if row.cashier}
+		referenced: set[str] = set()
+		for row in self.meter_readings:
+			if row.cashier:
+				referenced.add(row.cashier)
+		for row in self.collections:
+			if row.cashier:
+				referenced.add(row.cashier)
+		for row in self.credit_sales:
+			if row.cashier:
+				referenced.add(row.cashier)
+		for cashier in sorted(referenced - present):
+			self.append("cashiers", {"cashier": cashier, "float_amount": 0.0})
+
+	def _propagate_tank_resolution_reasons(self) -> None:
+		"""Copy resolution reasons from Shift Resolution rows to Shift Tank Dip rows
+		so the reconcile gate (_gate_tank_dips_explained) finds them (BUG-05).
+		"""
+		tank_reasons: dict[str, str] = {}
+		for res in self.resolutions:
+			if res.resolution_for == "Tank" and res.tank and res.reason:
+				tank_reasons[res.tank] = res.reason
+		for row in self.tank_dips:
+			if row.tank in tank_reasons:
+				row.reason = tank_reasons[row.tank]
 
 	def _snapshot_station_settings(self) -> None:
 		if not self.station:
@@ -1638,6 +1738,7 @@ class ForecourtShift(Document):
 			)
 
 			price = self._get_price_for_item(nozzle.item) if nozzle.item else None
+			opening = shift_openings.nozzle_openings(nozzle_row.nozzle, self.previous_shift)
 
 			self.append(
 				"meter_readings",
@@ -1653,14 +1754,12 @@ class ForecourtShift(Document):
 					"rec_elec_meter": rec_evol,
 					"rec_man_meter": rec_mvol,
 					"row_sales_basis": sales_basis,
-					"opening_elec_cash": flt(nozzle.last_ecash),
-					"opening_elec_meter": flt(nozzle.last_evol),
-					"opening_man_meter": flt(nozzle.last_mvol),
+					**opening,
 					# Pre-fill closing = opening so a nozzle with no sales this shift
 					# needs no data entry; clerk only changes if something was dispensed.
-					"closing_elec_cash": flt(nozzle.last_ecash),
-					"closing_elec_meter": flt(nozzle.last_evol),
-					"closing_man_meter": flt(nozzle.last_mvol),
+					"closing_elec_cash": opening["opening_elec_cash"],
+					"closing_elec_meter": opening["opening_elec_meter"],
+					"closing_man_meter": opening["opening_man_meter"],
 					"source": "Manual",
 				},
 			)
@@ -1682,9 +1781,7 @@ class ForecourtShift(Document):
 
 		for tank in tanks:
 			dip_mode = tank.dip_entry_mode or station_dip_mode
-			opening_l = self._get_previous_closing_dip(tank.name)
-			if opening_l is None:
-				opening_l = flt(tank.opening_dip_l)
+			opening_l = shift_openings.tank_opening(tank.name, self.previous_shift)
 
 			self.append(
 				"tank_dips",
@@ -1701,16 +1798,96 @@ class ForecourtShift(Document):
 				},
 			)
 
-	def _get_previous_closing_dip(self, tank: str) -> float | None:
-		if not self.previous_shift:
-			return None
-		result = frappe.get_all(
-			"Shift Tank Dip",
-			filters={"parent": self.previous_shift, "tank": tank},
-			fields=["dip_l"],
-			limit=1,
-		)
-		return flt(result[0].dip_l) if result else None
+	def _apply_opening_balances(self) -> None:
+		"""Force every segment-1 meter opening and every tank opening to the authoritative source.
+
+		Runs on insert only, so rows supplied by an API caller cannot carry arbitrary openings.
+		"""
+		for row in self.meter_readings:
+			if row.nozzle and (row.segment_no or 1) == 1:
+				for key, value in shift_openings.nozzle_openings(row.nozzle, self.previous_shift).items():
+					setattr(row, key, value)
+		for row in self.tank_dips:
+			if row.tank:
+				row.opening_l = shift_openings.tank_opening(row.tank, self.previous_shift)
+
+	def _guard_abandoned(self) -> None:
+		"""FMS-S122: an abandoned draft is frozen; Abandoned can only be set by abandon_draft()."""
+		before = None if self.is_new() else self.get_doc_before_save()
+		if before and before.status == "Abandoned":
+			frappe.throw(
+				_("[{0}] Shift {1} was abandoned and is locked. It cannot be edited or submitted.").format(
+					FMS_S122, self.name
+				),
+				title=_("Shift Abandoned"),
+			)
+		if self.status == "Abandoned":
+			frappe.throw(
+				_("[{0}] A shift can only be abandoned with Abandon Draft.").format(FMS_S122),
+				title=_("Shift Abandoned"),
+			)
+
+	def _protect_openings(self) -> None:
+		"""FMS-S121: opening readings are fixed at shift creation and cannot be edited.
+
+		Rows already stored must keep their stored openings. Rows added later (including a
+		deleted-and-re-added or duplicated row) must carry the authoritative opening.
+		"""
+		if self.is_new() or self.docstatus != 0:
+			return
+		before = self.get_doc_before_save()
+		if not before:
+			return
+		errors: list[str] = []
+		if (before.previous_shift or None) != (self.previous_shift or None):
+			errors.append(_("Previous Shift was changed."))
+
+		old_meters = {r.name: r for r in before.meter_readings}
+		for row in self.meter_readings:
+			if (row.segment_no or 1) != 1:
+				continue
+			old = old_meters.get(row.name)
+			if old is not None:
+				expected = {k: flt(old.get(k), 3) for k in shift_openings._METER_KEYS}
+			elif row.nozzle:
+				expected = {
+					k: flt(v, 3)
+					for k, v in shift_openings.nozzle_openings(row.nozzle, self.previous_shift).items()
+				}
+			else:
+				continue
+			for key, want in expected.items():
+				if flt(row.get(key), 3) != want:
+					errors.append(
+						_("Meter row {0} ({1}): {2} is {3}, must be {4}.").format(
+							row.idx, row.nozzle, key, flt(row.get(key), 3), want
+						)
+					)
+
+		old_tanks = {r.name: r for r in before.tank_dips}
+		for row in self.tank_dips:
+			old = old_tanks.get(row.name)
+			if old is not None:
+				want = flt(old.opening_l, 3)
+			elif row.tank:
+				want = flt(shift_openings.tank_opening(row.tank, self.previous_shift), 3)
+			else:
+				continue
+			if flt(row.opening_l, 3) != want:
+				errors.append(
+					_("Tank row {0} ({1}): Opening (L) is {2}, must be {3}.").format(
+						row.idx, row.tank, flt(row.opening_l, 3), want
+					)
+				)
+
+		if errors:
+			frappe.throw(
+				_(
+					"[{0}] Opening balances are fixed when the shift is created and cannot be edited: {1} "
+					"Correct the previous shift through a Shift Correction instead."
+				).format(FMS_S121, " ".join(errors)),
+				title=_("Opening Balances Locked"),
+			)
 
 	def _get_price_for_item(self, item: str) -> float | None:
 		for row in self.prices:
@@ -1722,6 +1899,112 @@ class ForecourtShift(Document):
 		if self.station and self.shift_template and self.shift_date:
 			station_label = frappe.db.get_value("Station", self.station, "station_name") or self.station
 			self.shift_title = f"{station_label} · {self.shift_template} · {self.shift_date}"
+
+
+_ABANDON_ROLES = {
+	"Station Manager",
+	"Area Manager",
+	"Forecourt Director",
+	"Forecourt Administrator",
+	"System Manager",
+}
+_ABANDON_MIN_REASON = 10
+_SHIFT_LINK_DOCTYPES = (
+	"Sales Invoice",
+	"POS Invoice",
+	"Delivery Note",
+	"Payment Entry",
+	"Journal Entry",
+	"Stock Entry",
+	"Stock Reconciliation",
+	"Purchase Receipt",
+)
+
+
+@frappe.whitelist()
+def abandon_draft(shift_name: str, reason: str) -> dict:
+	"""Mark a stale draft shift Abandoned so it stops blocking new shifts (FMS-S116).
+
+	Nothing is deleted or cancelled: the shift keeps all its rows, is locked against
+	edits and submission, and carries who/when/why. Refused when the shift is not a
+	plain draft, or when any non-cancelled native document is linked to it.
+	"""
+	roles = set(frappe.get_roles())
+	if not roles & _ABANDON_ROLES:
+		frappe.throw(
+			_(
+				"[{0}] Only a Station Manager, Area Manager, Forecourt Director or Administrator can abandon a draft shift."
+			).format(FMS_S122),
+			frappe.PermissionError,
+		)
+	shift = frappe.get_doc("Forecourt Shift", shift_name)
+	frappe.has_permission("Forecourt Shift", "write", shift, throw=True)
+
+	reason = (reason or "").strip()
+	if len(reason) < _ABANDON_MIN_REASON:
+		frappe.throw(
+			_("[{0}] Give a reason of at least {1} characters for abandoning the shift.").format(
+				FMS_S122, _ABANDON_MIN_REASON
+			)
+		)
+	if shift.docstatus != 0:
+		frappe.throw(
+			_(
+				"[{0}] Only a draft shift can be abandoned. Use a Shift Correction for submitted shifts."
+			).format(FMS_S122)
+		)
+	if shift.status == "Abandoned":
+		frappe.throw(_("[{0}] Shift {1} is already abandoned.").format(FMS_S122, shift.name))
+	if shift.status == "Closing":
+		frappe.throw(
+			_("[{0}] Shift {1} is being closed in the background and cannot be abandoned.").format(
+				FMS_S122, shift.name
+			)
+		)
+
+	linked: list[str] = []
+	for dt in _SHIFT_LINK_DOCTYPES:
+		if not frappe.get_meta(dt).has_field("fms_forecourt_shift"):
+			continue
+		for row in frappe.get_all(
+			dt, filters={"fms_forecourt_shift": shift.name, "docstatus": ["<", 2]}, pluck="name", limit=5
+		):
+			linked.append(f"{dt} {row}")
+	if linked:
+		frappe.throw(
+			_(
+				"[{0}] Shift {1} has linked documents ({2}). Cancel or delete them first, then abandon the shift."
+			).format(FMS_S122, shift.name, ", ".join(linked))
+		)
+
+	now = frappe.utils.now_datetime()
+	frappe.db.set_value(
+		"Forecourt Shift",
+		shift.name,
+		{
+			"status": "Abandoned",
+			"abandoned_by": frappe.session.user,
+			"abandoned_at": now,
+			"abandon_reason": reason,
+		},
+	)
+	released = frappe.get_all(
+		"Payment Feed Entry", filters={"forecourt_shift": shift.name, "status": "Matched"}, pluck="name"
+	)
+	for feed in released:
+		frappe.db.set_value(
+			"Payment Feed Entry",
+			feed,
+			{"status": "Unmatched", "forecourt_shift": None},
+			update_modified=False,
+		)
+	shift.add_comment(
+		"Info",
+		_("Draft abandoned by {0}: {1}. {2} payment feed entr(ies) released to Unmatched.").format(
+			frappe.session.user, reason, len(released)
+		),
+	)
+	return {"shift": shift.name, "status": "Abandoned", "feeds_released": len(released)}
 
 
 @frappe.whitelist()
