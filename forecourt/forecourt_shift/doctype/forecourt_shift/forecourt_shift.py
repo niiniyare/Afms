@@ -51,6 +51,7 @@ from forecourt.errors import (
 	FMS_S115,
 	FMS_S116,
 	FMS_W103,
+	FMS_W104,
 )
 
 
@@ -136,7 +137,7 @@ class ForecourtShift(Document):
 		# F15: FMS ledgers and nozzle last readings
 		posting_ledgers.write_shift_wetstock_ledger(self)
 		posting_ledgers.write_shift_nozzle_ledger(self)
-		posting_ledgers.write_shift_sales_ledger(self)
+		# MVP: SLE writing deferred — write_shift_sales_ledger not called
 		posting_ledgers.write_shift_cashier_ledger(self)
 		posting_ledgers.update_nozzle_last_readings(self)
 
@@ -641,11 +642,19 @@ class ForecourtShift(Document):
 	# ------------------------------------------------------------------ F08 helpers
 
 	def _compute_credit_sale_rates(self) -> None:
-		"""Set rate and amount on credit sale rows from the shift's price segments."""
+		"""Set rate and amount on credit sale rows from the shift's price segments.
+
+		When sold_at is not recorded, fall back to shift_start so the row always
+		gets a rate instead of silently leaving rate = 0.
+		"""
 		for row in self.credit_sales:
-			if not (row.item and row.sold_at):
+			if not row.item:
 				continue
-			rate = self._get_segment_price(row.item, get_datetime(row.sold_at))
+			# Use sold_at when available; fall back to shift_start for walk-up entries
+			at_dt = get_datetime(row.sold_at) if row.sold_at else get_datetime(self.shift_start)
+			if not at_dt:
+				continue
+			rate = self._get_segment_price(row.item, at_dt)
 			if rate:
 				row.rate = flt(rate)
 				row.amount = flt(flt(row.qty) * row.rate, 2)
@@ -784,6 +793,8 @@ class ForecourtShift(Document):
 		self._pull_grn_receipts()  # F05
 		self._pull_own_use_for_tanks()  # F05
 		self._compute_tank_dip_rows()
+		self._propagate_tank_resolution_reasons()  # BUG-05
+		self._sync_cashier_rows()  # BUG-03
 		self._compute_cashier_rows()
 		self._compute_resolution_approval()  # F11
 		self._set_approval_state()  # I03
@@ -954,6 +965,7 @@ class ForecourtShift(Document):
 		self._gate_tank_variance_approved(items)
 		self._gate_shift_approval(items)
 		self._gate_test_volume(items)
+		self._gate_previous_shift_open(items)  # BUG-06
 
 		state = "Ready"
 		for item in items:
@@ -967,6 +979,27 @@ class ForecourtShift(Document):
 				state = "Attention"
 
 		return {"state": state, "items": items}
+
+	def _gate_previous_shift_open(self, items: list[dict]) -> None:
+		"""Attention: previous shift at station is still a draft (BUG-06 / FMS-W104)."""
+		if not self.previous_shift:
+			return
+		ps_docstatus = frappe.db.get_value("Forecourt Shift", self.previous_shift, "docstatus")
+		if ps_docstatus == 0:
+			items.append(
+				{
+					"code": FMS_W104,
+					"severity": "attention",
+					"area": _("Previous Shift"),
+					"message": _(
+						"[{0}] Previous shift {1} has not been submitted yet. "
+						"Opening values for this shift may be provisional."
+					).format(FMS_W104, self.previous_shift),
+					"fix": _("Submit or discard the previous shift first."),
+					"tab": None,
+					"table": None,
+				}
+			)
 
 	def reconcile(self) -> str:
 		"""Run reconcile checks; set status to Reconciled or Pending Approval.
@@ -1100,11 +1133,27 @@ class ForecourtShift(Document):
 	# ------------------------------------------------------------------ F02
 	def before_insert(self) -> None:
 		"""Pre-fill the shift from the template and previous shift."""
+		# Enforce one-draft-per-station.  create_shift() checks this via S116, but
+		# a user can also click the standard Frappe + button — this gate catches that.
+		if self.station:
+			duplicate = frappe.db.get_value(
+				"Forecourt Shift",
+				{"station": self.station, "docstatus": 0},
+				"name",
+			)
+			if duplicate:
+				frappe.throw(
+					_("[{0}] Shift {1} is already open at {2}. Close it before opening another.").format(
+						FMS_S116, duplicate, self.station
+					),
+					title=_("Cannot Create Shift"),
+				)
 		self._find_previous_shift()
 		self._snapshot_station_settings()
 		self._compute_shift_window()
 		self._create_price_rows()
 		self._create_reading_rows()
+		self._create_cashier_rows()
 		self._create_tank_rows()
 		self._set_title()
 
@@ -1406,6 +1455,16 @@ class ForecourtShift(Document):
 				in_tol = calc_reconciliation.within_tolerance(rec.variance, flt(row.sales_l))
 				row.within_tolerance = int(in_tol)
 				row.needs_approval = int(not in_tol)
+			# Set flag server-side so it is consistent after save/reload (BUG-05)
+			if row.dip_l:
+				if row.needs_approval:
+					row.flag = "Approval"
+				elif row.within_tolerance:
+					row.flag = "Within"
+				else:
+					row.flag = "Outside"
+			else:
+				row.flag = ""
 
 	def _compute_cashier_rows(self) -> None:
 		# fuel_amount per cashier from meter readings
@@ -1519,6 +1578,11 @@ class ForecourtShift(Document):
 	# ------------------------------------------------------------------ F02 helpers
 
 	def _find_previous_shift(self) -> None:
+		# Use only submitted shifts so opening values come from verified closing
+		# readings.  The before_insert gate (S116) guarantees that when this shift
+		# is created there is at most one draft at the station (this shift itself),
+		# so the latest submitted shift is the correct predecessor.
+		# FMS-W104 readiness warning covers the edge case where the gate fails.
 		prev = frappe.get_all(
 			"Forecourt Shift",
 			filters={"station": self.station, "docstatus": 1},
@@ -1527,6 +1591,54 @@ class ForecourtShift(Document):
 			limit=1,
 		)
 		self.previous_shift = prev[0].name if prev else None
+
+	def _create_cashier_rows(self) -> None:
+		"""Create Shift Cashier rows from the template roster (BUG-03)."""
+		if not self.shift_template:
+			return
+		if self.cashiers:
+			return  # already populated (e.g. partial save before insert)
+		tpl = frappe.get_cached_doc("Forecourt Shift Template", self.shift_template)
+		for cashier_row in tpl.cashiers:
+			if not cashier_row.cashier:
+				continue
+			self.append(
+				"cashiers",
+				{
+					"cashier": cashier_row.cashier,
+					"float_amount": flt(cashier_row.float_amount),
+				},
+			)
+
+	def _sync_cashier_rows(self) -> None:
+		"""Ensure every cashier referenced in meter_readings/collections/credit_sales
+		has a Shift Cashier row (BUG-03).  Adds missing rows with zero float.
+		"""
+		present = {row.cashier for row in self.cashiers if row.cashier}
+		referenced: set[str] = set()
+		for row in self.meter_readings:
+			if row.cashier:
+				referenced.add(row.cashier)
+		for row in self.collections:
+			if row.cashier:
+				referenced.add(row.cashier)
+		for row in self.credit_sales:
+			if row.cashier:
+				referenced.add(row.cashier)
+		for cashier in sorted(referenced - present):
+			self.append("cashiers", {"cashier": cashier, "float_amount": 0.0})
+
+	def _propagate_tank_resolution_reasons(self) -> None:
+		"""Copy resolution reasons from Shift Resolution rows to Shift Tank Dip rows
+		so the reconcile gate (_gate_tank_dips_explained) finds them (BUG-05).
+		"""
+		tank_reasons: dict[str, str] = {}
+		for res in self.resolutions:
+			if res.resolution_for == "Tank" and res.tank and res.reason:
+				tank_reasons[res.tank] = res.reason
+		for row in self.tank_dips:
+			if row.tank in tank_reasons:
+				row.reason = tank_reasons[row.tank]
 
 	def _snapshot_station_settings(self) -> None:
 		if not self.station:

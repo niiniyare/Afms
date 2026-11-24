@@ -65,6 +65,7 @@ FMS_S120 = "FMS-S120"  # Close Shift already in progress for this shift (reserve
 
 FMS_W102 = "FMS-W102"  # Meter value exceeds nozzle maximum
 FMS_W103 = "FMS-W103"  # Meter drift beyond tolerance without reason
+FMS_W104 = "FMS-W104"  # Previous shift is still a draft; opening values may be provisional
 
 # ---------------------------------------------------------------------------
 # FMS-T2xx  Tanks, dips and deliveries

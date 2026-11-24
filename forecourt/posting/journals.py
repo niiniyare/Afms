@@ -124,6 +124,18 @@ def post_expense_and_difference_je(shift) -> str:
 	je.flags.ignore_permissions = True
 	je.insert(ignore_permissions=True)
 	je.submit()
+
+	# Back-link: write JE name to each cashier resolution row (BUG-04)
+	for row in shift.resolutions:
+		if row.resolution_for == "Cashier" and flt(row.amount, 2) > 0:
+			frappe.db.set_value(
+				"Shift Resolution",
+				row.name,
+				"journal_entry",
+				je.name,
+				update_modified=False,
+			)
+
 	return je.name
 
 

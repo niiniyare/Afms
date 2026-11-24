@@ -63,9 +63,10 @@ def create_shift(station: str, shift_template: str, shift_date: str) -> dict:
 		)
 
 	# S116: no other draft shift open at this station.
+	# Simplified: docstatus=0 covers all draft states including "Closing".
 	open_shift = frappe.db.get_value(
 		"Forecourt Shift",
-		{"station": station, "docstatus": 0, "status": ["not in", ["Closed", "Corrected"]]},
+		{"station": station, "docstatus": 0},
 		"name",
 	)
 	if open_shift:
@@ -74,23 +75,6 @@ def create_shift(station: str, shift_template: str, shift_date: str) -> dict:
 				"[{0}] Shift {1} is already open at {2}. "
 				"Close it before opening another one, or open it to continue."
 			).format(FMS_S116, open_shift, station),
-			title=_("Cannot Create Shift"),
-		)
-
-	# S117: last non-cancelled shift must be submitted (docstatus = 1).
-	last_draft = frappe.db.get_value(
-		"Forecourt Shift",
-		{"station": station, "docstatus": 0},
-		["name", "status"],
-		order_by="shift_start desc",
-		as_dict=True,
-	)
-	if last_draft:
-		frappe.throw(
-			_(
-				"[{0}] The previous shift {1} is not closed yet. "
-				"Its closing values are this shift's openings. Close it first."
-			).format(FMS_S117, last_draft.name),
 			title=_("Cannot Create Shift"),
 		)
 
