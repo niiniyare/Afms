@@ -12,19 +12,39 @@ from frappe import _
 
 
 def create_default_accounts(company: str) -> dict[str, str]:
-	"""Create the eleven FMS accounts, two Modes of Payment and update FCS.
+	"""Create the eleven FMS accounts, two Modes of Payment and link them in FCS.
 
-	Returns a {slug: account_name} dict for all accounts.
+	Returns a {slug: account_name} dict for all accounts. Use ensure_default_accounts()
+	for the created / already-existing report.
+	"""
+	return ensure_default_accounts(company)["accounts"]
+
+
+def ensure_default_accounts(company: str) -> dict:
+	"""Idempotent setup that never overwrites existing records or mappings.
+
+	Returns ``{"accounts", "created", "existing", "mappings_set", "mappings_kept",
+	"clearing"}``. ``mappings_kept`` lists FCS fields that already pointed somewhere
+	(left untouched); ``clearing`` reports each payment method's clearing account.
 	"""
 	abbr = frappe.db.get_value("Company", company, "abbr")
 	if not abbr:
 		frappe.throw(_("Company {0} not found.").format(company))
 
 	parents = _discover_parents(company)
-	accounts = _ensure_accounts(company, abbr, parents)
-	_ensure_modes_of_payment(company, accounts)
-	_update_fcs(company, accounts)
-	return accounts
+	created: list[str] = []
+	existing: list[str] = []
+	accounts = _ensure_accounts(company, abbr, parents, created, existing)
+	clearing = _ensure_modes_of_payment(company, accounts)
+	mappings_set, mappings_kept = _update_fcs(company, accounts)
+	return {
+		"accounts": accounts,
+		"created": created,
+		"existing": existing,
+		"mappings_set": mappings_set,
+		"mappings_kept": mappings_kept,
+		"clearing": clearing,
+	}
 
 
 # ── private helpers ──────────────────────────────────────────────────────────
@@ -79,6 +99,8 @@ def _ensure_accounts(
 	company: str,
 	abbr: str,
 	parents: dict[str, str | None],
+	created: list[str],
+	existing: list[str],
 ) -> dict[str, str]:
 	"""Create the eleven FMS accounts if absent. Return slug → name dict."""
 
@@ -100,6 +122,7 @@ def _ensure_accounts(
 	result: dict[str, str] = {}
 	for slug, label, account_type, parent_key in specs:
 		full_name = f"{label} - {abbr}"
+		(existing if frappe.db.exists("Account", full_name) else created).append(full_name)
 		result[slug] = _ensure_account(full_name, label, company, account_type, parents.get(parent_key))
 	return result
 
@@ -135,44 +158,74 @@ def _ensure_account(
 	return doc.name
 
 
-def _ensure_modes_of_payment(company: str, accounts: dict[str, str]) -> None:
-	_ensure_mop("Mobile Money", company, accounts["mobile_clearing"])
-	_ensure_mop("Card", company, accounts["card_clearing"])
+def _ensure_modes_of_payment(company: str, accounts: dict[str, str]) -> list[dict]:
+	return [
+		_ensure_mop("Mobile Money", company, accounts["mobile_clearing"]),
+		_ensure_mop("Card", company, accounts["card_clearing"]),
+	]
 
 
-def _ensure_mop(mop_name: str, company: str, account: str) -> None:
+def _ensure_mop(mop_name: str, company: str, account: str) -> dict:
+	"""Make sure *mop_name* has a row for *company*; never replace an existing account."""
 	if not frappe.db.exists("Mode of Payment", mop_name):
 		mop = frappe.get_doc({"doctype": "Mode of Payment", "mode_of_payment": mop_name, "type": "General"})
 		mop.flags.ignore_permissions = True
 		mop.insert()
 
-	existing_row = frappe.db.get_value(
-		"Mode of Payment Account",
-		{"parent": mop_name, "company": company},
-		"name",
+	current = frappe.db.get_value(
+		"Mode of Payment Account", {"parent": mop_name, "company": company}, "default_account"
 	)
-	if not existing_row:
-		mop = frappe.get_doc("Mode of Payment", mop_name)
+	if current:
+		acc = frappe.db.get_value("Account", current, ["company", "is_group"], as_dict=True)
+		valid = bool(acc) and acc.company == company and not acc.is_group
+		status = ("kept" if current == account else "kept (differs from default)") if valid else "invalid"
+		return {"mode_of_payment": mop_name, "account": current, "default": account, "status": status}
+
+	row_exists = frappe.db.exists("Mode of Payment Account", {"parent": mop_name, "company": company})
+	mop = frappe.get_doc("Mode of Payment", mop_name)
+	if row_exists:
+		for row in mop.accounts:
+			if row.company == company:
+				row.default_account = account
+	else:
 		mop.append("accounts", {"company": company, "default_account": account})
-		mop.flags.ignore_permissions = True
-		mop.save()
+	mop.flags.ignore_permissions = True
+	mop.save()
+	return {"mode_of_payment": mop_name, "account": account, "default": account, "status": "set"}
 
 
-def _update_fcs(company: str, accounts: dict[str, str]) -> None:
-	"""Create or update Forecourt Company Settings with FMS account links."""
+_FCS_FIELDS = (
+	("staff_shortage_receivable_account", "staff_shortage"),
+	("cash_short_account", "cash_short"),
+	("cash_over_account", "cash_over"),
+	("fuel_stock_variance_account", "fuel_variance"),
+	("delivery_shortage_claims_account", "delivery_claims"),
+	("voucher_clearing_account", "voucher_clearing"),
+)
+
+
+def _update_fcs(company: str, accounts: dict[str, str]) -> tuple[list[str], list[str]]:
+	"""Fill empty FMS account links in Forecourt Company Settings; keep populated ones.
+
+	Only the account fields are written; fiscal and other settings are never touched.
+	"""
 	if frappe.db.exists("Forecourt Company Settings", company):
 		fcs = frappe.get_doc("Forecourt Company Settings", company)
 	else:
 		fcs = frappe.new_doc("Forecourt Company Settings")
 		fcs.company = company
 
-	fcs.staff_shortage_receivable_account = accounts["staff_shortage"]
-	fcs.cash_short_account = accounts["cash_short"]
-	fcs.cash_over_account = accounts["cash_over"]
-	fcs.fuel_stock_variance_account = accounts["fuel_variance"]
-	fcs.delivery_shortage_claims_account = accounts["delivery_claims"]
-	fcs.voucher_clearing_account = accounts["voucher_clearing"]
+	mappings_set: list[str] = []
+	mappings_kept: list[str] = []
+	for field, slug in _FCS_FIELDS:
+		if fcs.get(field):
+			mappings_kept.append(field)
+		else:
+			fcs.set(field, accounts[slug])
+			mappings_set.append(field)
 
-	fcs.flags.ignore_permissions = True
-	fcs.flags.ignore_mandatory = True
-	fcs.save()
+	if mappings_set or fcs.is_new():
+		fcs.flags.ignore_permissions = True
+		fcs.flags.ignore_mandatory = True
+		fcs.save()
+	return mappings_set, mappings_kept

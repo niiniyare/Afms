@@ -204,3 +204,17 @@ def make_nozzle(
 	doc.flags.ignore_permissions = True
 	doc.insert()
 	return doc
+
+
+def map_company_settings_to_defaults(company: str, accounts: dict[str, str]) -> None:
+	"""Point Forecourt Company Settings at the default FMS accounts.
+
+	create_default_accounts() keeps existing mappings, and the shared test site can hold
+	mappings left by other tests, so tests that assert on the default accounts set them.
+	"""
+	from forecourt.setup.default_accounts import _FCS_FIELDS
+
+	frappe.db.set_value(
+		"Forecourt Company Settings", company, {field: accounts[slug] for field, slug in _FCS_FIELDS}
+	)
+	frappe.clear_document_cache("Forecourt Company Settings", company)
