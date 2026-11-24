@@ -29,10 +29,13 @@
 | M. Deployment and operations | 8 | 0 |
 | N. Pilot and go-live | 5 | 0 |
 | R. Reporting framework and new reports | 18 | 0 |
-| **Total (Phases 0–3)** | **142** | **100** |
+| V. Manual UI Verification (US-05) | 12 | 0 (**pending**) |
+| **Total (Phases 0–3)** | **154** | **100** |
 | P. Later phases (backlog) | 8 epics | — |
 
 Update the *Done* column in the same commit that ticks a task.
+
+> **Automated vs UI status:** Automated tests (CLI) and manual UI verification are tracked separately. A task is ticked only when **both** the CLI verify step and the UI verify step pass and are recorded.
 
 ---
 
@@ -962,6 +965,296 @@ Each epic is split into tasks in this file when it is scheduled.
 | P6. Loyalty and fleet cards | later | Section 17.3 |
 | P7. Temperature compensation | when a market needs it | Section 5.8: standard volumes at 15 °C from ASTM D1250 / API MPMS 11.1 tables (D30) |
 | P8. Scheduled price changes | when needed | Section 6.5a: approve a Fuel Price Change in advance and apply it at `effective_at` (D24) |
+
+---
+
+## V. Manual UI Verification — US-05
+
+**Site:** `fms.localhost` (dev/test only — never production)
+**Status key:** `[ ]` = not yet executed · `[~]` = partial / screenshot captured · `[x]` = passed · `[!]` = failed
+
+Automated test `forecourt.tests.test_golden_mvp.TestGoldenMVP` covers the same scenario end-to-end via code. These tasks verify that every step is reachable and behaves correctly through the ERPNext Desk UI, which automated tests cannot confirm.
+
+**Prerequisites (create once, reuse across tasks)**
+
+| Ref | Record | How to create |
+|---|---|---|
+| PRE-1 | Company with standard Chart of Accounts | Use existing `_Test Company` on `fms.localhost`, or create a new one via Setup > Company |
+| PRE-2 | Two ERPNext Users to act as cashiers (`amina@demo.local`, `brian@demo.local`) | Setup > User > New |
+| PRE-3 | Two Customer records: `Walk-In Customer` (auto-created by Station), `Coast Haulage Demo` | Selling > Customer > New |
+| PRE-4 | Two Item records: `PMS Demo` and `AGO Demo` with Item Group = Fuel, `is_stock_item=1` | Stock > Item > New |
+| PRE-5 | Station record `DEMO-STATION` via Forecourt > Station > New (auto-creates Walk-In Customer and warehouses) | see UI-V03 |
+| PRE-6 | Two Fuel Tank records linked to warehouses | Forecourt > Fuel Tank > New |
+| PRE-7 | Four Nozzle records linked to tanks | Forecourt > Nozzle > New |
+
+---
+
+- [ ] **UI-V01 · Manual UI · Default account creation via Forecourt Company Settings** · S · FMS-C03, US-05
+  - **Feature:** `create_default_accounts()` creates 11 FMS ledger accounts and updates FCS account links in one click.
+  - **Navigation:** Forecourt > Forecourt Company Settings > open the record for your company
+  - **Prerequisites:** PRE-1. No previous FMS accounts needed (function is idempotent).
+  - **Steps:**
+    1. Open Forecourt > Forecourt Company Settings. If no record exists, click **New**, select your company, and **Save**.
+    2. Verify the account link fields (Cash Short Account, Cash Over Account, etc.) are **empty**.
+    3. Click the **Create Default Accounts** button (top-right of the form or in the Actions menu).
+    4. A green toast appears: "Created 11 accounts for \<Company\>."
+    5. After the page reloads, verify the following fields are **filled**:
+       - Staff Shortage Receivable Account → `FMS Staff Shortage Payable - <abbr>`
+       - Cash Short Account → `FMS Cash Short - <abbr>`
+       - Cash Over Account → `FMS Cash Over - <abbr>`
+       - Fuel Stock Variance Account → `FMS Fuel Stock Variance - <abbr>`
+       - Delivery Shortage Claims Account → `FMS Delivery Shortage Claims - <abbr>`
+       - Voucher Clearing Account → `FMS Voucher Clearing - <abbr>`
+    6. Click the button a **second time** (idempotency check). Toast appears again; no duplicate accounts or errors.
+  - **Expected result:** 11 accounts visible under Accounting > Chart of Accounts (filter by "FMS"); FCS account fields populated; second click produces no error and no duplicate accounts.
+  - **Screenshot:** Chart of Accounts filtered to "FMS"; FCS form with all account fields filled.
+  - **Pass/Fail:** PASS if all 6 FCS account fields are filled and no error on second click. FAIL if any field is blank or any error dialog appears.
+
+---
+
+- [ ] **UI-V02 · Manual UI · Mode of Payment clearing account validation** · S · FMS-C03, US-05
+  - **Feature:** `create_default_accounts()` creates/updates Modes of Payment "Mobile Money" and "Card" with Bank-type clearing accounts.
+  - **Navigation:** Accounting > Mode of Payment
+  - **Prerequisites:** UI-V01 completed.
+  - **Steps:**
+    1. Open Accounting > Mode of Payment and find **Mobile Money**.
+    2. Open the record. Under the **Accounts** child table, verify there is a row for your company with **Default Account** = `FMS Mobile Money Clearing - <abbr>`.
+    3. Click the account link and verify its **Account Type** = `Bank` and it belongs to your company.
+    4. Repeat steps 1–3 for **Card** (Default Account = `FMS Card Clearing - <abbr>`).
+    5. Attempt to manually save the Mode of Payment with the clearing account changed to a **Cash**-type account. ERPNext should allow it (Cash is also valid). Then restore the Bank account and save.
+  - **Expected result:** Both Modes of Payment have company-specific Bank accounts. No validation error on save.
+  - **Screenshot:** Mobile Money MoP form showing Accounts table; Card MoP form showing Accounts table.
+  - **Pass/Fail:** PASS if both MoPs have the correct clearing account and Account Type = Bank. FAIL if the account is missing, wrong type, or belongs to a different company.
+
+---
+
+- [ ] **UI-V03 · Manual UI · Station setup and walk-in customer auto-creation** · S · FMS-C03, US-05
+  - **Feature:** Creating a Station automatically creates a Walk-In Customer and links it. Station also carries the till/safe accounts needed for Drop entries.
+  - **Navigation:** Forecourt > Station > New
+  - **Prerequisites:** PRE-1, PRE-2, PRE-4. Fuel Tanks and Nozzles may be created after the Station.
+  - **Steps:**
+    1. Click Forecourt > Station > New.
+    2. Fill: Station Name = `Demo Station`, Station Code = `DEMO`, Company = your company, Country.
+    3. Under **Till Accounts**, add one row: Account = `FMS Cash in Till - <abbr>`, Currency = your company currency.
+    4. Set **Safe Account** = `FMS Station Safe - <abbr>`.
+    5. Save and Submit (or Save if Station is not submittable).
+    6. Reload the form. Verify **Walk-In Customer** field is now filled (auto-created customer name).
+    7. Navigate to Selling > Customer and find the auto-created customer. Verify its Customer Group and name match the station.
+  - **Expected result:** Station saved; Walk-In Customer auto-populated; Customer record exists.
+  - **Screenshot:** Station form with Walk-In Customer field filled; Customer record.
+  - **Pass/Fail:** PASS if Walk-In Customer is set after save. FAIL if the field is empty after save.
+
+---
+
+- [ ] **UI-V04 · Manual UI · Forecourt Shift creation with meter readings** · M · FMS-F01–F10, US-05
+  - **Feature:** Create a shift with four nozzles (two PMS, two AGO). E-cash values are monetary (KES), not litres.
+  - **Navigation:** Forecourt > Forecourt Shift > New
+  - **Prerequisites:** PRE-1–PRE-7. UI-V01 completed. Fuel prices set.
+  - **Steps:**
+    1. Click Forecourt > Forecourt Shift > New.
+    2. Set: Station = `Demo Station`, Company, Shift Date = today, Shift Start = 06:00, Shift End = 18:00.
+    3. Under **Cashiers**, add two rows: Amina (float = 2 000), Brian (float = 3 000).
+    4. Under **Prices**, add: PMS Demo @ 180, AGO Demo @ 170.
+    5. Under **Meter Readings**, add four rows:
+       - N1 | PMS Demo | Cashier Amina | E-Cash Opening 10 000 | E-Cash Closing 136 000 | Price 180
+       - N2 | PMS Demo | Cashier Amina | E-Cash Opening 5 000 | E-Cash Closing 95 000 | Price 180
+       - N3 | AGO Demo | Cashier Brian | E-Cash Opening 20 000 | E-Cash Closing 105 000 | Price 170
+       - N4 | AGO Demo | Cashier Brian | E-Cash Opening 25 000 | E-Cash Closing 93 000 | Price 170
+    6. After saving, verify the computed **Net Volume (L)** for each row:
+       - N1: (136 000 − 10 000) / 180 = **700 L**
+       - N2: (95 000 − 5 000) / 180 = **500 L**
+       - N3: (105 000 − 20 000) / 170 = **500 L**
+       - N4: (93 000 − 25 000) / 170 = **400 L**
+    7. Verify **PMS total volume** = 1 200 L; **AGO total volume** = 900 L shown in the shift summary.
+  - **Expected result:** Net volumes computed correctly from monetary E-cash values divided by price; totals shown.
+  - **Screenshot:** Meter Readings child table with computed Net Volume column; shift header totals.
+  - **Pass/Fail:** PASS if all four Net Volume (L) values match the expected figures above. FAIL if any Net Volume is wrong (common mistake: treating E-cash as litres).
+
+---
+
+- [ ] **UI-V05 · Manual UI · Tank dip entry on auto-created rows** · M · FMS-F05, US-05
+  - **Feature:** `before_insert` auto-creates one Tank Dip row per active tank. The user updates Opening and Closing dip values; they do NOT add rows manually.
+  - **Navigation:** Forecourt > Forecourt Shift > (the shift from UI-V04) > Tank Dips tab
+  - **Prerequisites:** UI-V04 completed. Two Fuel Tanks linked to Demo Station.
+  - **Steps:**
+    1. Open the shift created in UI-V04.
+    2. Navigate to the **Tank Dips** tab. Verify exactly **two rows** exist (one per tank), auto-created with Opening = 0 and Dip = 0.
+    3. For the PMS tank row: set **Opening (L)** = 8 000, **Dip (L)** = 6 780.
+    4. For the AGO tank row: set **Opening (L)** = 5 200, **Dip (L)** = 4 290.
+    5. Save the shift. Verify the computed fields:
+       - PMS: Sales (L) = 8 000 − 6 780 = 1 220 L; Variance (L) = 1 220 − 1 200 = +20 L (over)
+       - AGO: Sales (L) = 5 200 − 4 290 = 910 L; Variance (L) = 910 − 900 = +10 L (over)
+    6. Attempt to manually **add a third row** to Tank Dips. The system should not prevent adding rows in the UI, but submitting with duplicate tank rows should raise a validation error (or the auto-row logic prevents it).
+  - **Expected result:** Two auto-created rows; dip values accepted; computed Sales and Variance fields shown correctly.
+  - **Screenshot:** Tank Dips tab with both rows filled; computed Sales and Variance visible.
+  - **Pass/Fail:** PASS if Sales (L) and Variance (L) match the expected figures. FAIL if rows are absent or computed values are wrong.
+
+---
+
+- [ ] **UI-V06 · Manual UI · Cashier counts, collections and credit sale entry** · M · FMS-F10, FMS-F11, US-05
+  - **Feature:** Cash counts, mobile/card collections, and credit slip entry per cashier.
+  - **Navigation:** Forecourt > Forecourt Shift > (shift from UI-V04) > Cash Counts / Collections / Credit Sales tabs
+  - **Prerequisites:** UI-V04, UI-V05. PRE-3 (Coast Haulage Demo customer). Mode of Payment "Mobile Money" and "Card" exist.
+  - **Steps:**
+    1. **Cash Counts tab:** Add two rows:
+       - Amina | Currency = KES | Amount = 98 000
+       - Brian | Currency = KES | Amount = 21 500
+    2. **Collections tab:** Add four rows:
+       - Amina | Mobile Money | Ref DEMO-MM-A | Amount 100 000
+       - Amina | Card | Ref DEMO-CARD-A | Amount 20 000
+       - Brian | Mobile Money | Ref DEMO-MM-B | Amount 80 000
+       - Brian | Card | Ref DEMO-CARD-B | Amount 20 000
+    3. **Credit Sales tab:** Add one row:
+       - Cashier = Brian | Customer = Coast Haulage Demo | Item = AGO Demo | Nozzle = N3 | Qty = 200 | Rate = 170 | Amount = 34 000 | Slip = CS-DEMO-01 | Sold At = shift date 10:00
+    4. Save the shift. On the **Cashiers** summary tab, verify:
+       - Amina: Expected = 1 200 × 180 / (some PMS attribution) ; check that Expected ≠ 0 and Difference shown.
+       - Brian: Expected includes credit sale amount of 34 000 KES.
+    5. Verify the **Brian difference** shows approximately −500 (shortage of 500 KES before resolution).
+  - **Expected result:** All collections and credit sale saved; Brian cashier row shows negative difference indicating shortage.
+  - **Screenshot:** Collections tab; Credit Sales tab; Cashiers summary showing Brian's difference.
+  - **Pass/Fail:** PASS if Brian's difference is non-zero and negative (shortage). FAIL if difference is 0 or positive before resolution.
+
+---
+
+- [ ] **UI-V07 · Manual UI · Resolution entry and shift reconcile/submit** · M · FMS-F11, FMS-F12, US-05
+  - **Feature:** A Resolution clears Brian's shortage; gates then allow submission; submission posts all native documents.
+  - **Navigation:** Forecourt > Forecourt Shift > (shift from UI-V06) > Resolutions tab, then Reconcile, then Submit
+  - **Prerequisites:** UI-V01–UI-V06. A Variance Reason record (Forecourt > Variance Reason) with **Applies to Cashier** = checked.
+  - **Steps:**
+    1. Open the shift. Go to the **Resolutions** tab. Add one row:
+       - Resolution For = Cashier | Cashier = Brian | Action = Charge to cashier | Amount = 500 | Reason = \<your Variance Reason\>
+    2. Click **Reconcile** (custom button on the shift form). No blockers should appear.
+    3. If blockers appear (FMS-S1xx error codes), read the message, fix the data, and retry Reconcile.
+    4. After a clean reconcile, click **Submit**.
+    5. Verify the shift status changes to **Closed**.
+    6. Verify the **Submit** button is gone and the form is read-only.
+  - **Expected result:** Shift reconciles cleanly and submits; status = Closed; form locked.
+  - **Screenshot:** Shift in Closed status; Resolutions tab showing the 500 KES charge entry.
+  - **Pass/Fail:** PASS if status = Closed. FAIL if any gate error prevents submission or status remains Draft/Submitted.
+
+---
+
+- [ ] **UI-V08 · Manual UI · Stock Reconciliation and warehouse balance** · M · FMS-F14, US-05
+  - **Feature:** Shift submission posts one Stock Reconciliation per tank; warehouse stock equals the closing dip.
+  - **Navigation:** Stock > Stock Reconciliation (filter: `fms_forecourt_shift` = your shift name); then Stock > Stock Balance
+  - **Prerequisites:** UI-V07 completed (shift submitted).
+  - **Steps:**
+    1. Go to Stock > Stock Reconciliation. Filter by the shift name in the custom field **FMS Forecourt Shift** (or search by posting date = shift date).
+    2. Verify **two** Stock Reconciliation documents exist (one per tank), both in **Submitted** status.
+    3. Open the PMS Stock Reconciliation. Verify:
+       - Item = PMS Demo
+       - Warehouse = PMS Demo warehouse
+       - Qty = 6 780 (the closing dip)
+       - Valuation Rate is populated (non-zero)
+    4. Open the AGO Stock Reconciliation. Verify: Qty = 4 290.
+    5. Go to Stock > Stock Balance. Filter: Item = PMS Demo, Warehouse = PMS Demo warehouse, As of Date = shift date, As of Time = 18:00. Verify **Balance Qty = 6 780**.
+    6. Repeat for AGO: Balance Qty = 4 290.
+  - **Expected result:** Two submitted SRs; PMS stock = 6 780 L; AGO stock = 4 290 L.
+  - **Screenshot:** SR list showing two submitted records; Stock Balance for PMS and AGO.
+  - **Pass/Fail:** PASS if both warehouse balances match dip values. FAIL if SRs are missing, in Draft, or balance differs.
+
+---
+
+- [ ] **UI-V09 · Manual UI · Walk-in Sales Invoice** · M · FMS-F13, US-05
+  - **Feature:** Shift submission posts one Sales Invoice per cashier for walk-in (cash/mobile/card) sales.
+  - **Navigation:** Accounts > Sales Invoice (filter: `fms_forecourt_shift` = shift name and Customer = Walk-In Customer)
+  - **Prerequisites:** UI-V07 completed.
+  - **Steps:**
+    1. Go to Accounts > Sales Invoice. Filter: custom field FMS Forecourt Shift = your shift name.
+    2. Identify the walk-in SI (Customer = the auto-created Walk-In Customer from UI-V03).
+    3. Open it. Verify:
+       - Status = Submitted
+       - Items include PMS Demo and/or AGO Demo with quantities reflecting the non-credit sales volumes
+       - Grand Total > 0
+    4. Check the **Payments** section — the SI should have linked Payment Entries for Mobile Money and Card amounts.
+    5. Navigate back to the SI list and confirm no duplicate walk-in SIs for the same shift.
+  - **Expected result:** Walk-in SI exists, submitted, grand_total > 0, items match non-credit fuel sales.
+  - **Screenshot:** Walk-in SI form showing items and grand total; Payment Entries linked.
+  - **Pass/Fail:** PASS if SI exists, submitted, grand_total > 0. FAIL if missing or in Draft.
+
+---
+
+- [ ] **UI-V10 · Manual UI · Credit Sales Invoice (Coast Haulage)** · M · FMS-F13, US-05
+  - **Feature:** Shift submission posts one Sales Invoice per credit slip; the customer's AR balance increases.
+  - **Navigation:** Accounts > Sales Invoice (filter: Customer = Coast Haulage Demo)
+  - **Prerequisites:** UI-V07 completed.
+  - **Steps:**
+    1. Go to Accounts > Sales Invoice. Filter: Customer = Coast Haulage Demo.
+    2. Find the SI linked to your shift (check the FMS Forecourt Shift field or posting date).
+    3. Open it. Verify:
+       - Status = Submitted
+       - Item = AGO Demo, Qty = 200, Rate = 170, Amount = 34 000
+       - Grand Total = 34 000
+       - Credit Slip No (custom field) = CS-DEMO-01
+    4. Navigate to Accounts > Accounts Receivable report. Filter: Company, Party Type = Customer, Party = Coast Haulage Demo, As of Date = shift date.
+    5. Verify the outstanding amount includes 34 000 KES for this invoice.
+  - **Expected result:** Credit SI exists, submitted, grand_total = 34 000; AR balance shows 34 000 outstanding.
+  - **Screenshot:** Credit SI form; Accounts Receivable report showing 34 000 outstanding.
+  - **Pass/Fail:** PASS if SI submitted with grand_total = 34 000 and AR = 34 000. FAIL if missing, wrong amount, or AR balance differs.
+
+---
+
+- [ ] **UI-V11 · Manual UI · Staff shortage Journal Entry** · M · FMS-F13, US-05
+  - **Feature:** Shift submission posts a Journal Entry for cashier shortages resolved as "Charge to cashier"; debit goes to FMS Staff Shortage Payable.
+  - **Navigation:** Accounts > Journal Entry (filter: FMS Forecourt Shift = shift name)
+  - **Prerequisites:** UI-V07 completed.
+  - **Steps:**
+    1. Go to Accounts > Journal Entry. Filter by FMS Forecourt Shift = your shift name.
+    2. Find the shortage JE (Voucher Type = Journal Entry or Debit Note).
+    3. Open it. Verify:
+       - Status = Submitted
+       - One debit line: Account = `FMS Staff Shortage Payable - <abbr>`, Debit = 500
+       - One credit line: Account = till or cash account, Credit = 500
+       - Narration references Brian's name and shift.
+    4. Navigate to Accounts > Trial Balance or General Ledger. Filter: Account = `FMS Staff Shortage Payable - <abbr>`, date range including shift date. Verify a 500 debit entry appears.
+  - **Expected result:** Shortage JE exists, submitted, debit = 500 on Staff Shortage Payable account.
+  - **Screenshot:** JE form with debit/credit lines; GL showing the 500 debit.
+  - **Pass/Fail:** PASS if JE submitted with debit = 500 on the correct account. FAIL if JE is missing, in Draft, or debit amount is wrong.
+
+---
+
+- [ ] **UI-V12 · Manual UI · FMS Ledger entry counts (NLE / WLE / CLE)** · S · FMS-F15, US-05
+  - **Feature:** Submission writes exactly 4 Nozzle Ledger Entries, 2 Wetstock Ledger Entries, 2 Cashier Ledger Entries. Sales Ledger Entries are **not** written (MVP: SLE deferred).
+  - **Navigation:** Forecourt > Nozzle Ledger Entry; Forecourt > Wetstock Ledger Entry; Forecourt > Cashier Ledger Entry
+  - **Prerequisites:** UI-V07 completed.
+  - **Steps:**
+    1. Go to Forecourt > Nozzle Ledger Entry. Filter: FMS Forecourt Shift = your shift name. Verify **exactly 4 rows** (one per nozzle).
+    2. Open each NLE row. Verify: `shift` field = your shift name; `is_cancelled` = 0; volume fields populated.
+    3. Go to Forecourt > Wetstock Ledger Entry. Filter by shift. Verify **exactly 2 rows** (one per tank).
+    4. Open each WLE row. Verify: tank, opening, closing, dip, variance fields populated.
+    5. Go to Forecourt > Cashier Ledger Entry. Filter by shift. Verify **exactly 2 rows** (Amina and Brian).
+    6. Open each CLE row. Verify: cashier name, expected amount, accounted amount, difference fields populated.
+    7. Navigate to Forecourt > Sales Ledger Entry (if the DocType is visible). Filter by shift. Verify **0 rows** (SLE not written in MVP).
+  - **Expected result:** NLE = 4, WLE = 2, CLE = 2, SLE = 0.
+  - **Screenshot:** Filtered list views for NLE, WLE, CLE showing row counts.
+  - **Pass/Fail:** PASS if counts exactly match. FAIL if any count differs or SLE rows exist.
+
+---
+
+**UI Verification summary**
+
+| Task | Feature | Status | Evidence required |
+|---|---|---|---|
+| UI-V01 | Default accounts creation | `[ ]` | Screenshot: CoA + FCS form |
+| UI-V02 | MoP clearing accounts | `[ ]` | Screenshot: MoP forms |
+| UI-V03 | Station + walk-in customer | `[ ]` | Screenshot: Station form |
+| UI-V04 | Shift meter readings + net volume | `[ ]` | Screenshot: Meter Readings tab |
+| UI-V05 | Tank dip entry | `[ ]` | Screenshot: Tank Dips tab |
+| UI-V06 | Cashier counts, collections, credit sale | `[ ]` | Screenshot: Collections + Credit Sales tabs |
+| UI-V07 | Resolution + reconcile + submit | `[ ]` | Screenshot: shift in Closed status |
+| UI-V08 | Stock Reconciliation + warehouse balance | `[ ]` | Screenshot: SR list + Stock Balance |
+| UI-V09 | Walk-in Sales Invoice | `[ ]` | Screenshot: walk-in SI form |
+| UI-V10 | Credit Sales Invoice (AR) | `[ ]` | Screenshot: credit SI + AR report |
+| UI-V11 | Staff shortage Journal Entry | `[ ]` | Screenshot: JE form + GL |
+| UI-V12 | FMS ledger counts (NLE/WLE/CLE) | `[ ]` | Screenshot: filtered ledger lists |
+
+**Not currently verifiable through UI (functionality missing or deferred)**
+
+| Scenario | Reason |
+|---|---|
+| Sales Ledger Entry (SLE) rows | SLE writing is deferred in MVP; `write_shift_sales_ledger` is not called |
+| Shift Correction flow | Requires director-approval workflow; outside US-05 scope |
+| Delivery dip GRN validation | GRNs are posted manually; no shift-driven UI for this |
 
 ---
 
