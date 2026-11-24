@@ -136,7 +136,7 @@ class ForecourtShift(Document):
 		# F15: FMS ledgers and nozzle last readings
 		posting_ledgers.write_shift_wetstock_ledger(self)
 		posting_ledgers.write_shift_nozzle_ledger(self)
-		posting_ledgers.write_shift_sales_ledger(self)
+		# MVP: SLE writing deferred — write_shift_sales_ledger not called
 		posting_ledgers.write_shift_cashier_ledger(self)
 		posting_ledgers.update_nozzle_last_readings(self)
 

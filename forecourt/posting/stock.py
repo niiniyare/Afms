@@ -37,6 +37,10 @@ def post_stock_reconciliations(shift) -> list[str]:
 		if not warehouse:
 			continue
 
+		# Valuation rate: use the shift's selling price as a proxy.
+		# Required by ERPNext when stock is at zero or negative before the SR.
+		valuation_rate = _item_valuation_rate(shift, dip_row.item)
+
 		sr = frappe.new_doc("Stock Reconciliation")
 		sr.company = shift.company
 		sr.purpose = "Stock Reconciliation"
@@ -51,6 +55,7 @@ def post_stock_reconciliations(shift) -> list[str]:
 				"item_code": dip_row.item,
 				"warehouse": warehouse,
 				"qty": qty,
+				"valuation_rate": valuation_rate,
 			},
 		)
 		from erpnext.stock.doctype.stock_reconciliation.stock_reconciliation import (
@@ -172,6 +177,18 @@ def _till_account(station, company: str) -> str | None:
 		if not row.currency or row.currency == company_currency:
 			return row.account
 	return station.till_accounts[0].account if station.till_accounts else None
+
+
+def _item_valuation_rate(shift, item_code: str) -> float:
+	"""Return the first matching shift price for the item, falling back to the
+	item's standard buying rate, then 0.0.  Used as SR valuation_rate when stock
+	is at zero or negative before the reconciliation.
+	"""
+	for row in shift.prices:
+		if row.item == item_code and flt(row.price):
+			return flt(row.price, 2)
+	rate = frappe.db.get_value("Item", item_code, "standard_rate") or 0.0
+	return flt(rate, 2)
 
 
 def _exceeds_tolerance(dip_row, company_settings) -> bool:
