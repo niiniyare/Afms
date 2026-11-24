@@ -10,6 +10,8 @@ import frappe
 from frappe import _
 from frappe.utils import date_diff, flt, today
 
+from forecourt.reports.common import apply_station_permission
+
 
 def execute(filters=None):
 	filters = filters or {}
@@ -45,7 +47,19 @@ def _data(filters):
 	f = {"docstatus": 1, "clearance_date": ["is", "not set"]}
 	if filters.get("company"):
 		f["company"] = filters["company"]
-	# Payment Entry has no station custom field yet; station filter is not applied
+	# Payment Entry carries no station field; scope restricted users through the shift link.
+	scope: dict = {}
+	if apply_station_permission(scope, filters):
+		return []
+	if scope.get("station"):
+		shifts = frappe.get_all(
+			"Forecourt Shift",
+			filters={"station": scope["station"]},
+			pluck="name",
+		)
+		if not shifts:
+			return []
+		f["fms_forecourt_shift"] = ["in", shifts]
 	if filters.get("mode_of_payment"):
 		f["mode_of_payment"] = filters["mode_of_payment"]
 

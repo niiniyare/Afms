@@ -865,10 +865,11 @@ Added to Purchase Receipt as the custom field `fms_delivery_dips` (section 12).
 | shift_template | Link | Forecourt Shift Template | R F | Filter by station |
 | shift_date | Date | | R I L F | Date of `shift_start` in the station's time zone (design guide D20) |
 | shift_start, shift_end | Datetime | | R | From template and date, station time zone |
-| status | Select | Open / Counting / Reconciled / Pending Approval / Closing / Closed / Corrected | RO L F, allow_on_submit | Set by the controller |
+| status | Select | Open / Counting / Reconciled / Pending Approval / Closing / Closed / Corrected / Abandoned | RO L F, allow_on_submit | Set by the controller. *Abandoned* is set only by `abandon_draft` (FMS-S122) and locks the draft |
+| abandoned_by, abandoned_at, abandon_reason | Link User / Datetime / Small Text | | RO, depends_on status = Abandoned | Audit trail of an abandoned draft |
 | approval_state | Select | Not Required / Pending Approval / Approved / Rejected | RO F | Workflow state field; set to Pending Approval or Not Required by the controller, moved by the approval workflow |
 | approved_by_user | Link | User | RO | Set by the *Approve* transition; must differ from the preparer |
-| previous_shift | Link | Forecourt Shift | RO | Found on insert |
+| previous_shift | Link | Forecourt Shift | RO | Latest *submitted* shift at the station, found on insert; immutable (FMS-S121) |
 | shift_title | Data | | RO H | |
 | dip_entry_mode, sales_basis, price_change_mode | Data | | RO | Snapshot of the station's effective settings at creation; tanks and pumps may override (rows carry their own values) |
 | record_elec_cash, record_elec_meter, record_man_meter | Check | | RO | Snapshot of the station default; a column is shown when any row records that meter |
@@ -928,7 +929,7 @@ All are `istable` 1, `editable_grid` 1, module Forecourt Shift.
 | price | Currency | | RO | From the segment |
 | rec_elec_cash, rec_elec_meter, rec_man_meter | Check | | RO | Meters recorded for this nozzle (pump override, else station); drive `mandatory_depends_on` of the closings |
 | row_sales_basis | Data | | RO | Sales basis for this nozzle (pump override, else station) |
-| opening_elec_cash, closing_elec_cash | Float | | depends_on rec_elec_cash | Opening RO |
+| opening_elec_cash, closing_elec_cash | Float | | depends_on rec_elec_cash | Opening RO and immutable (FMS-S121): closing meters of the latest submitted shift, else the nozzle's configured initial reading |
 | opening_elec_meter, closing_elec_meter | Float | | depends_on rec_elec_meter | |
 | opening_man_meter, closing_man_meter | Float | | depends_on rec_man_meter | |
 | rollover_elec_cash, rollover_elec_meter, rollover_man_meter | Check | | | |
@@ -1086,7 +1087,7 @@ Composite index: (`tank`, `posting_date`).
 
 ### 10.2 Nozzle Ledger Entry
 
-Extra fields: `shift_template`, `island`, `pump`, `nozzle` (I), `tank`, `item`, `cashier` (I), `attendant`, `segment_no`, `price`, `opening_*`/`closing_*` for each meter, `ecash_delta`, `evol_delta`, `mvol_delta`, `basis_meter`, `gross_l`, `test_l`, `own_use_l`, `net_l`, `amount`, the three drift fields, `source`.
+Extra fields: `shift_template`, `island`, `pump`, `nozzle` (I), `tank`, `item`, `cashier` (I), `attendant`, `segment_no`, `price`, `opening_*`/`closing_*` for each meter, `ecash_delta`, `evol_delta`, `mvol_delta`, `basis_meter` (Select: Elec Cash / Elec Mtr / Man Mtr / Highest, same values as the station and pump sales basis), `gross_l`, `test_l`, `own_use_l`, `net_l`, `amount`, the three drift fields, `source`.
 Composite index: (`nozzle`, `posting_date`).
 
 ### 10.3 Sales Ledger Entry

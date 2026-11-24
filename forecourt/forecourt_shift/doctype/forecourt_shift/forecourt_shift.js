@@ -6,6 +6,7 @@ const STATUS_COLOUR = {
 	Reconciled: "blue",
 	Closing: "blue",
 	Closed: "green",
+	Abandoned: "red",
 };
 
 function _set_status_indicator(frm) {
@@ -78,13 +79,58 @@ frappe.ui.form.on("Forecourt Shift", {
 		_color_grid_flags(frm, "tank_dips", "Shift Tank Dip");
 
 		// U06: readiness panel on Overview tab for active draft shifts.
+		// Guard frm.is_new() to avoid "not found" API error on unsaved docs (P3-1).
 		if (
+			!frm.is_new() &&
 			frm.doc.docstatus === 0 &&
 			["Open", "Counting", "Reconciled", "Pending Approval"].includes(frm.doc.status)
 		) {
 			_load_readiness_panel(frm);
 		} else if (frm.fields_dict.readiness_html) {
 			frm.fields_dict.readiness_html.$wrapper.html("");
+		}
+
+		if (
+			!frm.is_new() &&
+			frm.doc.docstatus === 0 &&
+			["Open", "Counting", "Reconciled", "Pending Approval"].includes(frm.doc.status) &&
+			frappe.user.has_role([
+				"Station Manager",
+				"Area Manager",
+				"Forecourt Director",
+				"Forecourt Administrator",
+				"System Manager",
+			])
+		) {
+			frm.add_custom_button(
+				__("Abandon Draft"),
+				function () {
+					frappe.prompt(
+						{
+							fieldname: "reason",
+							fieldtype: "Small Text",
+							label: __("Reason"),
+							reqd: 1,
+							description: __(
+								"Nothing is deleted. The shift is locked and stops blocking new shifts."
+							),
+						},
+						(values) => {
+							frappe.call({
+								method: "forecourt.forecourt_shift.doctype.forecourt_shift.forecourt_shift.abandon_draft",
+								args: { shift_name: frm.docname, reason: values.reason },
+								freeze: true,
+								callback() {
+									frm.reload_doc();
+								},
+							});
+						},
+						__("Abandon draft shift {0}?", [frm.docname]),
+						__("Abandon")
+					);
+				},
+				__("Tools")
+			);
 		}
 
 		if (frm.doc.docstatus === 0 && frm.doc.status === "Reconciled") {

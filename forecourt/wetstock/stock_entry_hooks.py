@@ -19,7 +19,7 @@ def validate_stock_entry(doc, method=None) -> None:
 	if not doc.get("fms_forecourt_shift") and doc.get("station"):
 		open_shift = frappe.db.get_value(
 			"Forecourt Shift",
-			{"station": doc.station, "docstatus": 0},
+			{"station": doc.station, "docstatus": 0, "status": ["!=", "Abandoned"]},
 			"name",
 			order_by="shift_start desc",
 		)

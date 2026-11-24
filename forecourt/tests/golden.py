@@ -493,6 +493,10 @@ def _make_and_close_shift(
 	company = setup.company
 	station = setup.station
 
+	from forecourt.forecourt_shift import openings as shift_openings
+
+	prev_shift = shift_openings.latest_submitted_shift(station)
+
 	# Meter readings (one per nozzle per shift)
 	nozzles = frappe.get_all(
 		"Nozzle", filters={"pump": ["like", f"{station}-%"]}, fields=["name", "tank", "pump"]
@@ -510,7 +514,7 @@ def _make_and_close_shift(
 		sales_l = _NOZZLE_SALES_L
 		# E-cash meter records KES (currency), not litres. Delta = sales_l * price.
 		sales_amount = flt(sales_l * price, 2)
-		opening = setup.nozzle_meters.get(noz.name, flt(idx * 10_000_000, 2))
+		opening = shift_openings.nozzle_openings(noz.name, prev_shift)["opening_elec_cash"]
 		closing = flt(opening + sales_amount, 2)
 		cashier_emp = setup.cashiers[idx % len(setup.cashiers)]
 		meter_readings.append(
