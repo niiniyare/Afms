@@ -10,6 +10,8 @@ import frappe
 from frappe import _
 from frappe.utils import date_diff, flt, today
 
+from forecourt.reports.common import permitted_stations
+
 
 def execute(filters=None):
 	filters = filters or {}
@@ -42,15 +44,31 @@ def _columns():
 
 def _data(filters):
 	as_of = filters.get("date") or today()
-	f = {"docstatus": 1, "clearance_date": ["is", "not set"]}
+
+	# Station permission: Payment Entry has no direct station field, so we
+	# restrict by the shifts that belong to permitted stations.
+	permitted = permitted_stations()
+	if permitted is not None:
+		# restricted user — get shifts for permitted stations
+		if not permitted:
+			return []
+		shift_names = frappe.get_all(
+			"Forecourt Shift",
+			filters={"station": ["in", permitted], "docstatus": 1},
+			pluck="name",
+		)
+		if not shift_names:
+			return []
+
+	f = {"docstatus": 1, "clearance_date": ["is", "not set"], "payment_type": "Receive"}
 	if filters.get("company"):
 		f["company"] = filters["company"]
-	# Payment Entry has no station custom field yet; station filter is not applied
 	if filters.get("mode_of_payment"):
 		f["mode_of_payment"] = filters["mode_of_payment"]
 
-	# Only Mobile Money and Card type entries (non-cash clearing)
-	f["payment_type"] = "Receive"
+	if permitted is not None:
+		f["fms_forecourt_shift"] = ["in", shift_names]
+
 	rows = frappe.get_all(
 		"Payment Entry",
 		filters=f,
